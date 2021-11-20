@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:rxdart/rxdart.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
@@ -16,11 +17,19 @@ abstract class BluetoothController<T> {
   int broadcast(BluetoothMessage m);
   bool send(BluetoothMessage m, T device);
   Stream<bool> scanning();
+  Stream<Future<T>> getConnectionStream();
+  Future<List<BluetoothDevice>> connectedDevicesStream();
 }
 
 class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> {
+  static final BluetoothControllerWidget _instance = BluetoothControllerWidget._internal();
+  factory BluetoothControllerWidget() => _instance;
+
+  BluetoothControllerWidget._internal();
+
   FlutterBlue flutterBlue = FlutterBlue.instance;
-  StreamController<BluetoothDevice> lamps = StreamController<BluetoothDevice>();
+  StreamController<BluetoothDevice> lamps = BehaviorSubject();
+  StreamController<Future<BluetoothDevice>> connectionStream = BehaviorSubject();
 
   @override
   Stream<BluetoothDevice> scan(int duration) {
@@ -34,7 +43,7 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
 
   @override
   void connect(BluetoothDevice device) {
-    device.connect();
+    connectionStream.add(device.connect().then((value) => device));
   }
 
   @override
@@ -56,5 +65,15 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   @override
   Stream<bool> scanning() {
     return flutterBlue.isScanning;
+  }
+
+  @override
+  Stream<Future<BluetoothDevice>> getConnectionStream() {
+    return connectionStream.stream;
+  }
+
+  @override
+  Future<List<BluetoothDevice>> connectedDevicesStream() {
+    return flutterBlue.connectedDevices;
   }
 }

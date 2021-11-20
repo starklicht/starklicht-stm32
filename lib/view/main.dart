@@ -27,8 +27,15 @@ class MyApp extends StatelessWidget {
       title: _title,
       home: const MyStatefulWidget(),
       theme: ThemeData(
-        brightness: Brightness.dark
-      )
+        brightness: Brightness.light,
+        primaryColor: Colors.pink,
+        accentColor: Colors.pink,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: Colors.pink,
+        accentColor: Colors.pink,
+      ),
     );
   }
 }
@@ -63,7 +70,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Starklicht'),
+        title: const Text('STARKLICHT', style: TextStyle(
+          fontFamily: 'MontserratBlack',
+        )),
+        backgroundColor: Colors.black87,
       ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
