@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
 
-import 'animations.dart';
+import 'view/animations.dart';
 
 void main() => runApp(const MyApp());
 
@@ -58,6 +58,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     ConnectionsWidget(),
     ColorsWidget(),
     AnimationsWidget(),
+    Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget())
   ];
 
   void _onItemTapped(int index) {
@@ -92,10 +93,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             icon: Icon(Icons.waves),
             label: 'Dynamic',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.wb_auto),
+            label: 'Animation'
+          )
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }

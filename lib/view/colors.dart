@@ -2,6 +2,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
+import 'package:starklicht_flutter/messages/color_message.dart';
 
 class ColorsWidget extends StatefulWidget {
   const ColorsWidget({Key? key}) : super(key: key);
@@ -14,10 +16,12 @@ class _ColorsWidgetState extends State<ColorsWidget> {
   double _red = 0;
   double _green = 0;
   double _blue = 0;
+  double _alpha = 0;
 
   // create some values
   Color pickerColor = Color(0xff443a49);
   Color currentColor = Color(0xff443a49);
+  BluetoothController controller = BluetoothControllerWidget();
 
 // ValueChanged<Color> callback
   void changeColor(Color color) {
@@ -26,7 +30,9 @@ class _ColorsWidgetState extends State<ColorsWidget> {
       _red = color.red.toDouble();
       _green = color.green.toDouble();
       _blue = color.blue.toDouble();
+      _alpha = color.alpha.toDouble();
     });
+    controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), _alpha.toInt()));
   }
 
   @override
@@ -42,6 +48,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
             setState(() {
               _red = value;
               pickerColor = Color.fromARGB(255, _red.toInt(), _green.toInt(), _blue.toInt());
+              controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), pickerColor.alpha));
             });
           }
       ),
@@ -54,6 +61,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
             setState(() {
               _green = value;
               pickerColor = Color.fromARGB(255, _red.toInt(), _green.toInt(), _blue.toInt());
+              controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), pickerColor.alpha));
             });
           }
       ),
@@ -66,6 +74,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
             setState(() {
               _blue = value;
               pickerColor = Color.fromARGB(255, _red.toInt(), _green.toInt(), _blue.toInt());
+              controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), pickerColor.alpha));
             });
           }
       ),

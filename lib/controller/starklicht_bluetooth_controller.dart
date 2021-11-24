@@ -3,22 +3,22 @@ import 'package:rxdart/rxdart.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import '../messages/imessage.dart';
+const serviceUUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+const characterUUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
-const uuid = "0000ffe0-0000-1000-8000-00805f9b34fb";
 
-abstract class BluetoothMessage {
 
-}
 
 abstract class BluetoothController<T> {
   Stream<T> scan(int duration);
   Future stopScan();
   void connect(T device);
-  int broadcast(BluetoothMessage m);
-  bool send(BluetoothMessage m, T device);
+  int broadcast(IBluetoothMessage m);
+  bool send(IBluetoothMessage m, T device);
   Stream<bool> scanning();
-  Stream<Future<T>> getConnectionStream();
-  Future<List<BluetoothDevice>> connectedDevicesStream();
+  Stream<T> getConnectionStream();
+  Future<List<T>> connectedDevicesStream();
 }
 
 class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> {
@@ -29,12 +29,15 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
 
   FlutterBlue flutterBlue = FlutterBlue.instance;
   StreamController<BluetoothDevice> lamps = BehaviorSubject();
-  StreamController<Future<BluetoothDevice>> connectionStream = BehaviorSubject();
+  StreamController<BluetoothDevice> connectionStream = BehaviorSubject();
+  final Map<BluetoothDevice, BluetoothCharacteristic> deviceMap = {};
+  Stopwatch stopwatch = Stopwatch()..start();
+
 
   @override
   Stream<BluetoothDevice> scan(int duration) {
     flutterBlue.scan(timeout: Duration(seconds: duration)).listen((res) {
-      if(res.advertisementData.serviceUuids.contains(uuid)) {
+      if(res.advertisementData.serviceUuids.contains(serviceUUID)) {
         lamps.add(res.device);
       }
     });
@@ -42,8 +45,13 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   }
 
   @override
-  void connect(BluetoothDevice device) {
-    connectionStream.add(device.connect().then((value) => device));
+  void connect(BluetoothDevice device) async {
+    await device.connect();
+    List<BluetoothService> services = await device.discoverServices();
+    var s = services.firstWhere((service) => service.uuid == Guid(serviceUUID));
+    var c = s.characteristics.firstWhere((characteristic) => characteristic.uuid == Guid(characterUUID));
+    deviceMap[device] = c;
+    connectionStream.add(device);
   }
 
   @override
@@ -51,14 +59,24 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
     return flutterBlue.stopScan();
   }
 
-  @override
-  int broadcast(BluetoothMessage m) {
-    // TODO: implement broadcast
-    throw UnimplementedError();
+  bool canSend() {
+    return stopwatch.elapsedMilliseconds > 20;
   }
 
   @override
-  bool send(BluetoothMessage m, BluetoothDevice device) {
+  int broadcast(IBluetoothMessage m) {
+    if (canSend()) {
+      deviceMap.forEach((key, value) {
+        m.send(value);
+      });
+      print(stopwatch.elapsedMilliseconds);
+      stopwatch = Stopwatch()..start();
+    }
+    return 0;
+  }
+
+  @override
+  bool send(IBluetoothMessage m, BluetoothDevice device) {
     return false;
   }
 
@@ -68,7 +86,7 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   }
 
   @override
-  Stream<Future<BluetoothDevice>> getConnectionStream() {
+  Stream<BluetoothDevice> getConnectionStream() {
     return connectionStream.stream;
   }
 

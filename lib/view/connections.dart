@@ -5,13 +5,13 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 
 class _ConnectionsWidgetState extends State<ConnectionsWidget> {
-  BluetoothController controller = BluetoothControllerWidget();
+  BluetoothController<BluetoothDevice> controller = BluetoothControllerWidget();
   List<BluetoothDevice> foundDevices = <BluetoothDevice>[];
   Set<BluetoothDevice> connectedDevices = {};
   List<bool> active = [true, true];
   bool _isLoading = false;
 
-  StreamSubscription<Future>? stream;
+  StreamSubscription<dynamic>? stream;
 
 
   @override
@@ -25,12 +25,10 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
       });
       connectedDevices = value.toSet();
       stream?.cancel();
-      stream = controller.getConnectionStream().asBroadcastStream().listen((i) => {
-        i.then((value) {
-          setState(() {
-            connectedDevices.add(value as BluetoothDevice);
-          });
-        })
+      stream = controller.getConnectionStream().listen((d) {
+        setState(() {
+          connectedDevices.add(d);
+        });
       });
     });
   }
