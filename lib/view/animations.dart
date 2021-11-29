@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -5,6 +6,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:starklicht_flutter/model/redux.dart';
+import 'package:starklicht_flutter/model/enums.dart';
+
+abstract class IGradientChange {
+  StreamController<List<ColorPoint>> streamSubject = BehaviorSubject();
+  Stream<List<ColorPoint>> stream();
+}
+
+abstract class IAnimationSettingsChange {
+  StreamController<AnimationSettingsConfig> streamSubject = BehaviorSubject();
+  Stream<AnimationSettingsConfig> stream();
+}
+
+
+class StarklichtAnimation {
+  List<ColorPoint> _colors = [];
+}
 
 extension IndexedIterable<E> on Iterable<E> {
   Iterable<T> mapIndexed<T>(T Function(E e, int i) f) {
@@ -68,14 +87,17 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
 
 }
 
-class AnimationSettings extends StatefulWidget {
+class AnimationSettings extends StatefulWidget{
   const AnimationSettings({Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _AnimationSettingsWidgetState();
+  _AnimationSettingsWidgetState createState() => _AnimationSettingsWidgetState();
 }
 
-class _AnimationSettingsWidgetState extends State<AnimationSettings> {
+class _AnimationSettingsWidgetState extends State<AnimationSettings> implements IAnimationSettingsChange {
+  @override
+  StreamController<AnimationSettingsConfig> streamSubject = BehaviorSubject();
+
   List<bool> isSelected = [true, false, false, false];
   List<bool> isSelectedInterpolation = [true, false];
   double _currentSeconds = 1;
@@ -83,6 +105,43 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> {
 
   int selIndex(List<bool> array) {
     return array.indexWhere((element) => element == true);
+  }
+
+  InterpolationType getInterpolation() {
+    return isSelectedInterpolation.indexWhere((i) => i == true) == 0? InterpolationType.constant : InterpolationType.linear;
+  }
+
+  TimeFactor getTimeFactor() {
+    var s = isSelected.indexWhere((i) => i == true);
+    switch (s) {
+      case 0:
+        return TimeFactor.repeat;
+      case 1:
+        return TimeFactor.pingpong;
+      case 2:
+        return TimeFactor.shuffle;
+      case 3:
+        return TimeFactor.once;
+    }
+    throw Exception("This should not have happened.");
+  }
+
+  void updateCurrentConfig() {
+    // Notify listeners through stream
+    streamSubject.add(
+        AnimationSettingsConfig(
+          getInterpolation(),
+          getTimeFactor(),
+          _currentSeconds.round(),
+          _currentMillis.round()
+        )
+    );
+  }
+
+  @override
+  void dispose() {
+    streamSubject.close();
+    super.dispose();
   }
 
   String getRepeatText() {
@@ -133,6 +192,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> {
                   isSelectedInterpolation[i] = false;
                 }
                 isSelectedInterpolation[index] = true;
+                updateCurrentConfig();
               });
             },
           )
@@ -144,7 +204,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> {
             children:
         [
           Row(children: [
-            Text("Wiederholung: ", style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text("Zeitfaktor: ", style: const TextStyle(fontWeight: FontWeight.bold)),
             Text(getRepeatText()),
           ]),
           SizedBox(height: 12),
@@ -154,7 +214,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> {
             Icon(Icons.repeat),
             Icon(Icons.swap_horiz),
             Icon(Icons.shuffle),
-            Icon(Icons.repeat_one)
+            Icon(Icons.looks_one)
           ],
           isSelected: isSelected,
           onPressed: (int index) {
@@ -163,6 +223,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> {
                 isSelected[i] = false;
               }
               isSelected[index] = true;
+              updateCurrentConfig();
             });
           },
         )
@@ -182,8 +243,9 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> {
           Slider(value: _currentSeconds, onChanged: (double value) {
             setState(() {
                 _currentSeconds = value;
+
             });
-            // HapticFeedback.selectionClick();
+            HapticFeedback.selectionClick();
             },
             onChangeEnd: (double value) {
               if (value == 0 && _currentMillis == 0) {
@@ -191,6 +253,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> {
                   _currentMillis = 50;
                 });
               }
+              updateCurrentConfig();
             },
             min: 0,
             max: 60,
@@ -201,14 +264,15 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> {
             setState(() {
               _currentMillis = value;
             });
-            // HapticFeedback.lightImpact();
-          },
+            HapticFeedback.selectionClick();
+            },
             onChangeEnd: (double value) {
               if (value == 0 && _currentSeconds == 0) {
                 setState(() {
                   _currentSeconds = 1;
                 });
               }
+              updateCurrentConfig();
             },
             min: 0,
             max: 950,
@@ -218,6 +282,11 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> {
         ]),
       )
     ]);
+  }
+
+  @override
+  Stream<AnimationSettingsConfig> stream() {
+    return streamSubject.stream;
   }
 
 }
@@ -435,16 +504,38 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
   late AnimationController controller;
   late Animation colorAnimation;
 
+  void updateAnimationConfig(AnimationSettingsConfig config) {
+    controller.removeListener(update);
+    controller.stop();
+    controller = AnimationController(vsync: this, duration: Duration(seconds: config.seconds, milliseconds: config.millis));
+
+    // TODO: Machen!
+    colorAnimation = ColorTween(begin: Colors.black, end: Colors.white).animate(controller);
+    controller.addListener(update);
+    controller.repeat();
+  }
+
 
   @override
   void initState() {
     super.initState();
-    controller =  AnimationController(vsync: this, duration: Duration(milliseconds: 500));
-    colorAnimation = ColorTween(begin: Colors.blue, end: Colors.red).animate(controller);
-    controller.addListener(() {
-      setState(() {});
-    });
+    controller =  AnimationController(vsync: this, duration: Duration(milliseconds: 1000));
+    colorAnimation = ColorTween(begin: Colors.black, end: Colors.white).animate(controller);
+    controller.addListener(update);
     controller.repeat();
+  }
+
+  void update() {
+    setState(() {});
+  }
+
+
+  @override
+  void dispose() {
+    controller.dispose();
+    controller.removeListener(update);
+    controller.stop();
+    super.dispose();
   }
 
   @override
