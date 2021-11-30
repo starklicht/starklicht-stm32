@@ -49,7 +49,7 @@ uint16_t ColorMessage::w() {
 }
 
 void ColorMessage::execute(Controller *controller) {
-    controller->changeOnlyColor(&color);
+    controller->changeColor(&color);
 }
 
 void ColorMessage::setColor(uint16_t r, uint16_t g, uint16_t b, uint16_t w) {
