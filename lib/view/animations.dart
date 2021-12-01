@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:starklicht_flutter/controller/animators.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 
@@ -51,7 +52,9 @@ extension on Color {
 }
 
 class GradientEditorWidget extends StatefulWidget {
-  const GradientEditorWidget({Key? key}) : super(key: key);
+  GradientSettingsConfig gradient;
+  Function? callback;
+  GradientEditorWidget({Key? key, required this.gradient, this.callback}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _GradientEditorWidgetState();
@@ -73,22 +76,30 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
         Container(
           height: 400,
             child:ColorPicker(
-        pickerColor: Colors.red,
-        onColorChanged: (e) => print("Color"),
+        pickerColor: widget.color,
+        onColorChanged: (e) => { widget.color = e },
         showLabel: true,
         pickerAreaHeightPercent: 0.8,
       )),
       actions: [
-        TextButton(child:Text("Abbrechen"), onPressed: () => {}),
-        TextButton(child:Text("Speichern"), onPressed: () => {})
+        TextButton(child:Text("Abbrechen"), onPressed: () => {
+          Navigator.pop(context)
+        }),
+        TextButton(child:Text("Speichern"), onPressed: () {
+          widget.saveCallback(widget.color);
+          Navigator.pop(context);
+        })
       ],
     );
   }
 
 }
 
-class AnimationSettings extends StatefulWidget{
-  const AnimationSettings({Key? key}) : super(key: key);
+class AnimationSettings extends StatefulWidget {
+  AnimationSettingsConfig settings;
+  Function? callback;
+
+  AnimationSettings({Key? key, required this.settings, this.callback}) : super(key: key);
 
   @override
   _AnimationSettingsWidgetState createState() => _AnimationSettingsWidgetState();
@@ -128,14 +139,13 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
 
   void updateCurrentConfig() {
     // Notify listeners through stream
-    streamSubject.add(
-        AnimationSettingsConfig(
-          getInterpolation(),
-          getTimeFactor(),
-          _currentSeconds.round(),
-          _currentMillis.round()
-        )
-    );
+    setState(() {
+      widget.settings.seconds = _currentSeconds.round();
+      widget.settings.millis = _currentMillis.round();
+    });
+    if(widget.settings.callback != null) {
+      widget.settings.callback!();
+    }
   }
 
   @override
@@ -245,7 +255,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
                 _currentSeconds = value;
 
             });
-            HapticFeedback.selectionClick();
+            vibrate();
             },
             onChangeEnd: (double value) {
               if (value == 0 && _currentMillis == 0) {
@@ -264,7 +274,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
             setState(() {
               _currentMillis = value;
             });
-            HapticFeedback.selectionClick();
+            vibrate();
             },
             onChangeEnd: (double value) {
               if (value == 0 && _currentSeconds == 0) {
@@ -284,6 +294,10 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
     ]);
   }
 
+  void vibrate() async {
+    // HapticFeedback.selectionClick();
+  }
+
   @override
   Stream<AnimationSettingsConfig> stream() {
     return streamSubject.stream;
@@ -293,14 +307,16 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
 
 
 class ColorPickerWidget extends StatefulWidget {
-  const ColorPickerWidget({Key? key}) : super(key: key);
+  Color color;
+  Function(Color c) saveCallback;
+
+  ColorPickerWidget({Key? key, required this.color, required this.saveCallback}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ColorPickerWidgetState();
 }
 
 class _GradientEditorWidgetState extends State<GradientEditorWidget> {
-  List<ColorPoint> _colors = [ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)];
   final _startState = [ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)];
   int? _activeIndex;
   double circleRadius = 32;
@@ -324,14 +340,14 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
 
   /// Returns a generated color for a given point
   Color getPointColor(double pointPos) {
-    if (_colors.isEmpty) {
+    if (widget.gradient.colors.isEmpty) {
       return Colors.white;
-    } else if (_colors.length == 1) {
-      return _colors[0].color;
+    } else if (widget.gradient.colors.length == 1) {
+      return widget.gradient.colors[0].color;
     }
-    var left = _colors.where((element) => element.point <= pointPos).toList()
+    var left = widget.gradient.colors.where((element) => element.point <= pointPos).toList()
       ..sort((a, b) => pointPos.compareTo(a.point));
-    var right = _colors.where((element) => element.point > pointPos).toList()
+    var right = widget.gradient.colors.where((element) => element.point > pointPos).toList()
       ..sort((a, b) => pointPos.compareTo(a.point));
     print(left.map((e) => e.point));
     print(right.map((e) => e.point));
@@ -356,31 +372,46 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
     var color = getPointColor(position);
     var point = ColorPoint(color, position);
     setState(() {
-      _colors.add(point);
-      _colors.sort((a, b) => a.point.compareTo(b.point));
-      _activeIndex = _colors.indexOf(point);
+      widget.gradient.colors.add(point);
+      widget.gradient.colors.sort((a, b) => a.point.compareTo(b.point));
+      _activeIndex = widget.gradient.colors.indexOf(point);
       _hasBeenTouched = true;
     });
+    notify();
   }
 
   void onDragEnd(double position, int pointIndex) {
     var pointPos = constrain(getCanvasPosition(position));
     setState(() {
-      _colors[pointIndex].point = pointPos;
-      var i = _colors[pointIndex];
+      widget.gradient.colors[pointIndex].point = pointPos;
+      var i = widget.gradient.colors[pointIndex];
       // Sort
-      _colors.sort((a, b) => a.point.compareTo(b.point));
-      _activeIndex = _colors.indexOf(i);
+      widget.gradient.colors.sort((a, b) => a.point.compareTo(b.point));
+      _activeIndex = widget.gradient.colors.indexOf(i);
       _hasBeenTouched = true;
     });
+    notify();
   }
 
   void onDragUpdate(DragUpdateDetails d, int pointIndex) {
     var pointPos = constrain(getCanvasPosition(d.globalPosition.dx));
     setState(() {
-      _colors[pointIndex].point = pointPos;
+      widget.gradient.colors[pointIndex].point = pointPos;
       _hasBeenTouched = true;
     });
+  }
+
+  void updateColor(Color c) {
+    setState(() {
+      widget.gradient.colors[_activeIndex!].color = c;
+    });
+    notify();
+  }
+
+  void notify() {
+    if(widget.gradient.callback != null) {
+      widget.gradient.callback!();
+    }
   }
 
 
@@ -398,8 +429,8 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                 gradient: LinearGradient(
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
-                    colors: List.from(_colors.map((e) => e.color)),
-                    stops: List.from(_colors.map((e) => e.point))),
+                    colors: List.from(widget.gradient.colors.map((e) => e.color)),
+                    stops: List.from(widget.gradient.colors.map((e) => e.point))),
                 borderRadius: const BorderRadius.all(Radius.circular(4)),
                 boxShadow: const [
                   BoxShadow(
@@ -410,7 +441,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                   ),
                 ],
               ))),
-      ..._colors.mapIndexed((e, currentIndex) => Positioned(
+      ...widget.gradient.colors.mapIndexed((e, currentIndex) => Positioned(
           left: getPointPosition(e.point),
           top: (widgetHeight - circleRadius) / 2,
           child: Draggable(
@@ -459,16 +490,16 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
     ]), Column(children: [
       if(true) ...[Container(child:InkWell(child:Ink(
         height: 32,
-        color: _activeIndex==null?Colors.grey:_colors[_activeIndex!].color,
+        color: _activeIndex==null?Colors.grey:widget.gradient.colors[_activeIndex!].color,
       ),
-      onTap: () => showDialog(context: context, builder: (_) {
-        return const ColorPickerWidget();
+      onTap: () => _activeIndex == null?null:showDialog(context: context, builder: (_) {
+        return ColorPickerWidget(color: widget.gradient.colors[_activeIndex!].color, saveCallback: updateColor);
       })),
       margin: EdgeInsets.all(16),
       ),
       Row(children: [
         TextButton.icon(onPressed: _hasBeenTouched?revertAll:null, label: Text("Zurücksetzen"), icon: const Icon(Icons.restore)),
-        TextButton.icon(onPressed: _activeIndex == null?null:deletePoint, label: Text("Löschen"), icon: const Icon(Icons.highlight_remove)),
+        TextButton.icon(onPressed: _activeIndex == null && widget.gradient.colors.length <= 2?null:deletePoint, label: Text("Löschen"), icon: const Icon(Icons.highlight_remove)),
       ])
       ]
     ])]);
@@ -477,24 +508,30 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   revertAll() {
     setState(() {
       _activeIndex = null;
-      _colors = [ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)];
+      widget.gradient.colors = [ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)];
       _hasBeenTouched = false;
     });
+    notify();
   }
 
   deletePoint() {
-    if(_colors.length <= 1) {
+    if(widget.gradient.colors.length <= 2) {
       return;
     }
     setState(() {
-      _colors.removeAt(_activeIndex!);
+      widget.gradient.colors.removeAt(_activeIndex!);
       _activeIndex = null;
     });
+    notify();
   }
 }
 
 class AnimationPreviewWidget extends StatefulWidget {
-  const AnimationPreviewWidget({Key? key}) : super(key: key);
+  AnimationSettingsConfig settings;
+  GradientSettingsConfig colors;
+  Function? callback;
+
+  AnimationPreviewWidget({Key? key, required this.settings, required this.colors, this.callback}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _AnimationPreviewWidgetState();
@@ -508,9 +545,6 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
     controller.removeListener(update);
     controller.stop();
     controller = AnimationController(vsync: this, duration: Duration(seconds: config.seconds, milliseconds: config.millis));
-
-    // TODO: Machen!
-    colorAnimation = ColorTween(begin: Colors.black, end: Colors.white).animate(controller);
     controller.addListener(update);
     controller.repeat();
   }
@@ -519,14 +553,25 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
   @override
   void initState() {
     super.initState();
-    controller =  AnimationController(vsync: this, duration: Duration(milliseconds: 1000));
-    colorAnimation = ColorTween(begin: Colors.black, end: Colors.white).animate(controller);
+    setState(() {
+      widget.settings.callback = updateAnimationCallback;
+      widget.colors.callback = updateAnimationCallback;
+    });
+    controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    colorAnimation = BaseColorAnimation(widget.colors.colors).animate(controller);
     controller.addListener(update);
     controller.repeat();
   }
 
   void update() {
     setState(() {});
+  }
+
+  void updateAnimationCallback () {
+    print('UPDATE ANIMNATION');
+    controller.duration = Duration(seconds: widget.settings.seconds, milliseconds: widget.settings.millis);
+    colorAnimation = BaseColorAnimation(widget.colors.colors).animate(controller);
+    controller.repeat();
   }
 
 
@@ -567,26 +612,32 @@ class AnimationsEditorWidget extends StatefulWidget {
 }
 
 class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
+  late AnimationSettingsConfig settings;
+  late GradientSettingsConfig gradient;
+
   @override
   Widget build(BuildContext context) {
-    return Column(children: const [
-      Text(
+    settings = AnimationSettingsConfig(InterpolationType.linear, TimeFactor.repeat, 1, 0);
+    gradient = GradientSettingsConfig([ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)]);
+    Function? callback;
+    return Column(children: [
+      const Text(
         "Zeitverlauf\n",
         textAlign: TextAlign.start,
       ),
-      GradientEditorWidget(),
-      Divider(
+      GradientEditorWidget(gradient: gradient, callback: callback),
+      const Divider(
         height: 32
       ),
-      Text(
+      const Text(
         "Animationseinstellungen",
         textAlign: TextAlign.start,
       ),
-      AnimationSettings(),
-      Divider(height: 32),
-      Text("Animationsvorschau"),
-      SizedBox(height: 12),
-      AnimationPreviewWidget()
+      AnimationSettings(settings: settings, callback: callback),
+      const Divider(height: 32),
+      const Text("Animationsvorschau"),
+      const SizedBox(height: 12),
+      AnimationPreviewWidget(settings: settings, colors: gradient, callback: callback)
     ]);
   }
 }
@@ -625,7 +676,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                 ListTile(
                   leading: CircleAvatar(backgroundColor: Colors.red),
                   title: Text(animations[index]),
-                  subtitle: Text('Beschreibung für sdf $index'),
+                  subtitle: Text('$index'),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
