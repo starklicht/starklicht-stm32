@@ -94,7 +94,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             label: 'Dynamic',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.wb_auto),
+            icon: Icon(Icons.animation),
             label: 'Animation'
           )
         ],

@@ -54,8 +54,10 @@ abstract class IBluetoothMessage {
     message.addAll(escapeList(getMessageBody()));
     message.addAll(endOfMessageSign);
     // Send to Device!
-    return c.write(message, withoutResponse: true);
+    return c.write(message, withoutResponse: withoutResponse);
   }
+
+  bool withoutResponse = true;
 
   void broadcast(List<BluetoothCharacteristic> broadcastList) async {
     for (var b in broadcastList) {

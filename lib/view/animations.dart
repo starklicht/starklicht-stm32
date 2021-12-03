@@ -8,6 +8,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:starklicht_flutter/controller/animators.dart';
+import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
+import 'package:starklicht_flutter/messages/animation_message.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 
@@ -119,7 +121,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
   }
 
   InterpolationType getInterpolation() {
-    return isSelectedInterpolation.indexWhere((i) => i == true) == 0? InterpolationType.constant : InterpolationType.linear;
+    return isSelectedInterpolation.indexWhere((i) => i == true) == 1? InterpolationType.constant : InterpolationType.linear;
   }
 
   TimeFactor getTimeFactor() {
@@ -142,6 +144,8 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
     setState(() {
       widget.settings.seconds = _currentSeconds.round();
       widget.settings.millis = _currentMillis.round();
+      widget.settings.timefactor = getTimeFactor();
+      widget.settings.interpolationType = getInterpolation();
     });
     if(widget.settings.callback != null) {
       widget.settings.callback!();
@@ -171,11 +175,50 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
   String getAnimationText() {
     switch(selIndex(isSelectedInterpolation)) {
       case 0:
-        return "Konstant";
-      case 1:
         return "Linear";
+      case 1:
+        return "Konstant";
     }
     return "Unbekannt";
+  }
+
+  List<String> getPossibleSeconds() {
+    List<String> r = [];
+    for(var i = 0; i < 61; i++) {
+      r.add("$i");
+    }
+    return r;
+  }
+
+  showPicker() {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+            color: Colors.white,
+              child: Row(children: <Widget>[
+            Expanded(
+                child: CupertinoPicker(
+              backgroundColor: Colors.white,
+              onSelectedItemChanged: (value) {
+                setState(() {
+                  _currentSeconds = value.toDouble();
+                  updateCurrentConfig();
+                });
+              },
+              itemExtent: 35.0,
+              children: getPossibleSeconds().map((e) => Text(e)).toList(),
+            )),
+            Expanded(
+              child: CupertinoPicker(
+                itemExtent: 35,
+
+                onSelectedItemChanged: (value) => {},
+                children: getPossibleSeconds().map((e) => Text(e)).toList()
+              )
+            )
+          ]));
+        });
   }
 
   @override
@@ -192,8 +235,8 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
           ToggleButtons(
             borderRadius: const BorderRadius.all(Radius.circular(10)),
             children: const <Widget>[
-              Icon(Icons.linear_scale),
               Icon(Icons.horizontal_rule),
+              Icon(Icons.linear_scale),
             ],
             isSelected: isSelectedInterpolation,
             onPressed: (int index) {
@@ -248,7 +291,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
         child: Column(children: [
           Row(children: [
             Text("Dauer: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text("${_currentSeconds.round()} ${_currentSeconds == 1?"Sekunde":"Sekunden"} ${_currentMillis.round()} Millisekunden"),
+            TextButton(child:Text("${_currentSeconds.round()} ${_currentSeconds == 1?"Sekunde":"Sekunden"} ${_currentMillis.round()} Millisekunden"), onPressed: showPicker),
           ]),
           Slider(value: _currentSeconds, onChanged: (double value) {
             setState(() {
@@ -368,7 +411,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
 
 
   void addPoint(double globalPositionX) {
-    var position = getCanvasPosition(globalPositionX);
+    var position = constrain(getCanvasPosition(globalPositionX));
     var color = getPointColor(position);
     var point = ColorPoint(color, position);
     setState(() {
@@ -530,8 +573,9 @@ class AnimationPreviewWidget extends StatefulWidget {
   AnimationSettingsConfig settings;
   GradientSettingsConfig colors;
   Function? callback;
+  Function? restartCallback;
 
-  AnimationPreviewWidget({Key? key, required this.settings, required this.colors, this.callback}) : super(key: key);
+  AnimationPreviewWidget({Key? key, required this.settings, required this.colors, this.callback, this.restartCallback}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _AnimationPreviewWidgetState();
@@ -541,26 +585,22 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
   late AnimationController controller;
   late Animation colorAnimation;
 
-  void updateAnimationConfig(AnimationSettingsConfig config) {
-    controller.removeListener(update);
-    controller.stop();
-    controller = AnimationController(vsync: this, duration: Duration(seconds: config.seconds, milliseconds: config.millis));
-    controller.addListener(update);
-    controller.repeat();
+  void restart() {
+    print('Restarting the animation');
   }
 
 
   @override
   void initState() {
     super.initState();
+    widget.restartCallback = restart;
     setState(() {
       widget.settings.callback = updateAnimationCallback;
       widget.colors.callback = updateAnimationCallback;
     });
     controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
-    colorAnimation = BaseColorAnimation(widget.colors.colors).animate(controller);
     controller.addListener(update);
-    controller.repeat();
+    updateAnimationCallback();
   }
 
   void update() {
@@ -568,10 +608,13 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
   }
 
   void updateAnimationCallback () {
-    print('UPDATE ANIMNATION');
     controller.duration = Duration(seconds: widget.settings.seconds, milliseconds: widget.settings.millis);
-    colorAnimation = BaseColorAnimation(widget.colors.colors).animate(controller);
-    controller.repeat();
+    if(widget.settings.interpolationType == InterpolationType.linear) {
+      colorAnimation = BaseColorAnimation(widget.colors.colors, widget.settings.timefactor == TimeFactor.shuffle).animate(controller);
+    } else {
+      colorAnimation = ConstantColorAnimator(widget.colors.colors, widget.settings.timefactor == TimeFactor.shuffle).animate(controller);
+    }
+    controller.repeat(reverse: widget.settings.timefactor == TimeFactor.pingpong);
   }
 
 
@@ -614,13 +657,15 @@ class AnimationsEditorWidget extends StatefulWidget {
 class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
   late AnimationSettingsConfig settings;
   late GradientSettingsConfig gradient;
+  BluetoothController controller = BluetoothControllerWidget();
+  Function? restartCallback;
 
   @override
   Widget build(BuildContext context) {
     settings = AnimationSettingsConfig(InterpolationType.linear, TimeFactor.repeat, 1, 0);
     gradient = GradientSettingsConfig([ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)]);
     Function? callback;
-    return Column(children: [
+    return Container(child:SingleChildScrollView(child: Column(children: [
       const Text(
         "Zeitverlauf\n",
         textAlign: TextAlign.start,
@@ -637,8 +682,17 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
       const Divider(height: 32),
       const Text("Animationsvorschau"),
       const SizedBox(height: 12),
-      AnimationPreviewWidget(settings: settings, colors: gradient, callback: callback)
-    ]);
+      AnimationPreviewWidget(settings: settings, colors: gradient, callback: callback, restartCallback: restartCallback),
+      TextButton(onPressed: send, child: Text("SEND"))
+    ])));
+  }
+
+  void send() {
+    print("BROADCAST");
+    controller.broadcast(
+      AnimationMessage(gradient.colors, settings)
+    );
+    restartCallback!();
   }
 }
 
