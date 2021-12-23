@@ -77,13 +77,15 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                 );
               } else {
                 return Card(
-                    margin: EdgeInsets.all(4.0),
-                    child: Column(
+                    margin: EdgeInsets.all(6.0),
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                    child: InkWell(child: Column(
                         children: [
                           ListTile(
                               leading: Icon(Icons.lightbulb),
                               title: Text(connectedDevices.toList()[index].name),
-                              subtitle: Text('Beschreibung für sdf $index - 1'),
+                              subtitle: Text(connectedDevices.toList()[index].id.id),
                               trailing: Switch(
                                 value: active[index],
                                 onChanged: (value) {
@@ -97,8 +99,9 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                               )
                           )
                         ]
-                    )
-                );
+                    ),
+                      onTap: () => print("INKWELLs"),
+                ));
               }
             }
         )

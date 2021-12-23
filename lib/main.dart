@@ -57,8 +57,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   static const List<Widget> _widgetOptions = <Widget>[
     ConnectionsWidget(),
     ColorsWidget(),
+    Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
     AnimationsWidget(),
-    Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget())
   ];
 
   void _onItemTapped(int index) {
@@ -90,13 +90,13 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             label: 'Simple',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.waves),
-            label: 'Dynamic',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.animation),
             label: 'Animation'
-          )
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.book),
+            label: 'Bibliothek',
+          ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

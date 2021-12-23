@@ -83,25 +83,24 @@ class BaseColorAnimation extends Animatable<Color?> {
 class ConstantColorAnimator extends BaseColorAnimation {
   ConstantColorAnimator(List<ColorPoint> points, bool randomize) : super(points, randomize);
 
-  @override
-  Color? transform(double t) {
+  double interpolate(double t) {
     if(_randomize) {
       if (t < lastTime) {
         nextValue = _random.nextDouble();
       }
       lastTime = t;
-      return gradientScale(nextValue);
+      return nextValue;
     }
     var l = selectLeft(t);
     var r = selectRight(t);
     if(l.isEmpty) {
-      return r[0].color;
+      return r[0].point;
     } else if(r.isEmpty) {
-      return l[0].color;
+      return l[0].point;
     }
     var m = [l[0], r[0]];
     var tt = map(t, m[0].point, m[1].point, 0, 1);
     var i = IntTween(begin: 0, end: 1).lerp(tt);
-    return m[i].color;
+    return m[i].point;
   }
 }

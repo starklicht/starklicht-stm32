@@ -19,6 +19,14 @@ class AnimationSettingsConfig {
       this.seconds,
       this.millis
       );
+
+  Map<String, dynamic> toJson() => {
+    'interpolationType': interpolationType.toString().split('.')[1],
+    'timeFactor': timefactor.toString().split('.')[1],
+    'millis': millis,
+    'seconds': seconds
+  };
+
 }
 
 class GradientSettingsConfig {

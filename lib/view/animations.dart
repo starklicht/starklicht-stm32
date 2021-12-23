@@ -7,11 +7,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:sembast/sembast.dart';
+import 'package:sembast/sembast_io.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:starklicht_flutter/controller/animators.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
+import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/model/enums.dart';
+import 'package:starklicht_flutter/persistence/persistence.dart';
 
 abstract class IGradientChange {
   StreamController<List<ColorPoint>> streamSubject = BehaviorSubject();
@@ -65,6 +70,12 @@ class GradientEditorWidget extends StatefulWidget {
 class ColorPoint {
   Color color;
   double point;
+
+  Map<String, dynamic> toJson() =>
+    {
+      'color': color.value,
+      'point': point
+    };
 
   ColorPoint(this.color, this.point);
 }
@@ -573,9 +584,10 @@ class AnimationPreviewWidget extends StatefulWidget {
   AnimationSettingsConfig settings;
   GradientSettingsConfig colors;
   Function? callback;
-  Function? restartCallback;
+  Set<Function> restartCallback;
+  Set<Function> notify;
 
-  AnimationPreviewWidget({Key? key, required this.settings, required this.colors, this.callback, this.restartCallback}) : super(key: key);
+  AnimationPreviewWidget({Key? key, required this.settings, required this.colors, this.callback, required this.restartCallback, required this.notify}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _AnimationPreviewWidgetState();
@@ -586,17 +598,18 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
   late Animation colorAnimation;
 
   void restart() {
-    print('Restarting the animation');
+    controller.reset();
+    updateAnimationCallback();
   }
 
 
   @override
   void initState() {
     super.initState();
-    widget.restartCallback = restart;
     setState(() {
-      widget.settings.callback = updateAnimationCallback;
-      widget.colors.callback = updateAnimationCallback;
+      widget.restartCallback.add(restart);
+      widget.settings.callback = updateAnimationCallbackAndSend;
+      widget.colors.callback = updateAnimationCallbackAndSend;
     });
     controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
     controller.addListener(update);
@@ -607,6 +620,11 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
     setState(() {});
   }
 
+  void updateAnimationCallbackAndSend () {
+    updateAnimationCallback();
+    for (var element in widget.notify) {element.call();}
+  }
+
   void updateAnimationCallback () {
     controller.duration = Duration(seconds: widget.settings.seconds, milliseconds: widget.settings.millis);
     if(widget.settings.interpolationType == InterpolationType.linear) {
@@ -614,7 +632,11 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
     } else {
       colorAnimation = ConstantColorAnimator(widget.colors.colors, widget.settings.timefactor == TimeFactor.shuffle).animate(controller);
     }
-    controller.repeat(reverse: widget.settings.timefactor == TimeFactor.pingpong);
+    if(widget.settings.timefactor == TimeFactor.once) {
+      controller.forward(from: 0);
+    } else {
+      controller.repeat(reverse: widget.settings.timefactor == TimeFactor.pingpong);
+    }
   }
 
 
@@ -654,11 +676,81 @@ class AnimationsEditorWidget extends StatefulWidget {
   State<StatefulWidget> createState() => _AnimationsEditorWidgetState();
 }
 
+class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
+  bool _syncWithLamp = false;
+  BluetoothController controller = BluetoothControllerWidget();
+
+
+  void send() {
+    controller.broadcast(
+        AnimationMessage(widget.colors.colors, widget.settings)
+    );
+    /* for(var i in restartCallback) {
+      i.call();
+    } */
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    widget.notify.add(notify);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Row(children: [
+        TextButton.icon(label: Text("Senden"),onPressed: send, icon: Icon(Icons.settings_remote)),
+        TextButton.icon(label: Text("Speichern"),onPressed: () => {
+          Persistence().saveAnimation(KeyframeAnimation(widget.colors.colors, widget.settings, "Test")).then((value) => {
+            /* Persistence().getAnimationStore().then((value) => {
+              print(value)
+            }) */
+            print('Persisted.')
+          })
+        }, icon: Icon(Icons.save)),
+
+      ],
+      mainAxisAlignment: MainAxisAlignment.center),
+      CheckboxListTile(value: _syncWithLamp, onChanged: (e) {
+        setState(() {
+          _syncWithLamp = e!;
+        });
+    },
+    controlAffinity: ListTileControlAffinity.leading,
+    title: Text("Automatisch mit Lampe synchronisieren")),
+    ]);
+  }
+
+  void notify() {
+    if(_syncWithLamp) {
+      send();
+    }
+  }
+
+}
+
+
+class AnimationTaskbarWidget extends StatefulWidget {
+  Set<Function> notify;
+  AnimationSettingsConfig settings;
+  GradientSettingsConfig colors;
+
+  BluetoothController controller = BluetoothControllerWidget();
+
+  AnimationTaskbarWidget({Key? key,  required this.notify, required this.colors, required this.settings }) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _AnimationTaskbarWidgetState();
+}
+
 class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
   late AnimationSettingsConfig settings;
   late GradientSettingsConfig gradient;
-  BluetoothController controller = BluetoothControllerWidget();
-  Function? restartCallback;
+  Set<Function> restartCallback = {};
+  Set<Function> notifyChanges = {};
+
 
   @override
   Widget build(BuildContext context) {
@@ -682,17 +774,12 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
       const Divider(height: 32),
       const Text("Animationsvorschau"),
       const SizedBox(height: 12),
-      AnimationPreviewWidget(settings: settings, colors: gradient, callback: callback, restartCallback: restartCallback),
-      TextButton(onPressed: send, child: Text("SEND"))
+      AnimationPreviewWidget(settings: settings, colors: gradient, callback: callback, restartCallback: restartCallback, notify: notifyChanges),
+      const Divider(height: 32),
+      const Text("Aktionen"),
+      const SizedBox(height: 12),
+      AnimationTaskbarWidget(settings: settings, colors: gradient, notify: notifyChanges)
     ])));
-  }
-
-  void send() {
-    print("BROADCAST");
-    controller.broadcast(
-      AnimationMessage(gradient.colors, settings)
-    );
-    restartCallback!();
   }
 }
 
@@ -710,16 +797,20 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
     print("Test");
   }
 
+  void load() {
+    Persistence().getAnimationStore().then((i) => {
+      print('Test')
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    setState(() {
-      animations.clear();
-      for (var i = 0; i < 10; i++) {
-        animations.add("Animation $i");
-        print("Adding item $i");
-      }
-    });
 
     return ListView.builder(
         itemCount: animations.length,
