@@ -35,6 +35,7 @@ void Controller::changeKeyframes(bool pingpong, int interpolation, int n, Keyfra
     mode = ANIMATION;
     animator->setInterpolatorType(interpolation);
     animator->setRepeating(true);
+    // TODO: Erweitern
     animator->setStartPoint(HAL_GetTick());
     animator->setNumberOfFrames(n);
     animator->setPingpong(pingpong);

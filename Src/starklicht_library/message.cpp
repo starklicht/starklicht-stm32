@@ -262,7 +262,6 @@ void SaveMessage::setSave(bool save) {
 void SaveMessage::execute(Controller *controller) {
     if (save) {
         controller->animatorToEEPROM(index);
-        //controller->animatorFromEEPROM(index);
     } else {
         controller->animatorFromEEPROM(index);
     }
