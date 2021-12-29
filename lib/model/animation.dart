@@ -36,6 +36,8 @@ class KeyframeAnimation {
   AnimationSettingsConfig _config;
   String title;
 
+  List<ColorPoint> get colors => _colors;
+
   KeyframeAnimation(this._colors, this._config, this.title);
 
   Map<String, dynamic> toJson() => {
@@ -43,4 +45,13 @@ class KeyframeAnimation {
     'config': _config.toJson(),
     'colors': _colors.map((e) => e.toJson()).toList()
   };
+
+
+  @override
+  String toString() {
+    return ''
+        '${config.seconds}s ${config.millis}ms';
+  }
+
+  AnimationSettingsConfig get config => _config;
 }

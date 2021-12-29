@@ -1,21 +1,16 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:sembast/sembast.dart';
-import 'package:sembast/sembast_io.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:starklicht_flutter/controller/animators.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
 import 'package:starklicht_flutter/model/animation.dart';
-import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/model/enums.dart';
+import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 
 abstract class IGradientChange {
@@ -499,7 +494,11 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
           left: getPointPosition(e.point),
           top: (widgetHeight - circleRadius) / 2,
           child: Draggable(
-            child: Container(
+            child: GestureDetector(
+                onTap: () => setState(() {
+                  _activeIndex = currentIndex;
+                }),
+                child: Container(
                 width: circleRadius,
                 height: circleRadius,
                 decoration: BoxDecoration(
@@ -514,7 +513,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                         offset:
                             Offset(2.0, 2.0), // shadow direction: bottom right
                       )
-                    ])),
+                    ]))),
             feedback: Container(
                 width: circleRadius,
                 height: circleRadius,
@@ -542,9 +541,22 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
             onDragUpdate: (d) => onDragUpdate(d, currentIndex),
           )))
     ]), Column(children: [
-      if(true) ...[Container(child:InkWell(child:Ink(
+      if(true) ...[Container(child:InkWell(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+          child:Ink(
         height: 32,
-        color: _activeIndex==null?Colors.grey:widget.gradient.colors[_activeIndex!].color,
+        decoration: BoxDecoration(
+            color: _activeIndex==null?Colors.grey:widget.gradient.colors[_activeIndex!].color,
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            blurRadius: 2.0,
+            spreadRadius: 0.0,
+            offset: Offset(2.0, 2.0), // shadow direction: bottom right
+          )
+              ]
+        ),
       ),
       onTap: () => _activeIndex == null?null:showDialog(context: context, builder: (_) {
         return ColorPickerWidget(color: widget.gradient.colors[_activeIndex!].color, saveCallback: updateColor);
@@ -703,11 +715,8 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
       Row(children: [
         TextButton.icon(label: Text("Senden"),onPressed: send, icon: Icon(Icons.settings_remote)),
         TextButton.icon(label: Text("Speichern"),onPressed: () => {
-          Persistence().saveAnimation(KeyframeAnimation(widget.colors.colors, widget.settings, "Test")).then((value) => {
-            /* Persistence().getAnimationStore().then((value) => {
-              print(value)
-            }) */
-            print('Persisted.')
+          showDialog(context: context, builder: (_) {
+            return SaveWidget(animation: KeyframeAnimation(widget.colors.colors, widget.settings, ""));
           })
         }, icon: Icon(Icons.save)),
 
@@ -745,6 +754,53 @@ class AnimationTaskbarWidget extends StatefulWidget {
   State<StatefulWidget> createState() => _AnimationTaskbarWidgetState();
 }
 
+class _SaveWidgetState extends State<SaveWidget> {
+  String value = "";
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return AlertDialog(
+      title: const Text('Animation speichern'),
+      content:
+      TextField(
+          decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          hintText: 'Name der Animation',
+        ),
+        onChanged: (text) {
+          widget.animation.title = text;
+        },
+      ),
+      actions: [
+        TextButton(onPressed: () => {Navigator.pop(context)}, child: Text('Abbrechen')),
+        TextButton(onPressed: () {
+          Persistence().saveAnimation(widget.animation);
+          var snackBar = SnackBar(
+            content: Text('Animation ${widget.animation.title} wurde gespeichert'),
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          Navigator.pop(context);
+        }, child: Text('Speichern'))
+      ],
+
+
+    );
+  }
+}
+
+
+class SaveWidget extends StatefulWidget {
+  KeyframeAnimation animation;
+  SaveWidget({Key? key, required this.animation}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _SaveWidgetState();
+}
+
+
+
+
 class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
   late AnimationSettingsConfig settings;
   late GradientSettingsConfig gradient;
@@ -780,60 +836,5 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
       const SizedBox(height: 12),
       AnimationTaskbarWidget(settings: settings, colors: gradient, notify: notifyChanges)
     ])));
-  }
-}
-
-class AnimationsWidget extends StatefulWidget {
-  const AnimationsWidget({Key? key}) : super(key: key);
-
-  @override
-  State<StatefulWidget> createState() => _AnimationsWidgetState();
-}
-
-class _AnimationsWidgetState extends State<AnimationsWidget> {
-  List<String> animations = [];
-
-  void edit() {
-    print("Test");
-  }
-
-  void load() {
-    Persistence().getAnimationStore().then((i) => {
-      print('Test')
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    load();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-    return ListView.builder(
-        itemCount: animations.length,
-        itemBuilder: (BuildContext context, int index) {
-          return Card(
-              margin: EdgeInsets.all(4.0),
-              child: Column(children: [
-                ListTile(
-                  leading: CircleAvatar(backgroundColor: Colors.red),
-                  title: Text(animations[index]),
-                  subtitle: Text('$index'),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                        onPressed: edit,
-                        icon: const Icon(Icons.settings_remote)),
-                    IconButton(
-                        onPressed: edit, icon: const Icon(Icons.arrow_forward))
-                  ],
-                )
-              ]));
-        });
   }
 }

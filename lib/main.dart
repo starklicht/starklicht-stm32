@@ -8,6 +8,7 @@
 // and displays a corresponding message in the center of the [Scaffold].
 
 import 'package:flutter/material.dart';
+import 'package:starklicht_flutter/view/animation_list.dart';
 import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
 
@@ -59,6 +60,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     ColorsWidget(),
     Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
     AnimationsWidget(),
+    Text('TODO')
   ];
 
   void _onItemTapped(int index) {
@@ -75,6 +77,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           fontFamily: 'MontserratBlack',
         )),
         backgroundColor: Colors.black87,
+        actions: <Widget>[
+          IconButton(onPressed: () => {}, icon: Icon(Icons.bookmark))
+        ],
       ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
@@ -96,7 +101,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'Bibliothek',
-          ),
+          )
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
