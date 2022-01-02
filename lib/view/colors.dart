@@ -1,12 +1,18 @@
 
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
 
 class ColorsWidget extends StatefulWidget {
-  const ColorsWidget({Key? key}) : super(key: key);
+  bool sendOnChange;
+  Color? startColor;
+  Function? changeCallback;
+  ColorsWidget({Key? key, required this.sendOnChange, this.startColor, this.changeCallback}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ColorsWidgetState();
@@ -18,9 +24,13 @@ class _ColorsWidgetState extends State<ColorsWidget> {
   double _blue = 0;
   double _alpha = 0;
 
+  bool _hexValid = true;
+  String _currentHex = "";
+
+  var _formKey = GlobalKey<FormState>();
+
   // create some values
-  Color pickerColor = Color(0xff443a49);
-  Color currentColor = Color(0xff443a49);
+  Color pickerColor = Color(0xff000000);
   BluetoothController controller = BluetoothControllerWidget();
 
 // ValueChanged<Color> callback
@@ -32,13 +42,52 @@ class _ColorsWidgetState extends State<ColorsWidget> {
       _blue = color.blue.toDouble();
       _alpha = color.alpha.toDouble();
     });
-    controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), _alpha.toInt()));
+    widget.changeCallback?.call(pickerColor);
+    if(widget.sendOnChange) {
+      controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), _alpha.toInt()));
+    }
+  }
+
+  String getColorText() {
+    return (0xFFFFFF & pickerColor.value).toRadixString(16).padLeft(6, '0').toUpperCase();
+  }
+
+  Color _getColorFromHex(String hexColor) {
+    hexColor = hexColor.replaceAll("#", "");
+    if (hexColor.length == 6) {
+      var prefix = pickerColor.alpha.toRadixString(16);
+      if(prefix.length == 1) {
+        prefix = "0" + prefix;
+      }
+      hexColor = prefix + hexColor;
+    }
+    if (hexColor.length == 8) {
+      return Color(int.parse("0x$hexColor"));
+    }
+    throw Exception("Hex code is wrong");
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    if(widget.startColor != null) {
+      setState(() {
+        pickerColor = widget.startColor!;
+        _red = widget.startColor!.red.toDouble();
+        _green = widget.startColor!.green.toDouble();
+        _blue = widget.startColor!.blue.toDouble();
+        _alpha = widget.startColor!.alpha.toDouble();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return Column(children: [
+    return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
       Slider(
           value: _red,
           min: 0,
@@ -47,8 +96,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
           onChanged: (value) {
             setState(() {
               _red = value;
-              pickerColor = Color.fromARGB(255, _red.toInt(), _green.toInt(), _blue.toInt());
-              controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), pickerColor.alpha));
+              changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
             });
           }
       ),
@@ -60,8 +108,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
           onChanged: (value) {
             setState(() {
               _green = value;
-              pickerColor = Color.fromARGB(255, _red.toInt(), _green.toInt(), _blue.toInt());
-              controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), pickerColor.alpha));
+              changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
             });
           }
       ),
@@ -73,18 +120,68 @@ class _ColorsWidgetState extends State<ColorsWidget> {
           onChanged: (value) {
             setState(() {
               _blue = value;
-              pickerColor = Color.fromARGB(255, _red.toInt(), _green.toInt(), _blue.toInt());
-              controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), pickerColor.alpha));
+              changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
             });
           }
       ),
       ColorPicker(
         pickerColor: pickerColor,
         onColorChanged: changeColor,
-        showLabel: true,
-        pickerAreaHeightPercent: 0.8,
+        pickerAreaBorderRadius: BorderRadius.all(Radius.circular(12)),
+        showLabel: false,
+        pickerAreaHeightPercent: .75,
+        paletteType: PaletteType.hsv,
       ),
+      TextButton(
+          onPressed: () {
+        showDialog(context: context, builder: (_) {
+          return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+            title: Text("Farbcode eingeben"),
+            content: Form(
+              key: _formKey,
+              onChanged: () => setState(() {
+                _hexValid = _formKey.currentState!.validate();
+              }),
+                child: TextFormField(
+                  onSaved: (v) => { _currentHex = v! },
+              initialValue: getColorText(),
+              validator: (value) {
+                if (value == null || value.length < 6) {
+                  return 'Hex-Code unvollständig';
+                }
+                if(!RegExp(r'^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$').hasMatch(value)) {
+                  return 'Kein valider Hex-Code';
+                }
+                return null;
+              },
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(6)
+              ],
+              decoration: const InputDecoration(
+                isDense: true,
+                prefixIcon:Text("#"),
+                prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+              ),
+            )),
+            actions: [
+              TextButton(child:Text("Abbrechen"), onPressed: () => {
+                Navigator.pop(context)
+              }),
+              TextButton(child:Text("Übernehmen"),
+                  onPressed: _hexValid?
+                  () => {
+                    _formKey.currentState?.save(),
+                    changeColor(_getColorFromHex(_currentHex)),
+                    Navigator.pop(context)
+                  }
+                                :
+                  null
+              )
+            ],
+          );});
+        });
+      }, child: Text("#${getColorText()}"))
     ]);
   }
-
 }

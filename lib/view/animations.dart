@@ -13,6 +13,8 @@ import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 
+import 'colors.dart';
+
 abstract class IGradientChange {
   StreamController<List<ColorPoint>> streamSubject = BehaviorSubject();
   Stream<List<ColorPoint>> stream();
@@ -79,16 +81,14 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      scrollable: true,
       title: Text("Farbe ändern"),
       content:
         Container(
-          height: 400,
-            child:ColorPicker(
-        pickerColor: widget.color,
-        onColorChanged: (e) => { widget.color = e },
-        showLabel: true,
-        pickerAreaHeightPercent: 0.8,
-      )),
+            child: ColorsWidget(sendOnChange: false, changeCallback: (color) => {
+              widget.color = color
+            }, startColor: widget.color),
+        ),
       actions: [
         TextButton(child:Text("Abbrechen"), onPressed: () => {
           Navigator.pop(context)
@@ -372,9 +372,83 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   double boundingBoxSize = 80;
   double widgetHeight = 80;
   bool _hasBeenTouched = false;
+  var _tapPosition;
+  var duplicateDistance = .25;
 
   double constrain(double value) {
     return value < 0 ? 0 : value > 1 ? 1 : value;
+  }
+
+
+  void duplicatePoint() {
+    var p;
+    if(_activeIndex == null) {
+      return;
+    }
+    var c = widget.gradient.colors[_activeIndex!];
+    if(c.point < 0.5) {
+      p = c.point + duplicateDistance;
+    } else {
+      p = c.point - duplicateDistance;
+    }
+    setState(() {
+      widget.gradient.colors.add(
+        ColorPoint(
+          c.color,
+          p
+        )
+      );
+    });
+    notify();
+  }
+
+  realignSpaceBetween() {
+    int num = widget.gradient.colors.length - 1;
+    for(int i = 0; i < widget.gradient.colors.length; i++) {
+      setState(() {
+        widget.gradient.colors[i].point = i / num;
+      });
+    }
+    notify();
+  }
+
+  void _showCustomMenu() {
+    final RenderBox overlay = Overlay.of(context)!.context.findRenderObject() as RenderBox;
+
+    showMenu(
+        context: context,
+        items: <PopupMenuEntry<int>>[
+          PopupMenuItem(
+            child: ListTile(
+              leading: Icon(Icons.content_copy), // your icon
+              title: Text("Duplizieren"),
+            ),
+            value: 1,
+            onTap: duplicatePoint,
+          ),
+          PopupMenuItem(
+              child: ListTile(
+                leading: Icon(Icons.delete), // your icon
+                title: Text("Löschen"),
+              ),
+            value: 2,
+            onTap: deletePoint,
+          ),
+          PopupMenuDivider(),
+          PopupMenuItem(
+              child: ListTile(
+                leading: Icon(Icons.horizontal_distribute), // your icon
+                title: Text("Neu anordnen"),
+              ),
+            value: 3,
+            onTap: realignSpaceBetween,
+          )
+        ],
+        position: RelativeRect.fromRect(
+            _tapPosition & const Size(40, 40), // smaller rect, the touch area
+            Offset.zero & overlay.size   // Bigger rect, the entire screen
+        )
+    );
   }
 
   double map(
@@ -386,6 +460,8 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
     return map(
         pointPos, 0, MediaQuery.of(context).size.width - circleRadius, 0, 1);
   }
+
+  void storePosition(TapDownDetails details) => _tapPosition = details.globalPosition;
 
   /// Returns a generated color for a given point
   Color getPointColor(double pointPos) {
@@ -498,6 +574,14 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                 onTap: () => setState(() {
                   _activeIndex = currentIndex;
                 }),
+                onTapDown: storePosition,
+                onLongPress: () {
+                  setState(() {
+                    _activeIndex = currentIndex;
+                  });
+                  // Open context menu
+                  _showCustomMenu();
+                },
                 child: Container(
                 width: circleRadius,
                 height: circleRadius,
@@ -656,7 +740,6 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
   void dispose() {
     controller.dispose();
     controller.removeListener(update);
-    controller.stop();
     super.dispose();
   }
 

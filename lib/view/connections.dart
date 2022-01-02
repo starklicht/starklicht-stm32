@@ -11,6 +11,8 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   List<bool> active = [true, true];
   bool _isLoading = false;
 
+  BluetoothState state = BluetoothState.unknown;
+
   StreamSubscription<dynamic>? stream;
 
 
@@ -31,6 +33,22 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
         });
       });
     });
+    controller.stateStream().listen((event) {
+      setState(() {
+        state = event;
+      });
+    });
+  }
+
+  List<String> getPlaceholderTitleAndSubtitle() {
+    if(state == BluetoothState.unauthorized || state == BluetoothState.unknown
+    || state == BluetoothState.unavailable) {
+      return ["Bluetooth ist nicht verfügbar", "Eventuell fehlen Berechtigungen für den\n Standortzugriff oder Bluetooth."];
+    }
+    if(state == BluetoothState.off) {
+      return ["Bluetooth ist aus", "Du kannst Bluetooth in deinen \nGeräteeinstellungen anschalten."];
+    }
+    return ["Keine aktiven Verbindungen", "Bitte verbinde dich zunächst mit einem Starklicht."];
   }
 
 
@@ -40,7 +58,12 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
       body: Center(child:
         ListView.builder(
             // + 1 To display a nice title
-            itemCount: connectedDevices.isEmpty || _isLoading?1:connectedDevices.length,
+            itemCount: connectedDevices.isEmpty || _isLoading
+                || state == BluetoothState.unknown ||
+                state == BluetoothState.off ||
+                state == BluetoothState.unauthorized ||
+                state == BluetoothState.unavailable
+                ?1:connectedDevices.length,
             itemBuilder: (BuildContext context, int index) {
               print(index);
               if (_isLoading) {
@@ -52,19 +75,19 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                     child: Column(
                         children: [
                           Image.asset('assets/searching-for-devices.png'),
-                          const Text(
-                              "Keine aktiven Verbindungen\n",
+                          Text(
+                              "${getPlaceholderTitleAndSubtitle()[0]}\n",
                               style: TextStyle(
                                 fontSize: 20
                               ),
                           ),
-                          const Text(
-                            "Bitte verbinde dich zunächst mit einem Gerät.\n",
+                          Text(
+                            "${getPlaceholderTitleAndSubtitle()[1]}\n",
                             style: TextStyle(
                                 color: Colors.grey
                             ),
                           ),
-                          ElevatedButton(
+                          if(state == BluetoothState.on) ElevatedButton(
                             child: Text("Gerät suchen"),
                             onPressed: () {
                               showDialog(context: context, builder: (_) {
@@ -106,7 +129,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
             }
         )
       ),
-      floatingActionButton: FloatingActionButton(
+        floatingActionButton: state == BluetoothState.on?FloatingActionButton(
         onPressed:  () => {
           showDialog(context: context, builder: (_) {
             return const SearchWidget();
@@ -114,7 +137,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
         },
         child: const Icon(Icons.add),
         // backgroundColor: Colors.white,
-      ),
+      ):null,
     );
   }
 

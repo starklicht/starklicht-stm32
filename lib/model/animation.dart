@@ -6,7 +6,6 @@ import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/factory.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/view/animations.dart';
-
 class KeyframeAnimationFactory extends Factory<KeyframeAnimation> {
   @override
   KeyframeAnimation build(String params) {
@@ -17,8 +16,10 @@ class KeyframeAnimationFactory extends Factory<KeyframeAnimation> {
       e['point'] as double
     )).toList();
     var animationSettings = AnimationSettingsConfig(
-      InterpolationType.linear,
-      TimeFactor.repeat,
+      // InterpolationType.linear,
+      // TimeFactor.repeat,
+      InterpolationType.values[json['config']['interpolationType'] as int],
+      TimeFactor.values[json['config']['timeFactor'] as int],
       json['config']['seconds'] as int,
       json['config']['millis'] as int,
     );

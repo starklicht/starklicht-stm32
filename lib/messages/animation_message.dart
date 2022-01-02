@@ -21,7 +21,7 @@ class AnimationMessage extends IBluetoothMessage {
       _colors.length,
       buildInterpolationType(),
       // Is Restart
-      _config.timefactor==TimeFactor.pingpong?1:0,
+      _config.timefactor==TimeFactor.pingpong?1:_config.timefactor==TimeFactor.once?2:0,
       // SECONDS
       _config.seconds,
       // Milliseconds

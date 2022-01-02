@@ -8,6 +8,8 @@
 // and displays a corresponding message in the center of the [Scaffold].
 
 import 'package:flutter/material.dart';
+import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
+import 'package:starklicht_flutter/messages/save_message.dart';
 import 'package:starklicht_flutter/view/animation_list.dart';
 import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
@@ -53,11 +55,12 @@ class MyStatefulWidget extends StatefulWidget {
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   int _selectedIndex = 0;
   double _red = 0;
+  final BluetoothController controller = BluetoothControllerWidget();
   static const TextStyle optionStyle =
   TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
-  static const List<Widget> _widgetOptions = <Widget>[
+  List<Widget> _widgetOptions = <Widget>[
     ConnectionsWidget(),
-    ColorsWidget(),
+    ColorsWidget(sendOnChange: true),
     Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
     AnimationsWidget(),
     Text('TODO')
@@ -69,6 +72,25 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     });
   }
 
+  void saveToLamp(int selectedRadio) {
+    print(selectedRadio);
+    int n = controller.broadcast(SaveMessage(true, selectedRadio));
+    var snackBar = SnackBar(
+      content: Text('Auf Button ${selectedRadio + 1} für ${n} Lampen gespeichert'),
+      duration: Duration(milliseconds: 600),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void loadFromLamp(int selectedRadio) {
+    int n = controller.broadcast(SaveMessage(false, selectedRadio));
+    var snackBar = SnackBar(
+      content: Text('Button ${selectedRadio + 1} auf ${n} Lampen geladen'),
+      duration: Duration(milliseconds: 600),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,7 +100,67 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         )),
         backgroundColor: Colors.black87,
         actions: <Widget>[
-          IconButton(onPressed: () => {}, icon: Icon(Icons.bookmark))
+          IconButton(onPressed: () => {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Lampenhelligkeiten auf 0% gesetzt"))
+          )
+          }, icon: Icon(Icons.power_settings_new)),
+          IconButton(onPressed: () => {
+            showDialog(context: context, builder: (_) {
+              return AlertDialog(
+                scrollable: true,
+                title: Text("Helligkeit einstellen"),
+                content: Container(
+                  child:Slider(
+                    onChanged: (d) => {}, value: 0,
+                  )
+                ),
+              );
+            })
+          }, icon: Icon(Icons.light_mode)),
+          IconButton(
+              onPressed: () => showDialog(context: context, builder: (BuildContext context) {
+                int selectedRadio = -1;
+                return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {return AlertDialog(
+                  title: Text("Auf Button speichern"),
+                  content: Container(
+                      height: 110,
+                      child:Column(
+                    children: [
+                      Text("Speichere die momentan ablaufende Szene auf deinem Starklicht"),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children:
+                        List<Widget>.generate(4, (int index) {
+                          return Radio<int>(
+                            value: index,
+                            groupValue: selectedRadio,
+                            onChanged: (value) {
+                              setState(() => selectedRadio = value as int);
+                            },
+                          );
+                        }),
+                      ),
+                      if(selectedRadio >= 0) ...[Text("Wird auf Button ${selectedRadio + 1} gespeichert")]
+
+                    ],
+                  )),
+                    actions: [
+                    TextButton(onPressed: () => Navigator.pop(context), child: Text("Abbrechen")),
+                      TextButton(onPressed: selectedRadio < 0?null:() {
+                        loadFromLamp(selectedRadio);
+                        Navigator.pop(context);
+                      }, child: Text("Laden")),
+                    TextButton(onPressed: selectedRadio < 0?null:() {
+                      saveToLamp(selectedRadio);
+                      Navigator.pop(context);
+                    }, child: Text("Speichern"))
+                  ],);},
+
+                );
+              }),
+              icon: Icon(Icons.save_alt)
+          ),
         ],
       ),
       body: Center(

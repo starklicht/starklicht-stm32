@@ -19,6 +19,7 @@ abstract class BluetoothController<T> {
   Stream<bool> scanning();
   Stream<T> getConnectionStream();
   Future<List<T>> connectedDevicesStream();
+  Stream<BluetoothState> stateStream();
 }
 
 class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> {
@@ -32,7 +33,6 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   StreamController<BluetoothDevice> connectionStream = BehaviorSubject();
   final Map<BluetoothDevice, BluetoothCharacteristic> deviceMap = {};
   Stopwatch stopwatch = Stopwatch()..start();
-
 
   @override
   Stream<BluetoothDevice> scan(int duration) {
@@ -72,7 +72,7 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
       print(stopwatch.elapsedMilliseconds);
       stopwatch = Stopwatch()..start();
     }
-    return 0;
+    return deviceMap.length;
   }
 
   @override
@@ -93,5 +93,10 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   @override
   Future<List<BluetoothDevice>> connectedDevicesStream() {
     return flutterBlue.connectedDevices;
+  }
+
+  @override
+  Stream<BluetoothState> stateStream() {
+    return flutterBlue.state;
   }
 }
