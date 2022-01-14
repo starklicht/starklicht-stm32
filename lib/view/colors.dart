@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
+import 'package:starklicht_flutter/persistence/persistence.dart';
 
 class ColorsWidget extends StatefulWidget {
   bool sendOnChange;
@@ -23,6 +24,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
   double _green = 0;
   double _blue = 0;
   double _alpha = 0;
+  bool isLoading = false;
 
   bool _hexValid = true;
   String _currentHex = "";
@@ -32,6 +34,8 @@ class _ColorsWidgetState extends State<ColorsWidget> {
   // create some values
   Color pickerColor = Color(0xff000000);
   BluetoothController controller = BluetoothControllerWidget();
+
+
 
 // ValueChanged<Color> callback
   void changeColor(Color color) {
@@ -44,6 +48,8 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     });
     widget.changeCallback?.call(pickerColor);
     if(widget.sendOnChange) {
+      // Also, save the color...
+      Persistence().setColor(pickerColor);
       controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), _alpha.toInt()));
     }
   }
@@ -79,12 +85,30 @@ class _ColorsWidgetState extends State<ColorsWidget> {
         _blue = widget.startColor!.blue.toDouble();
         _alpha = widget.startColor!.alpha.toDouble();
       });
+    } else if(widget.sendOnChange) {
+      // Load from state
+      setState(() {
+        isLoading = true;
+      });
+      Persistence().getColor().then((i) => {
+      setState(() {
+        pickerColor = i;
+        _red = i.red.toDouble();
+        _green = i.green.toDouble();
+        _blue = i.blue.toDouble();
+        _alpha = i.alpha.toDouble();
+        isLoading = false;
+      })
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
+    if(isLoading) {
+      return Text("Lädt...");
+    }
     return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -129,8 +153,9 @@ class _ColorsWidgetState extends State<ColorsWidget> {
         onColorChanged: changeColor,
         pickerAreaBorderRadius: BorderRadius.all(Radius.circular(12)),
         showLabel: false,
+        enableAlpha: false,
         pickerAreaHeightPercent: .75,
-        paletteType: PaletteType.hsv,
+        paletteType: PaletteType.hsv
       ),
       TextButton(
           onPressed: () {

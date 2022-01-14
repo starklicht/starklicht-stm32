@@ -21,7 +21,7 @@ class KeyframeAnimationFactory extends Factory<KeyframeAnimation> {
       InterpolationType.values[json['config']['interpolationType'] as int],
       TimeFactor.values[json['config']['timeFactor'] as int],
       json['config']['seconds'] as int,
-      json['config']['millis'] as int,
+      json['config']['millis'] as int
     );
     return KeyframeAnimation(
         colors,

@@ -90,14 +90,15 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       animations[index].config.interpolationType,
                       animations[index].config.timefactor,
                       animations[index].config.seconds,
-                      animations[index].config.millis,
+                      animations[index].config.millis
                     ),
                     colors: GradientSettingsConfig(
                       animations[index].colors.map((e) => ColorPoint(e.color, e.point)).toList()
                     ),
                     callback: null,
                     restartCallback: {},
-                    notify: {}
+                    notify: {},
+                    isEditorPreview: false,
                   ),
                   title: Text(animations[index].title),
                   subtitle: Text('${animations[index].toString()}'),

@@ -9,7 +9,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
+import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/save_message.dart';
+import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/animation_list.dart';
 import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
@@ -63,7 +65,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     ColorsWidget(sendOnChange: true),
     Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
     AnimationsWidget(),
-    Text('TODO')
   ];
 
   void _onItemTapped(int index) {
@@ -101,23 +102,51 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         backgroundColor: Colors.black87,
         actions: <Widget>[
           IconButton(onPressed: () => {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Lampenhelligkeiten auf 0% gesetzt"))
+            controller.broadcast(BrightnessMessage(0)),
+            Persistence().setBrightness(0),
+            ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Lampenhelligkeiten auf 0% gesetzt"))
           )
           }, icon: Icon(Icons.power_settings_new)),
-          IconButton(onPressed: () => {
-            showDialog(context: context, builder: (_) {
-              return AlertDialog(
-                scrollable: true,
-                title: Text("Helligkeit einstellen"),
-                content: Container(
-                  child:Slider(
-                    onChanged: (d) => {}, value: 0,
-                  )
-                ),
-              );
-            })
-          }, icon: Icon(Icons.light_mode)),
+          IconButton(onPressed: () {
+            var brightness = 100.0;
+            Persistence().getBrightness().then((i) {
+              setState(() {
+                brightness = i.toDouble();
+              });
+              showDialog(context: context, builder: (_) {
+                return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+                  return AlertDialog(
+                  scrollable: true,
+                  title: Text("Helligkeit einstellen"),
+                  content: Container(
+                    child:Column(children:  [
+                      Slider(
+                      max: 100,
+                        onChangeEnd: (d) => {
+                          setState(() {
+                            brightness = d;
+                          }),
+                          controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0)),
+                          Persistence().setBrightness(brightness.toInt())
+                        },
+                        onChanged: (d) => {
+                          setState(() {
+                            brightness = d;
+                          }),
+                          controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0))
+                        },
+                        value: brightness,
+                      ),
+                      Text("${brightness.toInt()}%", style: TextStyle(
+                        fontSize: 32
+                      ),)
+                    ])
+                  ),
+                  );});
+            }); });
+
+            }, icon: Icon(Icons.light_mode)),
           IconButton(
               onPressed: () => showDialog(context: context, builder: (BuildContext context) {
                 int selectedRadio = -1;

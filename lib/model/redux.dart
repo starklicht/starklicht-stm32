@@ -17,7 +17,7 @@ class AnimationSettingsConfig {
       this.interpolationType,
       this.timefactor,
       this.seconds,
-      this.millis
+      this.millis,
       );
 
   Map<String, dynamic> toJson() => {

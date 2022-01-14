@@ -122,6 +122,20 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
   double _currentSeconds = 1;
   double _currentMillis = 0;
 
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      _currentSeconds = widget.settings.seconds.toDouble();
+      _currentMillis = widget.settings.millis.toDouble();
+      isSelectedInterpolation = [false, false];
+      isSelectedInterpolation[widget.settings.interpolationType.index] = true;
+      isSelected = [false, false, false, false];
+      isSelected[widget.settings.timefactor.index] = true;
+    });
+  }
+
   int selIndex(List<bool> array) {
     return array.indexWhere((element) => element == true);
   }
@@ -298,21 +312,23 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
           Row(children: [
             Text("Dauer: ", style: const TextStyle(fontWeight: FontWeight.bold)),
             TextButton(child:Text("${_currentSeconds.round()} ${_currentSeconds == 1?"Sekunde":"Sekunden"} ${_currentMillis.round()} Millisekunden"), onPressed: showPicker),
+            if(_currentMillis + _currentSeconds == 0)...[Icon(Icons.warning)]
           ]),
           Slider(value: _currentSeconds, onChanged: (double value) {
             setState(() {
                 _currentSeconds = value;
-
             });
+            updateCurrentConfig();
+
             vibrate();
             },
             onChangeEnd: (double value) {
-              if (value == 0 && _currentMillis == 0) {
+              /* if (value == 0 && _currentMillis == 0) {
                 setState(() {
                   _currentMillis = 50;
                 });
-              }
-              updateCurrentConfig();
+              } */
+              // updateCurrentConfig();
             },
             min: 0,
             max: 60,
@@ -323,15 +339,16 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings> implements 
             setState(() {
               _currentMillis = value;
             });
+            updateCurrentConfig();
             vibrate();
             },
             onChangeEnd: (double value) {
-              if (value == 0 && _currentSeconds == 0) {
+              /* if (value == 0 && _currentSeconds == 0) {
                 setState(() {
                   _currentSeconds = 1;
                 });
-              }
-              updateCurrentConfig();
+              }*/
+              // updateCurrentConfig();
             },
             min: 0,
             max: 950,
@@ -571,9 +588,14 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
           top: (widgetHeight - circleRadius) / 2,
           child: Draggable(
             child: GestureDetector(
-                onTap: () => setState(() {
+                onTap: () {
+                  setState(() {
                   _activeIndex = currentIndex;
-                }),
+                  });
+                  showDialog(context: context, builder: (_) {
+                    return ColorPickerWidget(color: widget.gradient.colors[_activeIndex!].color, saveCallback: updateColor);
+                  });
+                },
                 onTapDown: storePosition,
                 onLongPress: () {
                   setState(() {
@@ -682,8 +704,9 @@ class AnimationPreviewWidget extends StatefulWidget {
   Function? callback;
   Set<Function> restartCallback;
   Set<Function> notify;
+  bool isEditorPreview = false;
 
-  AnimationPreviewWidget({Key? key, required this.settings, required this.colors, this.callback, required this.restartCallback, required this.notify}) : super(key: key);
+  AnimationPreviewWidget({Key? key, required this.settings, required this.colors, this.callback, required this.restartCallback, required this.notify, required this.isEditorPreview}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _AnimationPreviewWidgetState();
@@ -692,6 +715,7 @@ class AnimationPreviewWidget extends StatefulWidget {
 class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with SingleTickerProviderStateMixin {
   late AnimationController controller;
   late Animation colorAnimation;
+  var isAnimationValid = true;
 
   void restart() {
     controller.reset();
@@ -722,6 +746,21 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
   }
 
   void updateAnimationCallback () {
+    // Save
+    if(widget.isEditorPreview) {
+      Persistence().saveEditorAnimation(
+          KeyframeAnimation(widget.colors.colors, widget.settings, '')
+      );
+    }
+    if(widget.settings.seconds + widget.settings.millis == 0) {
+      setState(() {
+        isAnimationValid = false;
+      });
+      return;
+    }
+    setState(() {
+      isAnimationValid = true;
+    });
     controller.duration = Duration(seconds: widget.settings.seconds, milliseconds: widget.settings.millis);
     if(widget.settings.interpolationType == InterpolationType.linear) {
       colorAnimation = BaseColorAnimation(widget.colors.colors, widget.settings.timefactor == TimeFactor.shuffle).animate(controller);
@@ -733,6 +772,7 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
     } else {
       controller.repeat(reverse: widget.settings.timefactor == TimeFactor.pingpong);
     }
+
   }
 
 
@@ -749,16 +789,17 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget> with Si
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: colorAnimation.value,
+        color: isAnimationValid ? colorAnimation.value : Colors.orange,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: colorAnimation.value,
+            color: isAnimationValid ? colorAnimation.value : Colors.transparent,
             blurRadius: 32,
             spreadRadius: 3
           )
         ]
       ),
+      child: isAnimationValid ? null : Icon(Icons.warning)
     );
   }
 }
@@ -773,6 +814,7 @@ class AnimationsEditorWidget extends StatefulWidget {
 
 class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
   bool _syncWithLamp = false;
+  bool _integrateAnimations = false;
   BluetoothController controller = BluetoothControllerWidget();
 
 
@@ -780,9 +822,10 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
     controller.broadcast(
         AnimationMessage(widget.colors.colors, widget.settings)
     );
-    /* for(var i in restartCallback) {
-      i.call();
-    } */
+  }
+
+  bool errorState () {
+    return widget.settings.seconds == 0 && widget.settings.millis == 0;
   }
 
 
@@ -796,8 +839,8 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
   Widget build(BuildContext context) {
     return Column(children: [
       Row(children: [
-        TextButton.icon(label: Text("Senden"),onPressed: send, icon: Icon(Icons.settings_remote)),
-        TextButton.icon(label: Text("Speichern"),onPressed: () => {
+        TextButton.icon(label: Text("Senden"),onPressed: errorState()?null:send, icon: Icon(Icons.settings_remote)),
+        TextButton.icon(label: Text("Speichern"),onPressed: errorState()?null:() => {
           showDialog(context: context, builder: (_) {
             return SaveWidget(animation: KeyframeAnimation(widget.colors.colors, widget.settings, ""));
           })
@@ -805,22 +848,33 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
 
       ],
       mainAxisAlignment: MainAxisAlignment.center),
-      CheckboxListTile(value: _syncWithLamp, onChanged: (e) {
+    CheckboxListTile(
+        value: _syncWithLamp, onChanged: (e) {
+          setState(() {
+            _syncWithLamp = e!;
+          });
+      },
+      controlAffinity: ListTileControlAffinity.leading,
+      title: Text("Automatisch mit Lampe synchronisieren")
+    ),
+      CheckboxListTile(
+          value: _integrateAnimations, onChanged: (e) {
         setState(() {
-          _syncWithLamp = e!;
+          _integrateAnimations = e!;
         });
-    },
-    controlAffinity: ListTileControlAffinity.leading,
-    title: Text("Automatisch mit Lampe synchronisieren")),
+      },
+          controlAffinity: ListTileControlAffinity.leading,
+          title: Text("Nahtlose Übergänge zwischen Animationen")
+      ),
     ]);
   }
 
   void notify() {
+    setState(() {});
     if(_syncWithLamp) {
       send();
     }
   }
-
 }
 
 
@@ -885,39 +939,57 @@ class SaveWidget extends StatefulWidget {
 
 
 class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
-  late AnimationSettingsConfig settings;
-  late GradientSettingsConfig gradient;
+  AnimationSettingsConfig? settings;
+  GradientSettingsConfig? gradient;
   Set<Function> restartCallback = {};
   Set<Function> notifyChanges = {};
 
 
   @override
+  void initState() {
+    super.initState();
+    Persistence().getEditorAnimation().then((value) {
+      setState(() {
+        settings = value.config;
+        gradient = GradientSettingsConfig(value.colors);
+      });
+    });
+  }
+
+
+
+  @override
   Widget build(BuildContext context) {
-    settings = AnimationSettingsConfig(InterpolationType.linear, TimeFactor.repeat, 1, 0);
-    gradient = GradientSettingsConfig([ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)]);
+    // Persistence
+    // settings = AnimationSettingsConfig(InterpolationType.linear, TimeFactor.repeat, 1, 0);
+    // gradient = GradientSettingsConfig([ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)]);
     Function? callback;
+    if (settings == null || gradient == null) {
+    return Container(child:Text("Lädt..."));
+    } else {
     return Container(child:SingleChildScrollView(child: Column(children: [
-      const Text(
-        "Zeitverlauf\n",
-        textAlign: TextAlign.start,
-      ),
-      GradientEditorWidget(gradient: gradient, callback: callback),
-      const Divider(
-        height: 32
-      ),
-      const Text(
-        "Animationseinstellungen",
-        textAlign: TextAlign.start,
-      ),
-      AnimationSettings(settings: settings, callback: callback),
-      const Divider(height: 32),
-      const Text("Animationsvorschau"),
-      const SizedBox(height: 12),
-      AnimationPreviewWidget(settings: settings, colors: gradient, callback: callback, restartCallback: restartCallback, notify: notifyChanges),
+    const Text(
+    "Zeitverlauf\n",
+    textAlign: TextAlign.start,
+    ),
+    GradientEditorWidget(gradient: gradient!, callback: callback),
+    const Divider(
+    height: 32
+    ),
+    const Text(
+    "Animationseinstellungen",
+    textAlign: TextAlign.start,
+    ),
+    AnimationSettings(settings: settings!, callback: callback),
+    const Divider(height: 32),
+    const Text("Animationsvorschau"),
+    const SizedBox(height: 12),
+    AnimationPreviewWidget(settings: settings!, colors: gradient!, callback: callback, restartCallback: restartCallback, notify: notifyChanges, isEditorPreview: true),
       const Divider(height: 32),
       const Text("Aktionen"),
       const SizedBox(height: 12),
-      AnimationTaskbarWidget(settings: settings, colors: gradient, notify: notifyChanges)
+      AnimationTaskbarWidget(settings: settings!, colors: gradient!, notify: notifyChanges)
     ])));
+    }
   }
 }

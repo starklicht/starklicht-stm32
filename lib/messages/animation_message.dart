@@ -16,12 +16,17 @@ class AnimationMessage extends IBluetoothMessage {
 
   @override
   List<int> getMessageBody() {
+    if(_config.seconds == 0 && _config.millis == 0) {
+      throw Exception("Seconds and Millis are both 0!");
+    }
     var b = [
       // Length of messages
       _colors.length,
       buildInterpolationType(),
       // Is Restart
       _config.timefactor==TimeFactor.pingpong?1:_config.timefactor==TimeFactor.once?2:0,
+      // Integrate Seamlessly
+      0,
       // SECONDS
       _config.seconds,
       // Milliseconds
@@ -29,7 +34,6 @@ class AnimationMessage extends IBluetoothMessage {
       // Write all colors
       ...getColorsArray(),
     ];
-    print(b);
     return b;
   }
 
