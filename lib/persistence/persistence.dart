@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:collection/collection.dart'; // You have to add this manually, for some reason it cannot be added automatically
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/enums.dart';
@@ -10,12 +11,14 @@ import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/view/animations.dart';
 
 abstract class IPersistence {
-  List<KeyframeAnimation> getAnimationStore();
+  Future<List<KeyframeAnimation>> getAnimationStore();
   void saveAnimation(KeyframeAnimation a);
-  KeyframeAnimation? findByName(String name);
+  Future<List<KeyframeAnimation>> deleteAnimation(String title);
+  Future<KeyframeAnimation?> findByName(String name);
+  Future<bool> existsByName(String name);
 }
 
-class Persistence {
+class Persistence implements IPersistence {
   static KeyframeAnimation defaultEditorAnimation = KeyframeAnimation(
     [
       ColorPoint(Colors.black, 0),
@@ -44,7 +47,6 @@ class Persistence {
   Future<void> saveAnimation(KeyframeAnimation a) async {
     // TODO: implement saveAnimation
     var currentAnimations = await getAnimationStore();
-    print(currentAnimations);
     var i = currentAnimations.indexWhere((element) => element.title == a.title);
     if(i > -1) {
       currentAnimations[i] = a;
@@ -97,4 +99,28 @@ class Persistence {
     prefs.setInt(color, i.value);
   }
 
+  @override
+  Future<List<KeyframeAnimation>> deleteAnimation(String title) async {
+    var currentAnimations = await getAnimationStore();
+    currentAnimations.removeWhere((element) => element.title == title);
+    print(currentAnimations.length);
+    var sPrefs = await SharedPreferences.getInstance();
+    sPrefs.setStringList(
+        animationStore,
+        currentAnimations.map((e) => jsonEncode(e.toJson())).toList()
+    );
+    return currentAnimations;
+  }
+
+  @override
+  Future<KeyframeAnimation?> findByName(String name) async {
+    var currentAnimations = await getAnimationStore();
+    return currentAnimations.firstWhereOrNull((element) => element.title == name);
+  }
+
+  @override
+  Future<bool> existsByName(String name) async {
+    var a = await findByName(name);
+    return a != null;
+  }
 }

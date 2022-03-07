@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
@@ -17,13 +18,21 @@ class AnimationsWidget extends StatefulWidget {
 }
 
 class _AnimationsWidgetState extends State<AnimationsWidget> {
+  Offset _tapDownPosition = Offset(0, 0);
   List<KeyframeAnimation> animations = [];
+  String query = "";
   final BluetoothController controller = BluetoothControllerWidget();
 
 
   void edit() {
-
     print("Test");
+  }
+
+  List<KeyframeAnimation> filteredAnimations() {
+    if(query.isEmpty) {
+      return animations;
+    }
+    return animations.where((element) => element.title.toLowerCase().contains(query.toLowerCase())).toList();
   }
 
   void load() {
@@ -31,6 +40,21 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
       setState(() {
         animations = i;
       })
+    });
+  }
+
+  void deleteItem(String title) {
+    Persistence().deleteAnimation(title).then((i) {
+      if(i.length < animations.length) {
+        // If length has changed, it has been deleted
+        var snackBar = SnackBar(
+          content: Text('Animation "$title" wurde gelöscht'),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+      setState(() {
+        animations = i;
+      });
     });
   }
 
@@ -50,7 +74,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
   Widget build(BuildContext context) {
 
     return ListView.builder(
-        itemCount: animations.isEmpty?1:animations.length,
+        itemCount: animations.isEmpty?1:filteredAnimations().length+1,
         itemBuilder: (BuildContext context, int index) {
           if(animations.isEmpty) {
             return Padding(
@@ -75,33 +99,72 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                 )
             );
           }
+          else if(index == 0) {
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                decoration: const InputDecoration(
+                  hintText: 'Suche',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder()
+                ),
+                onChanged: (text) {
+                  setState(() {
+                    query = text;
+                  });
+                },
+                textCapitalization: TextCapitalization.sentences,
+              ),
+            );
+          }
           else {
+            var realIndex = index - 1;
             return Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
               margin: EdgeInsets.all(6.0),
               child: InkWell(
                 borderRadius: BorderRadius.all(Radius.circular(12)),
-                onTap: () => send(animations[index]),
-                  child: Padding(padding: EdgeInsets.only(top: 12, bottom: 12), child: Column(
-                      children: [
+                onTapDown: (TapDownDetails details) {
+                  _tapDownPosition = details.globalPosition;
+                },
+                onTap: () => send(filteredAnimations()[realIndex]),
+                onLongPress: () {
+                  final RenderBox overlay = Overlay.of(context)!.context.findRenderObject() as RenderBox;
+                  showMenu(
+                      context: context,
+                      position: RelativeRect.fromRect(_tapDownPosition & const Size(40, 40), Offset.zero & overlay.size),
+                      items: <PopupMenuEntry> [
+                        PopupMenuItem(
+                          child: ListTile(
+                            leading: Icon(Icons.delete), // your icon
+                            title: Text("Löschen"),
+                          ),
+                          value: 2,
+                          onTap: () => deleteItem(filteredAnimations()[realIndex].title),
+                        ),
+                      ]
+                  );
+                },
+                child: Padding(padding: EdgeInsets.only(top: 12, bottom: 12), child: Column(
+                    children: [
                 ListTile(
                   leading: AnimationPreviewWidget(
                     settings: AnimationSettingsConfig(
-                      animations[index].config.interpolationType,
-                      animations[index].config.timefactor,
-                      animations[index].config.seconds,
-                      animations[index].config.millis
+                      filteredAnimations()[realIndex].config.interpolationType,
+                      filteredAnimations()[realIndex].config.timefactor,
+                      filteredAnimations()[realIndex].config.seconds,
+                      filteredAnimations()[realIndex].config.millis
                     ),
                     colors: GradientSettingsConfig(
-                      animations[index].colors.map((e) => ColorPoint(e.color, e.point)).toList()
+                      filteredAnimations()[realIndex].colors.map((e) => ColorPoint(e.color, e.point)).toList()
                     ),
                     callback: null,
                     restartCallback: {},
                     notify: {},
                     isEditorPreview: false,
                   ),
-                  title: Text(animations[index].title),
-                  subtitle: Text('${animations[index].toString()}'),
+                  title: Text(filteredAnimations()[realIndex].title),
+                  subtitle: Text('${filteredAnimations()[realIndex].toString()}'),
                 ),
                 /* Row(
                   mainAxisAlignment: MainAxisAlignment.end,

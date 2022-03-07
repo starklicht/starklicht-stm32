@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:starklicht_flutter/controller/animators.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
@@ -26,10 +25,6 @@ abstract class IAnimationSettingsChange {
 }
 
 
-class StarklichtAnimation {
-  List<ColorPoint> _colors = [];
-}
-
 extension IndexedIterable<E> on Iterable<E> {
   Iterable<T> mapIndexed<T>(T Function(E e, int i) f) {
     var i = 0;
@@ -38,11 +33,6 @@ extension IndexedIterable<E> on Iterable<E> {
 }
 
 extension on Color {
-  Color blend(Color b) {
-    return Color.fromARGB((alpha + b.alpha) ~/ 2, (red + b.red) ~/ 2,
-        (blue + b.blue) ~/ 2, (green + b.green) ~/ 2);
-  }
-
   Color blendWithPercentage(Color b, double absolutePercentage) {
     return Color.fromARGB(
         (alpha * absolutePercentage + b.alpha * (1 - absolutePercentage))
@@ -383,7 +373,7 @@ class ColorPickerWidget extends StatefulWidget {
 }
 
 class _GradientEditorWidgetState extends State<GradientEditorWidget> {
-  final _startState = [ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)];
+  // final _startState = [ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)];
   int? _activeIndex;
   double circleRadius = 32;
   double boundingBoxSize = 80;
@@ -589,11 +579,14 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
           child: Draggable(
             child: GestureDetector(
                 onTap: () {
+                  // Show Color Selection Dialog only when tapping item and is active already
+                  if (currentIndex == _activeIndex) {
+                    showDialog(context: context, builder: (_) {
+                      return ColorPickerWidget(color: widget.gradient.colors[_activeIndex!].color, saveCallback: updateColor);
+                    });
+                  }
                   setState(() {
                   _activeIndex = currentIndex;
-                  });
-                  showDialog(context: context, builder: (_) {
-                    return ColorPickerWidget(color: widget.gradient.colors[_activeIndex!].color, saveCallback: updateColor);
                   });
                 },
                 onTapDown: storePosition,
@@ -893,36 +886,85 @@ class AnimationTaskbarWidget extends StatefulWidget {
 
 class _SaveWidgetState extends State<SaveWidget> {
   String value = "";
+  String name = "";
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      name = widget.animation.title;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    return AlertDialog(
-      title: const Text('Animation speichern'),
-      content:
-      TextField(
+    return StatefulBuilder(builder: (context, StateSetter setState)
+    {
+      return AlertDialog(
+        title: const Text('Animation speichern'),
+        content:
+        TextField(
           decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          hintText: 'Name der Animation',
+            border: OutlineInputBorder(),
+            hintText: 'Name der Animation',
+          ),
+          onChanged: (text) {
+            setState(() {
+              name = text;
+            });
+            // widget.animation.title = text.trim();
+          },
+          textCapitalization: TextCapitalization.sentences,
         ),
-        onChanged: (text) {
-          widget.animation.title = text;
-        },
-      ),
-      actions: [
-        TextButton(onPressed: () => {Navigator.pop(context)}, child: Text('Abbrechen')),
-        TextButton(onPressed: () {
-          Persistence().saveAnimation(widget.animation);
-          var snackBar = SnackBar(
-            content: Text('Animation ${widget.animation.title} wurde gespeichert'),
-          );
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
-          Navigator.pop(context);
-        }, child: Text('Speichern'))
-      ],
-
-
-    );
+        actions: [
+          TextButton(onPressed: () => {Navigator.pop(context)},
+              child: Text('Abbrechen')),
+          TextButton(onPressed: name.isEmpty ? null : () {
+            widget.animation.title = name.trim();
+            Persistence().existsByName(widget.animation.title).then((value) {
+              if (value) {
+                // Notify
+                showDialog(context: context, builder: (_) {
+                  return AlertDialog(
+                    title: Text('Animation "${widget.animation
+                        .title}" existiert bereits. Überschreiben?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => {
+                          Navigator.pop(context)
+                        },
+                        child: Text("Abbrechen")
+                      ),
+                      TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                            Persistence().saveAnimation(widget.animation);
+                            var snackBar = SnackBar(
+                              content: Text('Animation "${widget.animation
+                                  .title}" wurde überschrieben'),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          },
+                          child: Text("Überschreiben")
+                      )
+                    ],
+                  );
+                });
+              } else {
+                Persistence().saveAnimation(widget.animation);
+                var snackBar = SnackBar(
+                  content: Text('Animation "${widget.animation
+                      .title}" wurde gespeichert'),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                Navigator.pop(context);
+              }
+            });
+          }, child: Text('Speichern'))
+        ],
+      );
+    });
   }
 }
 
