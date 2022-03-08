@@ -153,6 +153,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
         onColorChanged: changeColor,
         pickerAreaBorderRadius: BorderRadius.all(Radius.circular(12)),
         showLabel: false,
+        displayThumbColor: true,
         enableAlpha: false,
         pickerAreaHeightPercent: .75,
         paletteType: PaletteType.hsv

@@ -107,7 +107,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Lampenhelligkeiten auf 0% gesetzt"))
           )
-          }, icon: Icon(Icons.power_settings_new)),
+            // TODO: Better icon
+          }, icon: Icon(Icons.lightbulb_outline)),
           IconButton(onPressed: () {
             var brightness = 100.0;
             Persistence().getBrightness().then((i) {

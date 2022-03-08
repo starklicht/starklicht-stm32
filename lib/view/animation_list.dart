@@ -29,10 +29,16 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
   }
 
   List<KeyframeAnimation> filteredAnimations() {
-    if(query.isEmpty) {
-      return animations;
+    var a = animations;
+    if(!query.isEmpty) {
+      a = animations.where((element) => element.title.toLowerCase().contains(query.toLowerCase()))
+          .toList();
     }
-    return animations.where((element) => element.title.toLowerCase().contains(query.toLowerCase())).toList();
+    a.sort((a, b) {
+      return a.title.compareTo(b.title);
+    });
+    print(a.length);
+    return a;
   }
 
   void load() {
