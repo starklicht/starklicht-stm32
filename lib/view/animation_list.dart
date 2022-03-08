@@ -148,6 +148,19 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                           value: 2,
                           onTap: () => deleteItem(filteredAnimations()[realIndex].title),
                         ),
+                        PopupMenuItem(child: ListTile(
+                          leading: Icon(Icons.edit),
+                          title: Text("Editieren"),
+                        ),
+                          onTap: () {
+                            Persistence().saveEditorAnimation(filteredAnimations()[realIndex]);
+                            var snackBar = const SnackBar(
+                              content: Text('Animation kann jetzt im Abschnitt "Animation" bearbeitet werden'),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          },
+                          value: 1
+                        )
                       ]
                   );
                 },

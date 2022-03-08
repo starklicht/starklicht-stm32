@@ -305,58 +305,41 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
         margin: EdgeInsets.all(12),
         child: Column(children: [
           Row(children: [
-            Text("Dauer: ",
+            const Text("Dauer ",
                 style: const TextStyle(fontWeight: FontWeight.bold)),
-            TextButton(
-                child: Text(
-                    "${_currentSeconds.round()} ${_currentSeconds == 1 ? "Sekunde" : "Sekunden"} ${_currentMillis.round()} Millisekunden"),
-                onPressed: showPicker),
             if (_currentMillis + _currentSeconds == 0) ...[Icon(Icons.warning)]
           ]),
-          Slider(
-            value: _currentSeconds,
-            onChanged: (double value) {
-              setState(() {
-                _currentSeconds = value;
-              });
-              updateCurrentConfig();
-
-              vibrate();
-            },
-            onChangeEnd: (double value) {
-              /* if (value == 0 && _currentMillis == 0) {
-                setState(() {
-                  _currentMillis = 50;
-                });
-              } */
-              // updateCurrentConfig();
-            },
-            min: 0,
-            max: 60,
-            label: "${_currentSeconds.round()}s",
-            divisions: 60,
-          ),
-          Slider(
-            value: _currentMillis,
-            onChanged: (double value) {
-              setState(() {
-                _currentMillis = value;
-              });
-              updateCurrentConfig();
-              vibrate();
-            },
-            onChangeEnd: (double value) {
-              /* if (value == 0 && _currentSeconds == 0) {
-                setState(() {
-                  _currentSeconds = 1;
-                });
-              }*/
-              // updateCurrentConfig();
-            },
-            min: 0,
-            max: 950,
-            label: "${_currentMillis.round()}ms",
-            divisions: 19,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              DropdownButton<double>(
+                value: _currentSeconds,
+                items: [for (var i = 0; i <= 60; i++) i].map((value) =>
+                    DropdownMenuItem<double>(
+                        value: value.toDouble(),
+                        child: Text("$value Sekunde${value==1?'':'n'}")
+                    )
+                ).toList(),
+                onChanged: (d) => setState(() {
+                  _currentSeconds = d!;
+                  updateCurrentConfig();
+                }),
+              ),
+              Text("+"),
+              DropdownButton<double>(
+                value: _currentMillis,
+                items: [for (var i = 0; i <= 20; i++) i].map((value) =>
+                    DropdownMenuItem<double>(
+                        value: value.toDouble() * 50,
+                        child: Text("${value * 50} Millisekunden")
+                    )
+                ).toList(),
+                onChanged: (d) => setState(() {
+                  _currentMillis = d!;
+                  updateCurrentConfig();
+                }),
+              )
+            ]
           )
         ]),
       )
