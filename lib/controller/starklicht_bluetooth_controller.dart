@@ -9,6 +9,10 @@ const characterUUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
 
 
+class StarklichtBluetoothOptions {
+  bool inverse = false;
+  bool active = true;
+}
 
 abstract class BluetoothController<T> {
   Stream<T> scan(int duration);
@@ -20,7 +24,10 @@ abstract class BluetoothController<T> {
   Stream<T> getConnectionStream();
   Future<List<T>> connectedDevicesStream();
   Stream<BluetoothState> stateStream();
+  Map<BluetoothDevice, StarklichtBluetoothOptions> getOptions();
+  void setInverse(BluetoothDevice d, bool val);
 }
+
 
 class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> {
   static final BluetoothControllerWidget _instance = BluetoothControllerWidget._internal();
@@ -32,7 +39,13 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   StreamController<BluetoothDevice> lamps = BehaviorSubject();
   StreamController<BluetoothDevice> connectionStream = BehaviorSubject();
   final Map<BluetoothDevice, BluetoothCharacteristic> deviceMap = {};
+  final Map<BluetoothDevice, StarklichtBluetoothOptions> optionsMap = {};
   Stopwatch stopwatch = Stopwatch()..start();
+
+  @override
+  Map<BluetoothDevice, StarklichtBluetoothOptions> getOptions() {
+    return optionsMap;
+  }
 
   @override
   Stream<BluetoothDevice> scan(int duration) {
@@ -51,6 +64,8 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
     var s = services.firstWhere((service) => service.uuid == Guid(serviceUUID));
     var c = s.characteristics.firstWhere((characteristic) => characteristic.uuid == Guid(characterUUID));
     deviceMap[device] = c;
+    // Put Options
+    optionsMap[device] = StarklichtBluetoothOptions();
     connectionStream.add(device);
   }
 
@@ -67,9 +82,10 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   int broadcast(IBluetoothMessage m) {
     if (canSend()) {
       deviceMap.forEach((key, value) {
-        m.send(value);
+        if(optionsMap[key]!.active) {
+          m.send(value);
+        }
       });
-      print(stopwatch.elapsedMilliseconds);
       stopwatch = Stopwatch()..start();
     }
     return deviceMap.length;
@@ -98,5 +114,10 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   @override
   Stream<BluetoothState> stateStream() {
     return flutterBlue.state;
+  }
+
+  @override
+  void setInverse(BluetoothDevice d, bool val) {
+    optionsMap[d]?.inverse = val;
   }
 }

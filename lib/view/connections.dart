@@ -8,7 +8,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   BluetoothController<BluetoothDevice> controller = BluetoothControllerWidget();
   List<BluetoothDevice> foundDevices = <BluetoothDevice>[];
   Set<BluetoothDevice> connectedDevices = {};
-  List<bool> active = [true, true];
+  Map<BluetoothDevice, StarklichtBluetoothOptions> options = {};
   bool _isLoading = false;
 
   BluetoothState state = BluetoothState.unknown;
@@ -18,6 +18,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
 
   @override
   void initState() {
+    super.initState();
     setState(() {
       _isLoading = true;
     });
@@ -31,6 +32,9 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
         setState(() {
           connectedDevices.add(d);
         });
+      });
+      setState(() {
+        options = controller.getOptions();
       });
     });
     controller.stateStream().listen((event) {
@@ -99,23 +103,24 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                     )
                 );
               } else {
+                var d = connectedDevices.toList()[index];
                 return Card(
-                    margin: EdgeInsets.all(6.0),
+                    margin: EdgeInsets.all(8.0),
                     elevation: 8,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                     child: InkWell(child: Column(
                         children: [
                           ListTile(
                               leading: Icon(Icons.lightbulb),
-                              title: Text(connectedDevices.toList()[index].name),
-                              subtitle: Text(connectedDevices.toList()[index].id.id),
+                              title: Text(d.name),
+                              subtitle: Text(d.id.id),
                               trailing: Switch(
-                                value: active[index],
+                                value: options[d]!.active,
                                 onChanged: (value) {
                                   setState(() {
-                                    active[index] = value;
-                                    print(active[index]);
+                                    options[d]!.active = value;
                                   });
+                                  controller.setInverse(d, options[d]!.active);
                                 },
                                 activeTrackColor: Colors.blueGrey,
                                 activeColor: Colors.white,
@@ -123,7 +128,13 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                           )
                         ]
                     ),
-                      onTap: () => print("INKWELLs"),
+                      onTap: () => showDialog(context: context, builder: (_) {
+                        return AlertDialog(
+                          title: Text(d.name),
+                          content: Column(
+                          ),
+                        );
+                      }),
                 ));
               }
             }
@@ -181,6 +192,7 @@ class _SearchWidgetState extends State<SearchWidget> {
 
   @override
   void initState() {
+    super.initState();
     scan();
   }
 
