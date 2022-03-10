@@ -96,7 +96,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('STARKLICHT', style: TextStyle(
+        title: const Text('STARKLICHT V2', style: TextStyle(
           fontFamily: 'MontserratBlack',
         )),
         backgroundColor: Colors.black87,

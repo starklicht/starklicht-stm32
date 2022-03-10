@@ -6,7 +6,7 @@ import 'package:flutter_blue/flutter_blue.dart';
 import '../messages/imessage.dart';
 const serviceUUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
 const characterUUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
-
+const iosUUID = "FFE0";
 
 
 
@@ -37,8 +37,11 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   @override
   Stream<BluetoothDevice> scan(int duration) {
     flutterBlue.scan(timeout: Duration(seconds: duration)).listen((res) {
-      if(res.advertisementData.serviceUuids.contains(serviceUUID)) {
+      print(res.device.name);
+      print(res.advertisementData.serviceUuids);
+      if(res.advertisementData.serviceUuids.contains(serviceUUID) || res.advertisementData.serviceUuids.contains(iosUUID)) {
         lamps.add(res.device);
+	print("Yeah this lamp has been added to list");
       }
     });
     return lamps.stream;
