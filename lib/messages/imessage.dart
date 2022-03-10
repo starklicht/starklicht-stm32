@@ -54,6 +54,7 @@ abstract class IBluetoothMessage {
     message.addAll(escapeList(getMessageBody()));
     message.addAll(endOfMessageSign);
     // Send to Device!
+    print("Length: " + message.length.toString());
     return c.write(message, withoutResponse: withoutResponse);
   }
 

@@ -6,7 +6,7 @@ import 'package:flutter_blue/flutter_blue.dart';
 import '../messages/imessage.dart';
 const serviceUUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
 const characterUUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
-
+const iosUUID = "FFE0";
 
 
 class StarklichtBluetoothOptions {
@@ -27,7 +27,6 @@ abstract class BluetoothController<T> {
   Map<BluetoothDevice, StarklichtBluetoothOptions> getOptions();
   void setInverse(BluetoothDevice d, bool val);
 }
-
 
 class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> {
   static final BluetoothControllerWidget _instance = BluetoothControllerWidget._internal();
@@ -50,7 +49,7 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   @override
   Stream<BluetoothDevice> scan(int duration) {
     flutterBlue.scan(timeout: Duration(seconds: duration)).listen((res) {
-      if(res.advertisementData.serviceUuids.contains(serviceUUID)) {
+      if(res.advertisementData.serviceUuids.contains(serviceUUID) || res.advertisementData.serviceUuids.contains(iosUUID)) {
         lamps.add(res.device);
       }
     });
