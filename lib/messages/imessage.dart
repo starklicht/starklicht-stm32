@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_blue/flutter_blue.dart';
 
 enum MessageType {
@@ -54,8 +56,16 @@ abstract class IBluetoothMessage {
     message.addAll(escapeList(getMessageBody()));
     message.addAll(endOfMessageSign);
     // Send to Device!
-    print("Length: " + message.length.toString());
-    return c.write(message, withoutResponse: withoutResponse);
+    if(Platform.isIOS) {
+      // Split the messages in ios
+      int chunkSize = 20;
+      print("IOS - splitting into chunks");
+      for (var i = 0; i < message.length; i += chunkSize) {
+        c.write(message.sublist(i, i+chunkSize > message.length ? message.length : i + chunkSize), withoutResponse: withoutResponse);
+      }
+    } else {
+      return c.write(message, withoutResponse: withoutResponse);
+    }
   }
 
   bool withoutResponse = true;
