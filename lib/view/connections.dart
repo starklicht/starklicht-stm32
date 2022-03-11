@@ -3,11 +3,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
+import 'package:lottie/lottie.dart';
 
 class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   BluetoothController<BluetoothDevice> controller = BluetoothControllerWidget();
   List<BluetoothDevice> foundDevices = <BluetoothDevice>[];
   Set<BluetoothDevice> connectedDevices = {};
+  bool mock = true;
   Map<BluetoothDevice, StarklichtBluetoothOptions> options = {};
   bool _isLoading = false;
 
@@ -59,9 +61,10 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child:
-        ListView.builder(
-            // + 1 To display a nice title
+      body: Container(
+        alignment: Alignment.center,
+        child: ListView.builder(
+          shrinkWrap: connectedDevices.isEmpty,
             itemCount: connectedDevices.isEmpty || _isLoading
                 || state == BluetoothState.unknown ||
                 state == BluetoothState.off ||
@@ -71,19 +74,24 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
             itemBuilder: (BuildContext context, int index) {
               print(index);
               if (_isLoading) {
-                return Center(child: CircularProgressIndicator());
+                return CircularProgressIndicator();
               }
               else if (connectedDevices.isEmpty) {
                 return Padding(
-                    padding: EdgeInsets.only(top: 140),
+                    padding: EdgeInsets.all(8),
                     child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset('assets/searching-for-devices.png'),
+                          Lottie.asset(
+                            'assets/rocket.json',
+                          ),
+                          // Image.asset('assets/searching-for-devices.png'),
                           Text(
-                              "${getPlaceholderTitleAndSubtitle()[0]}\n",
-                              style: TextStyle(
+                            "${getPlaceholderTitleAndSubtitle()[0]}\n",
+                            style: TextStyle(
                                 fontSize: 20
-                              ),
+                            ),
                           ),
                           Text(
                             "${getPlaceholderTitleAndSubtitle()[1]}\n",
@@ -132,10 +140,13 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                         return AlertDialog(
                           title: Text(d.name),
                           content: Column(
+                            children: [
+                              Text("Hallo Tobias. Ich hoffe dir geht es gut. Leider gibt es den Inverse Modus noch nicht. Danke.")
+                            ],
                           ),
                         );
                       }),
-                ));
+                    ));
               }
             }
         )

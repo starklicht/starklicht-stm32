@@ -16,6 +16,8 @@ abstract class IPersistence {
   Future<List<KeyframeAnimation>> deleteAnimation(String title);
   Future<KeyframeAnimation?> findByName(String name);
   Future<bool> existsByName(String name);
+  Future<bool> rename(String name, String newName);
+  Future<List<KeyframeAnimation>> save(List<KeyframeAnimation> newValues);
 }
 
 class Persistence implements IPersistence {
@@ -122,5 +124,33 @@ class Persistence implements IPersistence {
   Future<bool> existsByName(String name) async {
     var a = await findByName(name);
     return a != null;
+  }
+
+  @override
+  Future<bool> rename(String name, String newName) async {
+    if(name == newName) {
+      return false;
+    }
+    var l = await getAnimationStore();
+    if(l.indexWhere((element) => element.title == newName) > -1) {
+      throw Exception("Konnte nicht umbenannt werden, da Animation ${newName} schon existiert");
+    }
+    var index = l.indexWhere((element) => element.title == name);
+    if(index == -1) {
+      throw Exception("Konnte nicht umbenannt werden, da Animation ${name} nicht existiert");
+    }
+    l[index].title = newName;
+    save(l);
+    return true;
+  }
+
+  @override
+  Future<List<KeyframeAnimation>> save(List<KeyframeAnimation> newValues) async {
+    var sPrefs = await SharedPreferences.getInstance();
+    sPrefs.setStringList(
+        animationStore,
+        newValues.map((e) => jsonEncode(e.toJson())).toList()
+    );
+    return newValues;
   }
 }

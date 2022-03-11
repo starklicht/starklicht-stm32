@@ -8,6 +8,7 @@ import 'imessage.dart';
 class AnimationMessage extends IBluetoothMessage {
   List<ColorPoint> _colors;
   AnimationSettingsConfig _config;
+  int maxValue = 255;
 
   AnimationMessage(this._colors, this._config);
 
@@ -15,7 +16,7 @@ class AnimationMessage extends IBluetoothMessage {
   bool get withoutResponse => false;
 
   @override
-  List<int> getMessageBody() {
+  List<int> getMessageBody({ bool inverse = false }) {
     if(_config.seconds == 0 && _config.millis == 0) {
       throw Exception("Seconds and Millis are both 0!");
     }
@@ -32,7 +33,7 @@ class AnimationMessage extends IBluetoothMessage {
       // Milliseconds
       (_config.millis / 50).round(),
       // Write all colors
-      ...getColorsArray(),
+      ...getColorsArray(inverse),
     ];
     return b;
   }
@@ -54,13 +55,19 @@ class AnimationMessage extends IBluetoothMessage {
     }
   }
 
-  List<int> getColorsArray() {
+  List<int> getColorsArray(bool inverse) {
     List<int> l = [];
     for (var c in _colors) {
       l.add((c.point * 255).round());
-      l.add((c.color.red));
-      l.add((c.color.green));
-      l.add((c.color.blue));
+      if(inverse) {
+        l.add((maxValue - c.color.red));
+        l.add((maxValue - c.color.green));
+        l.add((maxValue - c.color.blue));
+      } else {
+        l.add((c.color.red));
+        l.add((c.color.green));
+        l.add((c.color.blue));
+      }
       l.add((c.color.alpha));
     }
     return l;

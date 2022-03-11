@@ -697,7 +697,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
           ), */
           Row(children: [
             TextButton.icon(
-                onPressed: _hasBeenTouched ? revertAll : null,
+                onPressed: revertAll,
                 label: Text("Zurücksetzen"),
                 icon: const Icon(Icons.restore)),
             TextButton.icon(

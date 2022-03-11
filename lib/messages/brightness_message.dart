@@ -6,7 +6,7 @@ class BrightnessMessage extends IBluetoothMessage {
   BrightnessMessage(this.brightness);
 
   @override
-  List<int> getMessageBody() {
+  List<int> getMessageBody({ bool inverse = false }) {
     return [
       brightness
     ];

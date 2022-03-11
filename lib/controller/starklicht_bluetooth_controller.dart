@@ -81,9 +81,7 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   int broadcast(IBluetoothMessage m) {
     if (canSend()) {
       deviceMap.forEach((key, value) {
-        if(optionsMap[key]!.active) {
-          m.send(value);
-        }
+        m.send(value, optionsMap[key]!);
       });
       stopwatch = Stopwatch()..start();
     }

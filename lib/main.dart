@@ -78,7 +78,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     int n = controller.broadcast(SaveMessage(true, selectedRadio));
     var snackBar = SnackBar(
       content: Text('Auf Button ${selectedRadio + 1} für ${n} Lampen gespeichert'),
-      duration: Duration(milliseconds: 600),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
@@ -87,7 +86,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     int n = controller.broadcast(SaveMessage(false, selectedRadio));
     var snackBar = SnackBar(
       content: Text('Button ${selectedRadio + 1} auf ${n} Lampen geladen'),
-      duration: Duration(milliseconds: 600),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
@@ -96,19 +94,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('STARKLICHT V2', style: TextStyle(
+        title: const Text('STARKLICHT', style: TextStyle(
           fontFamily: 'MontserratBlack',
         )),
         backgroundColor: Colors.black87,
         actions: <Widget>[
-          IconButton(onPressed: () => {
-            controller.broadcast(BrightnessMessage(0)),
-            Persistence().setBrightness(0),
-            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Lampenhelligkeiten auf 0% gesetzt"))
-          )
-            // TODO: Better icon
-          }, icon: Icon(Icons.lightbulb_outline)),
           IconButton(onPressed: () {
             var brightness = 100.0;
             Persistence().getBrightness().then((i) {
@@ -144,6 +134,20 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       ),)
                     ])
                   ),
+                    actions: [
+                      TextButton.icon(onPressed: () => {
+                        setState(() {
+                          brightness = 0;
+                        }),
+                        controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0))
+                      }, icon: Icon(Icons.lightbulb_outline), label: Text("Aus")),
+                      TextButton.icon(onPressed: () => {
+                        setState(() {
+                          brightness = 100;
+                        }),
+                        controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0))
+                      }, icon: Icon(Icons.lightbulb), label: Text("Max. Helligkeit"))
+                    ],
                   );});
             }); });
 

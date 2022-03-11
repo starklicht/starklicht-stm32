@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 
 enum MessageType {
   color, interpolated, request, onoff, poti, brightness, save, clear
@@ -36,7 +37,7 @@ abstract class IBluetoothMessage {
 
   static const List<int> endOfMessageSign = [escapeChar, endChar];
 
-  List<int> getMessageBody();
+  List<int> getMessageBody({ bool inverse = false });
 
   List<int> escape(int character) {
     return character == escapeChar?[escapeChar, character]:[character];
@@ -50,10 +51,13 @@ abstract class IBluetoothMessage {
     return buffer;
   }
 
-  Future<void> send(BluetoothCharacteristic c) async {
+  Future<void> send(BluetoothCharacteristic c, StarklichtBluetoothOptions options) async {
+    if(!options.active) {
+      return;
+    }
     // Build Message: ID - BODY - END-OF-MESSAGE-SIGN
     List<int> message = escape(messageType.id);
-    message.addAll(escapeList(getMessageBody()));
+    message.addAll(escapeList(getMessageBody(inverse: options.inverse)));
     message.addAll(endOfMessageSign);
     // Send to Device!
     if(Platform.isIOS) {
@@ -70,9 +74,9 @@ abstract class IBluetoothMessage {
 
   bool withoutResponse = true;
 
-  void broadcast(List<BluetoothCharacteristic> broadcastList) async {
+  /* void broadcast(List<BluetoothCharacteristic> broadcastList) async {
     for (var b in broadcastList) {
       send(b);
     }
-  }
+  } */
 }

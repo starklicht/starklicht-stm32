@@ -155,7 +155,8 @@ class _ColorsWidgetState extends State<ColorsWidget> {
         showLabel: false,
         displayThumbColor: true,
         enableAlpha: false,
-        pickerAreaHeightPercent: .75,
+        pickerAreaHeightPercent: 1,
+        colorPickerWidth: 300,
         paletteType: PaletteType.hsv
       ),
       TextButton(
