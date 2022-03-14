@@ -95,6 +95,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                     children: [
                       Lottie.asset(
                       'assets/server.json',
+		      width: 500
                       ),
                       const Text(
                         "Keine gespeicherten Animationen\n",

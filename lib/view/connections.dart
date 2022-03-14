@@ -85,6 +85,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                         children: [
                           Lottie.asset(
                             'assets/rocket.json',
+		            width: 500		
                           ),
                           // Image.asset('assets/searching-for-devices.png'),
                           Text(
