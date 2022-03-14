@@ -65,7 +65,8 @@ abstract class IBluetoothMessage {
       int chunkSize = 20;
       print("IOS - splitting into chunks");
       for (var i = 0; i < message.length; i += chunkSize) {
-        c.write(message.sublist(i, i+chunkSize > message.length ? message.length : i + chunkSize), withoutResponse: withoutResponse);
+	print("Chunk " + i.toString());
+        c.write(message.sublist(i, i+chunkSize > message.length ? message.length : i + chunkSize), withoutResponse: true);
       }
     } else {
       return c.write(message, withoutResponse: withoutResponse);
