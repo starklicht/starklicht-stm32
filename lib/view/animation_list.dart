@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:lottie/lottie.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
 
@@ -22,6 +23,8 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
   List<KeyframeAnimation> animations = [];
   String query = "";
   final BluetoothController controller = BluetoothControllerWidget();
+  String currentNameRename = "";
+  var t = TextEditingController();
 
 
   void edit() {
@@ -30,7 +33,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
 
   List<KeyframeAnimation> filteredAnimations() {
     var a = animations;
-    if(!query.isEmpty) {
+    if(query.isNotEmpty) {
       a = animations.where((element) => element.title.toLowerCase().contains(query.toLowerCase()))
           .toList();
     }
@@ -79,15 +82,20 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
   @override
   Widget build(BuildContext context) {
 
-    return ListView.builder(
+    return Container(
+        alignment: Alignment.center,
+        child: ListView.builder(
         itemCount: animations.isEmpty?1:filteredAnimations().length+1,
+        shrinkWrap: animations.isEmpty,
         itemBuilder: (BuildContext context, int index) {
           if(animations.isEmpty) {
             return Padding(
-                padding: EdgeInsets.only(top: 140),
+                padding: EdgeInsets.all(8),
                 child: Column(
                     children: [
-                      Image.asset('assets/question-mark.png'),
+                      Lottie.asset(
+                      'assets/server.json',
+                      ),
                       const Text(
                         "Keine gespeicherten Animationen\n",
                         style: TextStyle(
@@ -140,14 +148,6 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       context: context,
                       position: RelativeRect.fromRect(_tapDownPosition & const Size(40, 40), Offset.zero & overlay.size),
                       items: <PopupMenuEntry> [
-                        PopupMenuItem(
-                          child: ListTile(
-                            leading: Icon(Icons.delete), // your icon
-                            title: Text("Löschen"),
-                          ),
-                          value: 2,
-                          onTap: () => deleteItem(filteredAnimations()[realIndex].title),
-                        ),
                         PopupMenuItem(child: ListTile(
                           leading: Icon(Icons.edit),
                           title: Text("Editieren"),
@@ -159,8 +159,80 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                             );
                             ScaffoldMessenger.of(context).showSnackBar(snackBar);
                           },
-                          value: 1
-                        )
+                          value: 0
+                        ),
+                        PopupMenuItem(child: const ListTile(
+                          leading: Icon(Icons.drive_file_rename_outline_sharp),
+                          title: Text("Umbenennen"),
+                        ),
+                            onTap: () {
+                              setState(() {
+                                currentNameRename =  filteredAnimations()[realIndex].title;
+                              });
+                              t.text = currentNameRename;
+                              Future.delayed(
+                                const Duration(seconds: 0),
+                                () =>
+                                  showDialog(context: context, builder: (_) {
+                                  return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+                                    return AlertDialog(
+                                        title: Text("Umbenennen"),
+                                        content: TextField(
+                                          controller: t,
+                                          onChanged: (v) => {
+                                            setState(() {
+                                              currentNameRename = v;
+                                            })
+                                          },
+                                        ),
+                                        actions: [
+                                          TextButton(onPressed: () =>{
+                                            Navigator.pop(context)
+                                          }, child: Text("Abbrechen")),
+                                          TextButton(onPressed: filteredAnimations()[realIndex].title == currentNameRename? null : () {
+                                            var old = filteredAnimations()[realIndex].title;
+                                            Persistence().rename(filteredAnimations()[realIndex].title, t.text).then((value) =>
+                                            {
+                                              load(),
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content:
+                                                    Text('Animation "${old}" wurde zu "${t.text}" umbenannt')
+                                                )
+                                              ),
+                                              Navigator.pop(context)
+                                            });
+                                          }, child: Text("Speichern")),
+                                        ],
+                                    );
+                                  });
+                                })
+                              );
+                              /* setState(() {
+                                currentNameRename = filteredAnimations()[realIndex].title;
+                              });
+                              showDialog(context: context, builder: (_) {
+                                return AlertDialog(
+                                  title: Text("Umbenennen"),
+                                  content: TextField(
+                                    onChanged: (text) {
+                                      setState(() {
+                                        currentNameRename = text;
+                                      });
+                                    }
+                                  ),
+                                );
+                              }); */
+                            },
+                            value: 1
+                        ),
+                        PopupMenuItem(
+                          child: ListTile(
+                            leading: Icon(Icons.delete), // your icon
+                            title: Text("Löschen"),
+                          ),
+                          value: 2,
+                          onTap: () => deleteItem(filteredAnimations()[realIndex].title),
+                        ),
                       ]
                   );
                 },
@@ -197,6 +269,6 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                 )*/
               ]))));
           }
-        });
+        }));
   }
 }
