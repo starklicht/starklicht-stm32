@@ -128,7 +128,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                   setState(() {
                                     options[d]!.active = value;
                                   });
-                                  controller.setInverse(d, options[d]!.active);
+                                  controller.setActive(d, options[d]!.active);
                                 },
                                 activeTrackColor: Colors.blueGrey,
                                 activeColor: Colors.white,
@@ -137,14 +137,25 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                         ]
                     ),
                       onTap: () => showDialog(context: context, builder: (_) {
-                        return AlertDialog(
+                        return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+                          return AlertDialog(
                           title: Text(d.name),
                           content: Column(
-                            children: [
-                              Text("Hallo Tobias. Ich hoffe dir geht es gut. Leider gibt es den Inverse Modus noch nicht. Danke.")
-                            ],
+                          children: [
+                            Text("Farben invertieren: "),
+                            CheckboxListTile(
+                              value: options[d]!.inverse,
+                              onChanged: (value) {
+                                setState(() {
+                                  options[d]!.inverse = value!;
+                                });
+                                controller.setInverse(d, value!);
+                              }
+                            )
+                          ],
                           ),
-                        );
+                          );
+                        });
                       }),
                     ));
               }

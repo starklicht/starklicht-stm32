@@ -26,6 +26,7 @@ abstract class BluetoothController<T> {
   Stream<BluetoothState> stateStream();
   Map<BluetoothDevice, StarklichtBluetoothOptions> getOptions();
   void setInverse(BluetoothDevice d, bool val);
+  void setActive(BluetoothDevice d, bool val);
 }
 
 class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> {
@@ -116,5 +117,10 @@ class BluetoothControllerWidget implements BluetoothController<BluetoothDevice> 
   @override
   void setInverse(BluetoothDevice d, bool val) {
     optionsMap[d]?.inverse = val;
+  }
+
+  @override
+  void setActive(BluetoothDevice d, bool val) {
+    optionsMap[d]?.active = val;
   }
 }
