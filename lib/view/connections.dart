@@ -1,21 +1,28 @@
 import 'dart:async';
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:lottie/lottie.dart';
+import 'package:starklicht_flutter/persistence/persistence.dart';
 
 class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   BluetoothController<BluetoothDevice> controller = BluetoothControllerWidget();
   List<BluetoothDevice> foundDevices = <BluetoothDevice>[];
   Set<BluetoothDevice> connectedDevices = {};
   bool mock = true;
-  Map<BluetoothDevice, StarklichtBluetoothOptions> options = {};
+  bool test = false;
+  bool test2 = false;
+  List<StarklichtBluetoothOptions> options = [];
   bool _isLoading = false;
 
   BluetoothState state = BluetoothState.unknown;
 
   StreamSubscription<dynamic>? stream;
+  StreamSubscription<dynamic>? optionsStream;
+  StreamSubscription<dynamic>? disconnectStream;
 
 
   @override
@@ -27,21 +34,34 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
     controller.connectedDevicesStream().then((value) {
       setState(() {
         _isLoading = false;
+        connectedDevices = value.toSet();
       });
-      connectedDevices = value.toSet();
-      stream?.cancel();
-      stream = controller.getConnectionStream().listen((d) {
-        setState(() {
-          connectedDevices.add(d);
-        });
-      });
+      /*  */
+    });
+    stream?.cancel();
+    stream = controller.getConnectionStream().listen((d) {
+      print("STATE CHANGE!");
+      print(d.state.toString());
       setState(() {
-        options = controller.getOptions();
+        connectedDevices.add(d);
+      });
+    });
+    disconnectStream?.cancel();
+    disconnectStream = controller.getDisconnectionStream().listen((d) {
+      print("DISCONNECTIOOOON");
+      print(d.id);
+      setState(() {
+        connectedDevices.remove(d);
       });
     });
     controller.stateStream().listen((event) {
       setState(() {
         state = event;
+      });
+    });
+    optionsStream = controller.getOptionsStream().listen((event) {
+      setState(() {
+        options = event;
       });
     });
   }
@@ -85,7 +105,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                         children: [
                           Lottie.asset(
                             'assets/rocket.json',
-		            width: 500		
+		                        width: 500
                           ),
                           // Image.asset('assets/searching-for-devices.png'),
                           Text(
@@ -113,17 +133,180 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                 );
               } else {
                 var d = connectedDevices.toList()[index];
-                return Card(
+                var option = options.firstWhereOrNull((element) => element.id == d.id.id);
+                  return Card(
                     margin: EdgeInsets.all(8.0),
                     elevation: 8,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
-                    child: InkWell(child: Column(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 16, left: 8, right: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ListTile(
-                              leading: Icon(Icons.lightbulb),
-                              title: Text(d.name),
-                              subtitle: Text(d.id.id),
-                              trailing: Switch(
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    option?.name ?? d.name
+                                    , style: TextStyle(
+                                    fontSize: 32,
+                                  )),
+                                  IconButton(onPressed: () => {
+                                    showDialog(context: context, builder: (_) {
+                                      return AlertDialog(
+                                        title: Text("Informationen"),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text("Gerätename: ${d.name}"),
+                                            Text("Name: ${option?.name ?? "Nicht vergeben"}"),
+                                            Text("ID: ${d.id.id}")
+                                          ]
+                                        ),
+                                      );
+                                    })
+                                  }, icon: Icon(Icons.info_outlined))
+                                ],
+                              ),
+                              if(option != null) ...[
+                                Divider(
+                                  height: 32
+                                ),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    ChoiceChip(
+                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        avatar: CircleAvatar(
+                                            child: Icon(Icons.invert_colors)
+                                        ),
+                                        selected: option.inverse,
+                                        onSelected: (val) {
+                                          setState(() {
+                                            controller.setOptions(d.id.id, option.withInverse(val));
+                                          });
+                                        },
+                                        label: Text("Invertieren")
+                                    ),
+                                    GestureDetector(
+                                      onLongPress: () => {
+                                        showDialog(context: context, builder: (_) {
+                                          var t = TextEditingController();
+                                          t.text = option.delayTimeMillis.toString();
+                                          return AlertDialog(
+                                            title: Text("Verzögungsdauer ändern"),
+                                            content: TextField(
+                                              controller: t,
+                                              decoration: InputDecoration(
+                                                  labelText: 'Verzögerung in ms',
+                                                  border: OutlineInputBorder()
+                                              ),
+                                              keyboardType: TextInputType.number,
+                                              inputFormatters: <TextInputFormatter>[
+                                                FilteringTextInputFormatter.digitsOnly
+                                              ],
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                  child: Text("Abbrechen"),
+                                                  onPressed: () => {Navigator.pop(context)}),
+                                              TextButton(
+                                                child: Text("Speichern"),
+                                                onPressed: () => {
+                                                  controller.setOptions(d.id.id, option.withDelayTime(
+                                                    int.parse(t.text)
+                                                  )),
+                                                  Navigator.pop(context)
+                                                }
+                                              )
+                                            ],
+                                          );
+                                        })
+                                      },
+                                      child: ChoiceChip(
+                                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          avatar: CircleAvatar(
+                                              child: Icon(Icons.schedule)
+                                          ),
+                                          selected: option.delay,
+                                          onSelected: (val) {
+                                            setState(() {
+                                              controller.setOptions(d.id.id, option.withDelay(val));
+                                            });
+                                          },
+                                          label: Text("Verzögerung (${option.delayTimeMillis}ms)")
+                                      ),
+                                    ),
+                                    ChoiceChip(
+                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        avatar: CircleAvatar(
+                                            child: Icon(Icons.visibility_off)
+                                        ),
+                                        selected: !option.active,
+                                        onSelected: (val) {
+                                          setState(() {
+                                            controller.setOptions(d.id.id, option.withActive(!val));
+                                          });
+                                        },
+                                        label: Text("Deaktivieren")
+                                    ),
+                                  ]
+                              ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 16.0),
+                                  child: Wrap(
+                                    children: [
+                                      TextButton(
+                                        child: Text("Verbindung trennen".toUpperCase(), style:
+                                        TextStyle(
+                                          color: Colors.redAccent
+                                        )),
+                                        onPressed: () => {
+                                          controller.disconnect(d)
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text("Umbenennen".toUpperCase()),
+                                        onPressed: () => {
+                                          showDialog(context: context, builder: (_) {
+                                            var t = TextEditingController();
+                                            t.text = option.name ?? "";
+                                            return AlertDialog(
+                                              title: Text("Umbenennen"),
+                                              content: TextField(
+                                                textCapitalization: TextCapitalization.sentences,
+                                                controller: t,
+                                                decoration: InputDecoration(
+                                                    labelText: 'Name',
+                                                    hintText: d.name,
+                                                    border: OutlineInputBorder()
+                                                ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                    child: Text("Abbrechen"),
+                                                onPressed: () => {Navigator.pop(context)}),
+                                                TextButton(
+                                                  child: Text("Speichern"),
+                                                  onPressed: () {
+                                                    var text = t.text.trim();
+                                                    controller.setOptions(d.id.id, option.withName(
+                                                        text.isEmpty ? null : text
+                                                    ));
+                                                    Navigator.pop(context);
+                                                  }
+                                                )
+                                              ],
+                                            );
+                                          })
+                                        },
+                                      )
+                                    ],
+                                  ),
+                                )
+                              ]
+                              /* trailing: Switch(
                                 value: options[d]!.active,
                                 onChanged: (value) {
                                   setState(() {
@@ -133,18 +316,17 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                 },
                                 activeTrackColor: Colors.blueGrey,
                                 activeColor: Colors.white,
-                              )
-                          )
+                              ) */
                         ]
                     ),
-                      onTap: () => showDialog(context: context, builder: (_) {
+                      /* onTap: () => showDialog(context: context, builder: (_) {
                         return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
                           return AlertDialog(
                           title: Text(d.name),
                           content: Column(
                           children: [
-                            Text("Farben invertieren: "),
                             CheckboxListTile(
+                              title: Text("Farben invertieren"),
                               value: options[d]!.inverse,
                               onChanged: (value) {
                                 setState(() {
@@ -152,12 +334,44 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                 });
                                 controller.setInverse(d, value!);
                               }
-                            )
+                            ),
+                            CheckboxListTile(
+                                title: Text("Eingaben verzögern"),
+                                value: options[d]!.delay,
+                                onChanged: (value) {
+                                  setState(() {
+                                    options[d]!.delay = value!;
+                                  });
+                                  controller.setDelay(d, value!);
+                                }
+                            ),
+                            if(options[d]!.delay)
+                              ...[
+                                TextFormField(
+                                  onChanged: (value) {
+                                    var s = 0;
+                                    if(value.isNotEmpty) {
+                                      s = int.parse(value.trim());
+                                    }
+                                    setState(() {
+                                      options[d]!.delayTimeMillis = s;
+                                    });
+                                    controller.setDelayTime(d, s);
+                                  },
+                                  initialValue: options[d]!.delayTimeMillis
+                                      .toString(),
+                                  decoration: const InputDecoration(
+                                    labelText: "Verzögerung in Millisekunden:",
+                                    border: OutlineInputBorder()
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                )
+                              ]
                           ],
                           ),
                           );
                         });
-                      }),
+                      }), */
                     ));
               }
             }
@@ -178,12 +392,15 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   @override
   void dispose() {
     stream?.cancel();
+    optionsStream?.cancel();
+    disconnectStream?.cancel;
+    // Remove handler again
     super.dispose();
   }
 }
 
 class ConnectionsWidget extends StatefulWidget {
-  const ConnectionsWidget({Key? key}) : super(key: key);
+  ConnectionsWidget({Key? key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ConnectionsWidgetState();
@@ -191,13 +408,15 @@ class ConnectionsWidget extends StatefulWidget {
 
 class _SearchWidgetState extends State<SearchWidget> {
   BluetoothController controller = BluetoothControllerWidget();
-  List<BluetoothDevice> foundDevices = <BluetoothDevice>[];
+  Set<BluetoothDevice> foundDevices = <BluetoothDevice>{};
   bool _scanning = false;
   StreamSubscription? subscription;
   StreamSubscription? deviceSubscription;
 
   void scan() {
-    foundDevices.clear();
+    setState(() {
+      foundDevices = {};
+    });
     subscription?.cancel();
     deviceSubscription?.cancel();
     deviceSubscription = controller.scan(4).asBroadcastStream().listen((a) {

@@ -119,7 +119,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
               padding: const EdgeInsets.all(8.0),
               child: TextField(
                 decoration: const InputDecoration(
-                  hintText: 'Suche',
+                  labelText: 'Suche',
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder()
                 ),

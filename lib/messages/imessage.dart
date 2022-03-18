@@ -62,14 +62,28 @@ abstract class IBluetoothMessage {
     // Send to Device!
     if(Platform.isIOS) {
       // Split the messages in ios
-      int chunkSize = 20;
-      print("IOS - splitting into chunks");
-      for (var i = 0; i < message.length; i += chunkSize) {
-	print("Chunk " + i.toString());
-        c.write(message.sublist(i, i+chunkSize > message.length ? message.length : i + chunkSize), withoutResponse: true);
+      if(!options.delay || options.delayTimeMillis == 0) {
+        int chunkSize = 20;
+        for (var i = 0; i < message.length; i += chunkSize) {
+          c.write(message.sublist(i, i+chunkSize > message.length ? message.length : i + chunkSize), withoutResponse: true);
+        }
+      } else {
+        Future.delayed(Duration(milliseconds: options.delayTimeMillis), () {
+          int chunkSize = 20;
+          for (var i = 0; i < message.length; i += chunkSize) {
+            c.write(message.sublist(i, i+chunkSize > message.length ? message.length : i + chunkSize), withoutResponse: true);
+          }
+        });
       }
+
     } else {
-      return c.write(message, withoutResponse: withoutResponse);
+      if(!options.delay || options.delayTimeMillis == 0) {
+        return c.write(message, withoutResponse: withoutResponse);
+      } else {
+        Future.delayed(Duration(milliseconds: options.delayTimeMillis), () {
+          return c.write(message, withoutResponse: withoutResponse);
+        });
+      }
     }
   }
 

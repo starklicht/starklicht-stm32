@@ -44,6 +44,16 @@ extension on Color {
         (blue * absolutePercentage + b.blue * (1 - absolutePercentage))
             .toInt());
   }
+
+  Color inverse() {
+    var hsv = HSVColor.fromColor(Color.fromARGB(alpha, red, green, blue));
+    if(hsv.hue > 180) {
+      hsv = hsv.withHue(hsv.hue - 180);
+    } else {
+      hsv = hsv.withHue(hsv.hue + 180);
+    }
+    return hsv.toColor();
+  }
 }
 
 class GradientEditorWidget extends StatefulWidget {
@@ -973,7 +983,7 @@ class _SaveWidgetState extends State<SaveWidget> {
         content: TextField(
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
-            hintText: 'Name der Animation',
+            labelText: 'Name der Animation',
           ),
           onChanged: (text) {
             setState(() {

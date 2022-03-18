@@ -7,6 +7,8 @@
 // amber. The `_onItemTapped` function changes the selected item's index
 // and displays a corresponding message in the center of the [Scaffold].
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
@@ -33,13 +35,9 @@ class MyApp extends StatelessWidget {
       home: const MyStatefulWidget(),
       theme: ThemeData(
         brightness: Brightness.light,
-        primaryColor: Colors.pink,
-        accentColor: Colors.pink,
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        primaryColor: Colors.pink,
-        accentColor: Colors.pink,
       ),
     );
   }
@@ -55,21 +53,35 @@ class MyStatefulWidget extends StatefulWidget {
 
 /// This is the private State class that goes with MyStatefulWidget.
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
+  // TODO: Put hashmap of Options over here and pass it to the components.
+  // The options should be synchronized to controller
+  List<StarklichtBluetoothOptions> options = [];
+  StreamSubscription<dynamic>? optionsStream;
   int _selectedIndex = 0;
   double _red = 0;
   final BluetoothController controller = BluetoothControllerWidget();
   static const TextStyle optionStyle =
   TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   List<Widget> _widgetOptions = <Widget>[
-    ConnectionsWidget(),
-    ColorsWidget(sendOnChange: true),
-    Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
-    AnimationsWidget(),
+  ConnectionsWidget(),
+  ColorsWidget(sendOnChange: true),
+  Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
+  AnimationsWidget(),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    controller.getOptionsStream().listen((event) {
+      setState(() {
+        options = event;
+      });
     });
   }
 
@@ -89,6 +101,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -197,8 +210,43 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           ),
         ],
       ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      bottomSheet: options.isEmpty ? null : Container(
+          margin: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(3)),
+            border: Border.all(
+              color: Theme.of(context).dividerColor
+            ),
+            color: Theme.of(context).cardColor
+          ),
+          height: 40,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children:
+             options.map((e) =>
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                    children:
+                    [
+                      Checkbox(
+                        value: e.active,
+                        onChanged: (v) => {
+                          setState(() {
+                            controller.setOptions(e.id, e.withActive(v!));
+                          }),
+                        },
+                      ),
+                      Text(controller.getName(e.id)),
+                    ]
+                ),
+              )
+            ).toList()
+        )
+      ),
+      body: Padding(
+        padding: controller.getOptions().isEmpty ? EdgeInsets.zero:EdgeInsets.only(bottom: 56),
+        child: Center(child: _widgetOptions.elementAt(_selectedIndex)),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[

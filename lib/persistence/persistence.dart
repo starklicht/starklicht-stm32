@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart'; // You have to add this manually, for some reason it cannot be added automatically
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/redux.dart';
@@ -18,9 +19,17 @@ abstract class IPersistence {
   Future<bool> existsByName(String name);
   Future<bool> rename(String name, String newName);
   Future<List<KeyframeAnimation>> save(List<KeyframeAnimation> newValues);
+  Future<StarklichtBluetoothOptions> getBluetoothOption(String id);
+  Future<bool> hasBluetoothOption(String id);
+  Future<StarklichtBluetoothOptions> setBluetoothOption(String id, StarklichtBluetoothOptions option);
 }
 
 class Persistence implements IPersistence {
+  static final Persistence _instance = Persistence._internal();
+  factory Persistence() => _instance;
+  Persistence._internal();
+  static const String optionsPrefix = "OPTIONS_";
+
   static KeyframeAnimation defaultEditorAnimation = KeyframeAnimation(
     [
       ColorPoint(Colors.black, 0),
@@ -152,5 +161,28 @@ class Persistence implements IPersistence {
         newValues.map((e) => jsonEncode(e.toJson())).toList()
     );
     return newValues;
+  }
+
+  @override
+  Future<StarklichtBluetoothOptions> getBluetoothOption(String id) async {
+    var sPrefs = await SharedPreferences.getInstance();
+    var json = sPrefs.getString("$optionsPrefix$id");
+    if(json == null) {
+      return setBluetoothOption(id, StarklichtBluetoothOptions(id));
+    }
+    return StarklichtBluetoothOptionsFactory().build(json);
+  }
+
+  @override
+  Future<StarklichtBluetoothOptions> setBluetoothOption(String id, StarklichtBluetoothOptions option) async {
+    var sPrefs = await SharedPreferences.getInstance();
+    sPrefs.setString("$optionsPrefix$id", jsonEncode(option.toJson()));
+    return option;
+  }
+
+  @override
+  Future<bool> hasBluetoothOption(String id) async {
+    var sPrefs = await SharedPreferences.getInstance();
+    return sPrefs.containsKey("$optionsPrefix$id");
   }
 }

@@ -1,9 +1,24 @@
+import 'dart:ui';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/view/animations.dart';
 
 import 'imessage.dart';
+
+extension on Color {
+  Color inverse() {
+    var hsv = HSVColor.fromColor(Color.fromARGB(alpha, red, green, blue));
+    if(hsv.hue > 180) {
+      hsv = hsv.withHue(hsv.hue - 180);
+    } else {
+      hsv = hsv.withHue(hsv.hue + 180);
+    }
+    return hsv.toColor();
+  }
+}
 
 class AnimationMessage extends IBluetoothMessage {
   List<ColorPoint> _colors;
@@ -58,16 +73,14 @@ class AnimationMessage extends IBluetoothMessage {
   List<int> getColorsArray(bool inverse) {
     List<int> l = [];
     for (var c in _colors) {
+      var col = Color.fromARGB(255, c.color.red, c.color.green, c.color.blue);
       l.add((c.point * 255).round());
       if(inverse) {
-        l.add((maxValue - c.color.red));
-        l.add((maxValue - c.color.green));
-        l.add((maxValue - c.color.blue));
-      } else {
-        l.add((c.color.red));
-        l.add((c.color.green));
-        l.add((c.color.blue));
+        col = col.inverse();
       }
+      l.add((col.red));
+      l.add((col.green));
+      l.add((col.blue));
       l.add((c.color.alpha));
     }
     return l;
