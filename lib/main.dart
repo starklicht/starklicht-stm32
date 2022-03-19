@@ -55,9 +55,10 @@ class MyStatefulWidget extends StatefulWidget {
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   // TODO: Put hashmap of Options over here and pass it to the components.
   // The options should be synchronized to controller
-  List<StarklichtBluetoothOptions> options = [];
+  List<SBluetoothDevice> options = [];
   StreamSubscription<dynamic>? optionsStream;
   int _selectedIndex = 0;
+  bool hideBottom = false;
   double _red = 0;
   final BluetoothController controller = BluetoothControllerWidget();
   static const TextStyle optionStyle =
@@ -78,10 +79,32 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   @override
   void initState() {
     super.initState();
-    controller.getOptionsStream().listen((event) {
+    controller.connectedDevicesStream().listen((event) {
       setState(() {
-        options = event;
+        options = event as List<SBluetoothDevice>;
       });
+    });
+    controller.connectionChangeStream().listen((event) {
+      var text = "";
+      var name = event.device.options.name ?? event.device.device.name;
+      if(event.type == ConnectionType.CONNECT) {
+        if(!event.auto) {
+          text = "${name} wurde verbunden";
+        } else {
+          text = "${name} hat sich verbunden";
+        }
+      } else {
+        if(!event.auto) {
+          text = "${name} wurde getrennt";
+        } else {
+          text = "${name} hat sich getrennt";
+        }
+      }
+      var snackBar = SnackBar(
+        content: Text(text),
+        duration: Duration(milliseconds: 600),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     });
   }
 
@@ -112,6 +135,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         )),
         backgroundColor: Colors.black87,
         actions: <Widget>[
+          if(options.isNotEmpty)...[ IconButton(
+            onPressed: () => {
+              setState(() {
+                hideBottom = !hideBottom;
+              })
+            },
+            icon: Icon(Icons.border_bottom),
+          ), ],
           IconButton(onPressed: () {
             var brightness = 100.0;
             Persistence().getBrightness().then((i) {
@@ -210,7 +241,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           ),
         ],
       ),
-      bottomSheet: options.isEmpty ? null : Container(
+      bottomSheet: options.isEmpty || hideBottom ? null : Container(
           margin: EdgeInsets.all(8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(3)),
@@ -230,14 +261,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     children:
                     [
                       Checkbox(
-                        value: e.active,
+                        value: e.options.active,
                         onChanged: (v) => {
                           setState(() {
-                            controller.setOptions(e.id, e.withActive(v!));
+                            controller.setOptions(e.device.id.id, e.options.withActive(v!));
                           }),
                         },
                       ),
-                      Text(controller.getName(e.id)),
+                      Text(controller.getName(e.device.id.id)),
                     ]
                 ),
               )
@@ -245,7 +276,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         )
       ),
       body: Padding(
-        padding: controller.getOptions().isEmpty ? EdgeInsets.zero:EdgeInsets.only(bottom: 56),
+        padding: options.isEmpty || hideBottom ? EdgeInsets.zero:EdgeInsets.only(bottom: 56),
         child: Center(child: _widgetOptions.elementAt(_selectedIndex)),
       ),
       bottomNavigationBar: BottomNavigationBar(

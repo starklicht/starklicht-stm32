@@ -9,18 +9,18 @@ import 'package:lottie/lottie.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 
 class _ConnectionsWidgetState extends State<ConnectionsWidget> {
-  BluetoothController<BluetoothDevice> controller = BluetoothControllerWidget();
-  List<BluetoothDevice> foundDevices = <BluetoothDevice>[];
-  Set<BluetoothDevice> connectedDevices = {};
+  BluetoothController<SBluetoothDevice> controller = BluetoothControllerWidget();
+  List<SBluetoothDevice> foundDevices = <SBluetoothDevice>[];
+  Set<SBluetoothDevice> connectedDevices = {};
   bool mock = true;
   bool test = false;
   bool test2 = false;
-  List<StarklichtBluetoothOptions> options = [];
   bool _isLoading = false;
 
   BluetoothState state = BluetoothState.unknown;
 
   StreamSubscription<dynamic>? stream;
+  StreamSubscription<dynamic>? myStream;
   StreamSubscription<dynamic>? optionsStream;
   StreamSubscription<dynamic>? disconnectStream;
 
@@ -29,39 +29,22 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   void initState() {
     super.initState();
     setState(() {
-      _isLoading = true;
+      _isLoading = false;
     });
-    controller.connectedDevicesStream().then((value) {
-      setState(() {
-        _isLoading = false;
-        connectedDevices = value.toSet();
-      });
+    myStream?.cancel();
+    myStream = controller.connectedDevicesStream().listen((value) {
+      if(mounted) {
+        setState(() {
+          _isLoading = false;
+          connectedDevices = value.toSet();
+        });
+      }
       /*  */
     });
     stream?.cancel();
-    stream = controller.getConnectionStream().listen((d) {
-      print("STATE CHANGE!");
-      print(d.state.toString());
-      setState(() {
-        connectedDevices.add(d);
-      });
-    });
-    disconnectStream?.cancel();
-    disconnectStream = controller.getDisconnectionStream().listen((d) {
-      print("DISCONNECTIOOOON");
-      print(d.id);
-      setState(() {
-        connectedDevices.remove(d);
-      });
-    });
     controller.stateStream().listen((event) {
       setState(() {
         state = event;
-      });
-    });
-    optionsStream = controller.getOptionsStream().listen((event) {
-      setState(() {
-        options = event;
       });
     });
   }
@@ -133,7 +116,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                 );
               } else {
                 var d = connectedDevices.toList()[index];
-                var option = options.firstWhereOrNull((element) => element.id == d.id.id);
+                var option = d.options;
                   return Card(
                     margin: EdgeInsets.all(8.0),
                     elevation: 8,
@@ -142,13 +125,16 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                              Row(
+                          SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
-                                    option?.name ?? d.name
+                                    option.name ?? d.device.name
                                     , style: TextStyle(
                                     fontSize: 32,
+                                    overflow: TextOverflow.ellipsis
                                   )),
                                   IconButton(onPressed: () => {
                                     showDialog(context: context, builder: (_) {
@@ -158,16 +144,16 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                           mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text("Gerätename: ${d.name}"),
-                                            Text("Name: ${option?.name ?? "Nicht vergeben"}"),
-                                            Text("ID: ${d.id.id}")
+                                            Text("Gerätename: ${d.device.name}"),
+                                            Text("Name: ${option.name ?? "Nicht vergeben"}"),
+                                            Text("ID: ${d.device.id.id}")
                                           ]
                                         ),
                                       );
                                     })
                                   }, icon: Icon(Icons.info_outlined))
                                 ],
-                              ),
+                              )),
                               if(option != null) ...[
                                 Divider(
                                   height: 32
@@ -184,7 +170,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                         selected: option.inverse,
                                         onSelected: (val) {
                                           setState(() {
-                                            controller.setOptions(d.id.id, option.withInverse(val));
+                                            controller.setOptions(d.device.id.id, option.withInverse(val));
                                           });
                                         },
                                         label: Text("Invertieren")
@@ -214,7 +200,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                               TextButton(
                                                 child: Text("Speichern"),
                                                 onPressed: () => {
-                                                  controller.setOptions(d.id.id, option.withDelayTime(
+                                                  controller.setOptions(d.device.id.id, option.withDelayTime(
                                                     int.parse(t.text)
                                                   )),
                                                   Navigator.pop(context)
@@ -232,7 +218,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                           selected: option.delay,
                                           onSelected: (val) {
                                             setState(() {
-                                              controller.setOptions(d.id.id, option.withDelay(val));
+                                              controller.setOptions(d.device.id.id, option.withDelay(val));
                                             });
                                           },
                                           label: Text("Verzögerung (${option.delayTimeMillis}ms)")
@@ -241,15 +227,15 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                     ChoiceChip(
                                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                         avatar: CircleAvatar(
-                                            child: Icon(Icons.visibility_off)
+                                            child: Icon(Icons.visibility)
                                         ),
-                                        selected: !option.active,
+                                        selected: option.active,
                                         onSelected: (val) {
                                           setState(() {
-                                            controller.setOptions(d.id.id, option.withActive(!val));
+                                            controller.setOptions(d.device.id.id, option.withActive(val));
                                           });
                                         },
-                                        label: Text("Deaktivieren")
+                                        label: Text("Aktivieren")
                                     ),
                                   ]
                               ),
@@ -277,9 +263,12 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                               content: TextField(
                                                 textCapitalization: TextCapitalization.sentences,
                                                 controller: t,
+                                                  inputFormatters: [
+                                                    LengthLimitingTextInputFormatter(20),
+                                                  ],
                                                 decoration: InputDecoration(
                                                     labelText: 'Name',
-                                                    hintText: d.name,
+                                                    hintText: d.device.name,
                                                     border: OutlineInputBorder()
                                                 ),
                                               ),
@@ -291,7 +280,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                                   child: Text("Speichern"),
                                                   onPressed: () {
                                                     var text = t.text.trim();
-                                                    controller.setOptions(d.id.id, option.withName(
+                                                    controller.setOptions(d.device.id.id, option.withName(
                                                         text.isEmpty ? null : text
                                                     ));
                                                     Navigator.pop(context);
@@ -394,6 +383,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
     stream?.cancel();
     optionsStream?.cancel();
     disconnectStream?.cancel;
+    myStream?.cancel;
     // Remove handler again
     super.dispose();
   }
@@ -408,20 +398,21 @@ class ConnectionsWidget extends StatefulWidget {
 
 class _SearchWidgetState extends State<SearchWidget> {
   BluetoothController controller = BluetoothControllerWidget();
-  Set<BluetoothDevice> foundDevices = <BluetoothDevice>{};
+  Set<SBluetoothDevice> foundDevices = <SBluetoothDevice>{};
   bool _scanning = false;
   StreamSubscription? subscription;
   StreamSubscription? deviceSubscription;
 
   void scan() {
     setState(() {
-      foundDevices = {};
+      foundDevices.clear();
     });
+    print("DEVICES: ${foundDevices.length}");
     subscription?.cancel();
     deviceSubscription?.cancel();
-    deviceSubscription = controller.scan(4).asBroadcastStream().listen((a) {
+    deviceSubscription = controller.scan(4).listen((a) {
       setState(() {
-        foundDevices.add(a);
+        foundDevices = a.toSet() as Set<SBluetoothDevice>;
       });
     });
     subscription = controller.scanning().asBroadcastStream().listen((event) {
@@ -451,38 +442,34 @@ class _SearchWidgetState extends State<SearchWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return SimpleDialog(
-        title: Text(getTitle()),
-        children: <Widget>[
-          ...foundDevices.map((e) => SimpleDialogOption(
-            padding: const EdgeInsets.all(20),
-            onPressed: () {
-              controller.connect(e);
-              Navigator.pop(context);
-            },
-            child: Text(e.name),
-          )),
-          if (_scanning) ...[
-            SimpleDialogOption(
-                child: Center(
-                    child: Column(
-                      children: const [CircularProgressIndicator()],
-                    )
-                )
-            )
-          ]
-          else ...[
-            Center(
-                child: Column(
-                  children: [ElevatedButton(onPressed: scan, child: Text("Erneut suchen"))
-                  ],
-                )
-            )
-          ]
+    return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+      return SimpleDialog(title: Text(getTitle()), children: <Widget>[
+        ...foundDevices.map((e) => SimpleDialogOption(
+              padding: const EdgeInsets.all(20),
+              onPressed: () {
+                controller.connect(e);
+                Navigator.pop(context);
+              },
+              child: Text(e.options.name ?? e.device.name),
+            )),
+        if (_scanning) ...[
+          SimpleDialogOption(
+              child: Center(
+                  child: Column(
+            children: const [CircularProgressIndicator()],
+          )))
+        ] else ...[
+          Center(
+              child: Column(
+            children: [
+              ElevatedButton(onPressed: scan, child: Text("Erneut suchen"))
+            ],
+          ))
         ]
-    );
+      ]);
+    });
   }
-
 }
 
 
