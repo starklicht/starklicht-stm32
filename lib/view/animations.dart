@@ -11,7 +11,7 @@ import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
-
+import '../i18n/animations.dart';
 import 'colors.dart';
 
 abstract class IGradientChange {
@@ -81,7 +81,7 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
-      title: Text("Farbe ändern"),
+      title: Text("Farbe ändern".i18n),
       content: Container(
         child: ColorsWidget(
             sendOnChange: false,
@@ -90,10 +90,10 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
       ),
       actions: [
         TextButton(
-            child: Text("Abbrechen"),
+            child: Text("Abbrechen".i18n),
             onPressed: () => {Navigator.pop(context)}),
         TextButton(
-            child: Text("Speichern"),
+            child: Text("Speichern".i18n),
             onPressed: () {
               widget.saveCallback(widget.color);
               Navigator.pop(context);
@@ -185,13 +185,13 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
   String getRepeatText() {
     switch (selIndex(isSelected)) {
       case 0:
-        return "Schleife";
+        return "Schleife".i18n;
       case 1:
-        return "Ping Pong";
+        return "Ping Pong".i18n;
       case 2:
-        return "Zufall";
+        return "Zufall".i18n;
       case 3:
-        return "Einmalig";
+        return "Einmalig".i18n;
     }
     return "Unbekannt";
   }
@@ -199,9 +199,9 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
   String getAnimationText() {
     switch (selIndex(isSelectedInterpolation)) {
       case 0:
-        return "Linear";
+        return "Linear".i18n;
       case 1:
-        return "Konstant";
+        return "Konstant".i18n;
     }
     return "Unbekannt";
   }
@@ -281,7 +281,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
             ),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
-                Text("Zeitfaktor: ",
+                Text("Zeitfaktor: ".i18n,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 Text(getRepeatText()),
               ]),
@@ -315,7 +315,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
         margin: EdgeInsets.all(12),
         child: Column(children: [
           Row(children: [
-            const Text("Dauer ",
+            Text("Dauer".i18n,
                 style: const TextStyle(fontWeight: FontWeight.bold)),
             if (_currentMillis + _currentSeconds == 0) ...[Icon(Icons.warning)]
           ]),
@@ -327,7 +327,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
                 items: [for (var i = 0; i <= 60; i++) i].map((value) =>
                     DropdownMenuItem<double>(
                         value: value.toDouble(),
-                        child: Text("$value Sekunde${value==1?'':'n'}")
+                        child: Text("%d Sekunden".plural(value))
                     )
                 ).toList(),
                 onChanged: (d) => setState(() {
@@ -341,7 +341,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
                 items: [for (var i = 0; i <= 20; i++) i].map((value) =>
                     DropdownMenuItem<double>(
                         value: value.toDouble() * 50,
-                        child: Text("${value * 50} Millisekunden")
+                        child: Text("%s Millisekunden".i18n.fill([value*50]))
                     )
                 ).toList(),
                 onChanged: (d) => setState(() {
@@ -432,7 +432,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
           PopupMenuItem(
             child: ListTile(
               leading: Icon(Icons.content_copy), // your icon
-              title: Text("Duplizieren"),
+              title: Text("Duplizieren".i18n),
             ),
             value: 1,
             onTap: duplicatePoint,
@@ -440,7 +440,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
           PopupMenuItem(
             child: ListTile(
               leading: Icon(Icons.delete), // your icon
-              title: Text("Löschen"),
+              title: Text("Löschen".i18n),
             ),
             value: 2,
             onTap: deletePoint,
@@ -449,7 +449,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
           PopupMenuItem(
             child: ListTile(
               leading: Icon(Icons.horizontal_distribute), // your icon
-              title: Text("Neu anordnen"),
+              title: Text("Ausbreiten".i18n),
             ),
             value: 3,
             onTap: realignSpaceBetween,
@@ -708,14 +708,14 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
           Row(children: [
             TextButton.icon(
                 onPressed: revertAll,
-                label: Text("Zurücksetzen"),
+                label: Text("Zurücksetzen".i18n),
                 icon: const Icon(Icons.restore)),
             TextButton.icon(
                 onPressed:
                     _activeIndex == null && widget.gradient.colors.length <= 2
                         ? null
                         : deletePoint,
-                label: Text("Löschen"),
+                label: Text("Löschen".i18n),
                 icon: const Icon(Icons.highlight_remove)),
           ])
         ]
@@ -898,11 +898,11 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
     return Column(children: [
       Row(children: [
         TextButton.icon(
-            label: Text("Senden"),
+            label: Text("Senden".i18n),
             onPressed: errorState() ? null : send,
             icon: Icon(Icons.settings_remote)),
         TextButton.icon(
-            label: Text("Speichern"),
+            label: Text("Speichern".i18n),
             onPressed: errorState()
                 ? null
                 : () => {
@@ -924,7 +924,7 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
             });
           },
           controlAffinity: ListTileControlAffinity.leading,
-          title: Text("Automatisch mit Lampe synchronisieren")),
+          title: Text("Automatisch mit Lampe synchronisieren".i18n)),
       CheckboxListTile(
           value: _integrateAnimations,
           onChanged: (e) {
@@ -933,7 +933,7 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
             });
           },
           controlAffinity: ListTileControlAffinity.leading,
-          title: Text("Nahtlose Übergänge zwischen Animationen")),
+          title: Text("Nahtlose Übergänge zwischen Animationen".i18n)),
     ]);
   }
 
@@ -979,11 +979,11 @@ class _SaveWidgetState extends State<SaveWidget> {
   Widget build(BuildContext context) {
     return StatefulBuilder(builder: (context, StateSetter setState) {
       return AlertDialog(
-        title: const Text('Animation speichern'),
+        title: Text('Animation speichern'.i18n),
         content: TextField(
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             border: OutlineInputBorder(),
-            labelText: 'Name der Animation',
+            labelText: 'Name der Animation'.i18n,
           ),
           onChanged: (text) {
             setState(() {
@@ -996,7 +996,7 @@ class _SaveWidgetState extends State<SaveWidget> {
         actions: [
           TextButton(
               onPressed: () => {Navigator.pop(context)},
-              child: Text('Abbrechen')),
+              child: Text('Abbrechen'.i18n)),
           TextButton(
               onPressed: name.isEmpty
                   ? null
@@ -1012,12 +1012,14 @@ class _SaveWidgetState extends State<SaveWidget> {
                               builder: (_) {
                                 return AlertDialog(
                                   title: Text(
-                                      'Animation "${widget.animation.title}" existiert bereits. Überschreiben?'),
+                                      'Animation "%s" existiert bereits. Überschreiben?'.i18n.fill([
+                                        widget.animation.title
+                                      ])),
                                   actions: [
                                     TextButton(
                                         onPressed: () =>
                                             {Navigator.pop(context)},
-                                        child: Text("Abbrechen")),
+                                        child: Text("Abbrechen".i18n)),
                                     TextButton(
                                         onPressed: () {
                                           Navigator.pop(context);
@@ -1026,12 +1028,12 @@ class _SaveWidgetState extends State<SaveWidget> {
                                               .saveAnimation(widget.animation);
                                           var snackBar = SnackBar(
                                             content: Text(
-                                                'Animation "${widget.animation.title}" wurde überschrieben'),
+                                                'Animation "%s" wurde überschrieben'.i18n.fill([widget.animation.title])),
                                           );
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(snackBar);
                                         },
-                                        child: Text("Überschreiben"))
+                                        child: Text("Überschreiben".i18n))
                                   ],
                                 );
                               });
@@ -1039,14 +1041,14 @@ class _SaveWidgetState extends State<SaveWidget> {
                           Persistence().saveAnimation(widget.animation);
                           var snackBar = SnackBar(
                             content: Text(
-                                'Animation "${widget.animation.title}" wurde gespeichert'),
+                                'Animation "%s" wurde gespeichert'.i18n.fill([widget.animation.title])),
                           );
                           ScaffoldMessenger.of(context).showSnackBar(snackBar);
                           Navigator.pop(context);
                         }
                       });
                     },
-              child: Text('Speichern'))
+              child: Text('Speichern'.i18n))
         ],
       );
     });
@@ -1086,24 +1088,24 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
     // gradient = GradientSettingsConfig([ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)]);
     Function? callback;
     if (settings == null || gradient == null) {
-      return Container(child: Text("Lädt..."));
+      return Container(child: Text("Lädt...".i18n));
     } else {
       return Container(
           child: SingleChildScrollView(
               child: Column(children: [
-        const Text(
-          "Zeitverlauf\n",
+        Text(
+          "Zeitverlauf\n".i18n,
           textAlign: TextAlign.start,
         ),
         GradientEditorWidget(gradient: gradient!, callback: callback),
         const Divider(height: 32),
-        const Text(
-          "Animationseinstellungen",
+        Text(
+          "Animationseinstellungen".i18n,
           textAlign: TextAlign.start,
         ),
         AnimationSettings(settings: settings!, callback: callback),
         const Divider(height: 32),
-        const Text("Animationsvorschau"),
+        Text("Animationsvorschau".i18n),
         const SizedBox(height: 12),
         AnimationPreviewWidget(
             settings: settings!,
@@ -1113,7 +1115,7 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
             notify: notifyChanges,
             isEditorPreview: true),
         const Divider(height: 32),
-        const Text("Aktionen"),
+        Text("Aktionen".i18n),
         const SizedBox(height: 12),
         AnimationTaskbarWidget(
             settings: settings!, colors: gradient!, notify: notifyChanges)

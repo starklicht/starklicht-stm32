@@ -10,6 +10,7 @@ import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/animations.dart';
+import '../i18n/animation_list.dart';
 
 class AnimationsWidget extends StatefulWidget {
   const AnimationsWidget({Key? key}) : super(key: key);
@@ -57,7 +58,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
       if(i.length < animations.length) {
         // If length has changed, it has been deleted
         var snackBar = SnackBar(
-          content: Text('Animation "$title" wurde gelöscht'),
+          content: Text('Animation "%s" wurde gelöscht'.i18n.fill([title])),
         );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
@@ -97,14 +98,14 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       'assets/server.json',
 		      width: 500
                       ),
-                      const Text(
-                        "Keine gespeicherten Animationen\n",
+                      Text(
+                        "Keine gespeicherten Animationen\n".i18n,
                         style: TextStyle(
                             fontSize: 20
                         ),
                       ),
-                      const Text(
-                        "Im Bereich \"Animation\" kannst du Animationen erstellen und speichern.\n",
+                      Text(
+                        'Im Bereich "Animation" kannst du Animationen erstellen und speichern'.i18n,
                         style: TextStyle(
                             color: Colors.grey,
                         ),
@@ -118,8 +119,8 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
             return Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Suche',
+                decoration: InputDecoration(
+                  labelText: 'Suche'.i18n,
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder()
                 ),
@@ -151,20 +152,20 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       items: <PopupMenuEntry> [
                         PopupMenuItem(child: ListTile(
                           leading: Icon(Icons.edit),
-                          title: Text("Editieren"),
+                          title: Text("Editieren".i18n),
                         ),
                           onTap: () {
                             Persistence().saveEditorAnimation(filteredAnimations()[realIndex]);
-                            var snackBar = const SnackBar(
-                              content: Text('Animation kann jetzt im Abschnitt "Animation" bearbeitet werden'),
+                            var snackBar = SnackBar(
+                              content: Text('Animation kann jetzt im Abschnitt "Animation" bearbeitet werden'.i18n),
                             );
                             ScaffoldMessenger.of(context).showSnackBar(snackBar);
                           },
                           value: 0
                         ),
-                        PopupMenuItem(child: const ListTile(
+                        PopupMenuItem(child: ListTile(
                           leading: Icon(Icons.drive_file_rename_outline_sharp),
-                          title: Text("Umbenennen"),
+                          title: Text("Umbenennen".i18n),
                         ),
                             onTap: () {
                               setState(() {
@@ -177,7 +178,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                                   showDialog(context: context, builder: (_) {
                                   return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
                                     return AlertDialog(
-                                        title: Text("Umbenennen"),
+                                        title: Text("Umbenennen".i18n),
                                         content: TextField(
                                           controller: t,
                                           onChanged: (v) => {
@@ -189,7 +190,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                                         actions: [
                                           TextButton(onPressed: () =>{
                                             Navigator.pop(context)
-                                          }, child: Text("Abbrechen")),
+                                          }, child: Text("Abbrechen".i18n)),
                                           TextButton(onPressed: filteredAnimations()[realIndex].title == currentNameRename? null : () {
                                             var old = filteredAnimations()[realIndex].title;
                                             Persistence().rename(filteredAnimations()[realIndex].title, t.text).then((value) =>
@@ -197,12 +198,12 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                                               load(),
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(content:
-                                                    Text('Animation "${old}" wurde zu "${t.text}" umbenannt')
+                                                    Text('Animation "%s" wurde zu "%s" umbenannt'.i18n.fill([old, t.text]))
                                                 )
                                               ),
                                               Navigator.pop(context)
                                             });
-                                          }, child: Text("Speichern")),
+                                          }, child: Text("Speichern".i18n)),
                                         ],
                                     );
                                   });
@@ -229,7 +230,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                         PopupMenuItem(
                           child: ListTile(
                             leading: Icon(Icons.delete), // your icon
-                            title: Text("Löschen"),
+                            title: Text("Löschen".i18n),
                           ),
                           value: 2,
                           onTap: () => deleteItem(filteredAnimations()[realIndex].title),

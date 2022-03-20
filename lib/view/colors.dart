@@ -8,6 +8,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
+import '../i18n/colors.dart';
 
 class ColorsWidget extends StatefulWidget {
   bool sendOnChange;
@@ -107,7 +108,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
   Widget build(BuildContext context) {
     // TODO: implement build
     if(isLoading) {
-      return Text("Lädt...");
+      return Text("Lädt...".i18n);
     }
     return Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -164,7 +165,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
         showDialog(context: context, builder: (_) {
           return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
-            title: Text("Farbcode eingeben"),
+            title: Text("Farbcode eingeben".i18n),
             content: Form(
               key: _formKey,
               onChanged: () => setState(() {
@@ -175,7 +176,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
               initialValue: getColorText(),
               validator: (value) {
                 if (value == null || value.length < 6) {
-                  return 'Hex-Code unvollständig';
+                  return 'Hex-Code unvollständig'.i18n;
                 }
                 if(!RegExp(r'^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$').hasMatch(value)) {
                   return 'Kein valider Hex-Code';
@@ -192,10 +193,10 @@ class _ColorsWidgetState extends State<ColorsWidget> {
               ),
             )),
             actions: [
-              TextButton(child:Text("Abbrechen"), onPressed: () => {
+              TextButton(child:Text("Abbrechen".i18n), onPressed: () => {
                 Navigator.pop(context)
               }),
-              TextButton(child:Text("Übernehmen"),
+              TextButton(child:Text("Übernehmen".i18n),
                   onPressed: _hexValid?
                   () => {
                     _formKey.currentState?.save(),

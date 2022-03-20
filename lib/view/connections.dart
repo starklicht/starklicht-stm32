@@ -4,9 +4,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:i18n_extension/i18n_extension.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:lottie/lottie.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
+import "../i18n/connections.dart";
 
 class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   BluetoothController<SBluetoothDevice> controller = BluetoothControllerWidget();
@@ -52,12 +54,12 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   List<String> getPlaceholderTitleAndSubtitle() {
     if(state == BluetoothState.unauthorized || state == BluetoothState.unknown
     || state == BluetoothState.unavailable) {
-      return ["Bluetooth ist nicht verfügbar", "Eventuell fehlen Berechtigungen für den\n Standortzugriff oder Bluetooth."];
+      return ["Bluetooth ist nicht verfügbar".i18n, "Eventuell fehlen Berechtigungen für den Standortzugriff oder Bluetooth".i18n];
     }
     if(state == BluetoothState.off) {
-      return ["Bluetooth ist aus", "Du kannst Bluetooth in deinen \nGeräteeinstellungen anschalten."];
+      return ["Bluetooth ist aus".i18n, "Du kannst Bluetooth in deinen Geräteeinstellungen anschalten".i18n];
     }
-    return ["Keine aktiven Verbindungen", "Bitte verbinde dich zunächst mit einem Starklicht."];
+    return ["Keine aktiven Verbindungen".i18n, "Bitte verbinde dich zunächst mit einem Starklicht".i18n];
   }
 
 
@@ -104,7 +106,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                             ),
                           ),
                           if(state == BluetoothState.on) ElevatedButton(
-                            child: Text("Gerät suchen"),
+                            child: Text("Gerät suchen".i18n),
                             onPressed: () {
                               showDialog(context: context, builder: (_) {
                                 return const SearchWidget();
@@ -139,14 +141,14 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                   IconButton(onPressed: () => {
                                     showDialog(context: context, builder: (_) {
                                       return AlertDialog(
-                                        title: Text("Informationen"),
+                                        title: Text("Informationen".i18n),
                                         content: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text("Gerätename: ${d.device.name}"),
-                                            Text("Name: ${option.name ?? "Nicht vergeben"}"),
-                                            Text("ID: ${d.device.id.id}")
+                                            Text("Gerätename: %s".i18n.fill([d.device.name])),
+                                            Text("Name: %s".i18n.fill([option.name ?? "Nicht vergeben"])),
+                                            Text("ID: %s".i18n.fill([d.device.id.id]))
                                           ]
                                         ),
                                       );
@@ -173,7 +175,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                             controller.setOptions(d.device.id.id, option.withInverse(val));
                                           });
                                         },
-                                        label: Text("Invertieren")
+                                        label: Text("Invertieren".i18n)
                                     ),
                                     GestureDetector(
                                       onLongPress: () => {
@@ -181,11 +183,11 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                           var t = TextEditingController();
                                           t.text = option.delayTimeMillis.toString();
                                           return AlertDialog(
-                                            title: Text("Verzögungsdauer ändern"),
+                                            title: Text("Verzögungsdauer ändern".i18n),
                                             content: TextField(
                                               controller: t,
                                               decoration: InputDecoration(
-                                                  labelText: 'Verzögerung in ms',
+                                                  labelText: 'Verzögerung in ms'.i18n,
                                                   border: OutlineInputBorder()
                                               ),
                                               keyboardType: TextInputType.number,
@@ -195,10 +197,10 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                             ),
                                             actions: [
                                               TextButton(
-                                                  child: Text("Abbrechen"),
+                                                  child: Text("Abbrechen".i18n),
                                                   onPressed: () => {Navigator.pop(context)}),
                                               TextButton(
-                                                child: Text("Speichern"),
+                                                child: Text("Speichern".i18n),
                                                 onPressed: () => {
                                                   controller.setOptions(d.device.id.id, option.withDelayTime(
                                                     int.parse(t.text)
@@ -221,7 +223,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                               controller.setOptions(d.device.id.id, option.withDelay(val));
                                             });
                                           },
-                                          label: Text("Verzögerung (${option.delayTimeMillis}ms)")
+                                          label: Text("Verzögerung (%d ms)".i18n.fill([option.delayTimeMillis]))
                                       ),
                                     ),
                                     ChoiceChip(
@@ -235,7 +237,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                             controller.setOptions(d.device.id.id, option.withActive(val));
                                           });
                                         },
-                                        label: Text("Aktivieren")
+                                        label: Text("Aktivieren".i18n)
                                     ),
                                   ]
                               ),
@@ -244,7 +246,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                   child: Wrap(
                                     children: [
                                       TextButton(
-                                        child: Text("Verbindung trennen".toUpperCase(), style:
+                                        child: Text("Verbindung trennen".i18n.toUpperCase(), style:
                                         TextStyle(
                                           color: Colors.redAccent
                                         )),
@@ -253,13 +255,13 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                         },
                                       ),
                                       TextButton(
-                                        child: Text("Umbenennen".toUpperCase()),
+                                        child: Text("Umbenennen".i18n.toUpperCase()),
                                         onPressed: () => {
                                           showDialog(context: context, builder: (_) {
                                             var t = TextEditingController();
                                             t.text = option.name ?? "";
                                             return AlertDialog(
-                                              title: Text("Umbenennen"),
+                                              title: Text("Umbenennen".i18n),
                                               content: TextField(
                                                 textCapitalization: TextCapitalization.sentences,
                                                 controller: t,
@@ -267,17 +269,17 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                                     LengthLimitingTextInputFormatter(20),
                                                   ],
                                                 decoration: InputDecoration(
-                                                    labelText: 'Name',
+                                                    labelText: 'Name'.i18n,
                                                     hintText: d.device.name,
                                                     border: OutlineInputBorder()
                                                 ),
                                               ),
                                               actions: [
                                                 TextButton(
-                                                    child: Text("Abbrechen"),
+                                                    child: Text("Abbrechen".i18n),
                                                 onPressed: () => {Navigator.pop(context)}),
                                                 TextButton(
-                                                  child: Text("Speichern"),
+                                                  child: Text("Speichern".i18n),
                                                   onPressed: () {
                                                     var text = t.text.trim();
                                                     controller.setOptions(d.device.id.id, option.withName(
@@ -407,7 +409,6 @@ class _SearchWidgetState extends State<SearchWidget> {
     setState(() {
       foundDevices.clear();
     });
-    print("DEVICES: ${foundDevices.length}");
     subscription?.cancel();
     deviceSubscription?.cancel();
     deviceSubscription = controller.scan(4).listen((a) {
@@ -437,7 +438,7 @@ class _SearchWidgetState extends State<SearchWidget> {
   }
 
   String getTitle() {
-    return _scanning?"Suche":foundDevices.isEmpty?"Keine Geräte gefunden":"Mit Gerät verbinden";
+    return _scanning?"Suche".i18n:foundDevices.isEmpty?"Keine Geräte gefunden".i18n:"Mit Gerät verbinden".i18n;
   }
 
   @override
@@ -463,7 +464,7 @@ class _SearchWidgetState extends State<SearchWidget> {
           Center(
               child: Column(
             children: [
-              ElevatedButton(onPressed: scan, child: Text("Erneut suchen"))
+              ElevatedButton(onPressed: scan, child: Text("Search again".i18n))
             ],
           ))
         ]

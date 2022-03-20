@@ -10,6 +10,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:i18n_extension/i18n_extension.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/save_message.dart';
@@ -17,6 +19,9 @@ import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/animation_list.dart';
 import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
+import "package:i18n_extension/i18n_widget.dart";
+import "package:i18n_extension/i18n_extension.dart";
+import "i18n/main.dart";
 
 import 'view/animations.dart';
 
@@ -31,8 +36,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('en', "US"),
+        const Locale('de', "DE")
+      ],
       title: _title,
-      home: const MyStatefulWidget(),
+      home: I18n(
+          child: const MyStatefulWidget()
+      ),
       theme: ThemeData(
         brightness: Brightness.light,
       ),
@@ -89,15 +105,15 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       var name = event.device.options.name ?? event.device.device.name;
       if(event.type == ConnectionType.CONNECT) {
         if(!event.auto) {
-          text = "${name} wurde verbunden";
+          text = "%s wurde verbunden".i18n.fill([name]);
         } else {
-          text = "${name} hat sich verbunden";
+          text = "%s hat sich verbunden".i18n.fill([name]);
         }
       } else {
         if(!event.auto) {
-          text = "${name} wurde getrennt";
+          text = "%s wurde getrennt".i18n.fill([name]);
         } else {
-          text = "${name} hat sich getrennt";
+          text = "%s hat sich getrennt".i18n.fill([name]);
         }
       }
       var snackBar = SnackBar(
@@ -112,7 +128,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     print(selectedRadio);
     int n = controller.broadcast(SaveMessage(true, selectedRadio));
     var snackBar = SnackBar(
-      content: Text('Auf Button ${selectedRadio + 1} für ${n} Lampen gespeichert'),
+      content: Text('Auf Button %d gespeichert'.i18n.fill([selectedRadio + 1])),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
@@ -120,7 +136,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   void loadFromLamp(int selectedRadio) {
     int n = controller.broadcast(SaveMessage(false, selectedRadio));
     var snackBar = SnackBar(
-      content: Text('Button ${selectedRadio + 1} auf ${n} Lampen geladen'),
+      content: Text('Button %d geladen'.i18n.fill([selectedRadio + 1])),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
@@ -130,7 +146,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('STARKLICHT', style: TextStyle(
+        title: Text('STARKLICHT'.i18n, style: TextStyle(
           fontFamily: 'MontserratBlack',
         )),
         backgroundColor: Colors.black87,
@@ -153,7 +169,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
                   return AlertDialog(
                   scrollable: true,
-                  title: Text("Helligkeit einstellen"),
+                  title: Text("Helligkeit einstellen".i18n),
                   content: Container(
                     child:Column(children:  [
                       Slider(
@@ -184,13 +200,13 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           brightness = 0;
                         }),
                         controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0))
-                      }, icon: Icon(Icons.lightbulb_outline), label: Text("Aus")),
+                      }, icon: Icon(Icons.lightbulb_outline), label: Text("Aus".i18n)),
                       TextButton.icon(onPressed: () => {
                         setState(() {
                           brightness = 100;
                         }),
                         controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0))
-                      }, icon: Icon(Icons.lightbulb), label: Text("Max. Helligkeit"))
+                      }, icon: Icon(Icons.lightbulb), label: Text("Max. Helligkeit".i18n))
                     ],
                   );});
             }); });
@@ -200,12 +216,12 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               onPressed: () => showDialog(context: context, builder: (BuildContext context) {
                 int selectedRadio = -1;
                 return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {return AlertDialog(
-                  title: Text("Auf Button speichern"),
+                  title: Text("Auf Button speichern".i18n),
                   content: Container(
                       height: 110,
                       child:Column(
                     children: [
-                      Text("Speichere die momentan ablaufende Szene auf deinem Starklicht"),
+                      Text("Speichere die momentan ablaufende Szene auf deinem Starklicht".i18n),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children:
@@ -219,20 +235,20 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           );
                         }),
                       ),
-                      if(selectedRadio >= 0) ...[Text("Wird auf Button ${selectedRadio + 1} gespeichert")]
+                      if(selectedRadio >= 0) ...[Text("Wird auf Button %d gespeichert".i18n.fill([selectedRadio + 1]))]
 
                     ],
                   )),
                     actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: Text("Abbrechen")),
+                    TextButton(onPressed: () => Navigator.pop(context), child: Text("Abbrechen".i18n)),
                       TextButton(onPressed: selectedRadio < 0?null:() {
                         loadFromLamp(selectedRadio);
                         Navigator.pop(context);
-                      }, child: Text("Laden")),
+                      }, child: Text("Laden".i18n)),
                     TextButton(onPressed: selectedRadio < 0?null:() {
                       saveToLamp(selectedRadio);
                       Navigator.pop(context);
-                    }, child: Text("Speichern"))
+                    }, child: Text("Speichern".i18n))
                   ],);},
 
                 );
@@ -280,22 +296,22 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         child: Center(child: _widgetOptions.elementAt(_selectedIndex)),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.wifi_tethering),
-            label: 'Connections',
+            label: 'Verbindungen'.i18n,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.color_lens),
-            label: 'Simple',
+            label: 'Farbe'.i18n,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.animation),
-            label: 'Animation'
+            label: 'Animation'.i18n
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
-            label: 'Bibliothek',
+            label: 'Bibliothek'.i18n,
           )
         ],
         currentIndex: _selectedIndex,
