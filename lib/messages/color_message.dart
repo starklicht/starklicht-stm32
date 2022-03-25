@@ -17,9 +17,17 @@ extension on Color {
 
 class ColorMessage extends IBluetoothMessage {
   int maxValue = 255;
-  int red, green, blue, master;
+  late int red, green, blue, master;
 
   ColorMessage(this.red, this.green, this.blue, this.master);
+
+  ColorMessage.fromColor(Color color) {
+    red = color.red;
+    green = color.green;
+    blue = color.blue;
+    master = color.alpha;
+  }
+
 
   @override
   List<int> getMessageBody({ bool inverse = false }) {
@@ -27,9 +35,20 @@ class ColorMessage extends IBluetoothMessage {
       return [red, green, blue, master];
     } else {
       // Inverse color
-      var c = Color.fromARGB(255, red, green, blue).inverse();
+      var c = toColor().inverse();
       return [c.red, c.green, c.blue, master];
     }
+  }
+
+  @override
+  Color toColor() {
+    // TODO: implement toColor
+    return Color.fromARGB(255, red, green, blue);
+  }
+
+  @override
+  String retrieveText() {
+    return "#" + toColor().toString().substring(10, 16);
   }
 
   @override

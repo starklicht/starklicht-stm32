@@ -44,6 +44,9 @@ dependencies:
   shimmer: ^2.0.0
   sembast: ^3.1.1+1
   lottie: ^1.2.2
+  dotted_border: ^2.0.0+2
+  reorderableitemsview: ^2.0.1
+  flutter_speed_dial: ^5.0.0+1
 
 dev_dependencies:
   flutter_test:

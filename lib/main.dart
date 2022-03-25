@@ -17,12 +17,14 @@ import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/save_message.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/animation_list.dart';
+import 'package:starklicht_flutter/view/orchestra.dart';
 import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
 import "package:i18n_extension/i18n_widget.dart";
 import "package:i18n_extension/i18n_extension.dart";
 import "i18n/main.dart";
 
+import 'model/orchestra.dart';
 import 'view/animations.dart';
 
 void main() => runApp(const MyApp());
@@ -80,10 +82,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   static const TextStyle optionStyle =
   TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   List<Widget> _widgetOptions = <Widget>[
-  ConnectionsWidget(),
-  ColorsWidget(sendOnChange: true),
-  Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
-  AnimationsWidget(),
+    ConnectionsWidget(),
+    ColorsWidget(sendOnChange: true),
+    Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
+    AnimationsWidget(),
+    OrchestraWidget()
   ];
 
   void _onItemTapped(int index) {
@@ -312,6 +315,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'Bibliothek'.i18n,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.podcasts),
+            label: 'Orchester'
           )
         ],
         currentIndex: _selectedIndex,
