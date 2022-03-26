@@ -45,7 +45,7 @@ class TimedNodeHandler extends OrchestraNodeHandler<TimedNode> {
   }
 }
 
-class UserInputHandler extends OrchestraNodeHandler<WaitUserNode> {
+class UserInputHandler extends OrchestraNodeHandler<TimedNode> {
   @override
   Future<void> cancel() {
     // TODO: implement cancel
@@ -53,7 +53,7 @@ class UserInputHandler extends OrchestraNodeHandler<WaitUserNode> {
   }
 
   @override
-  Future<bool> execute(WaitUserNode event, StreamController<double> progress, {BuildContext? context}) async {
+  Future<bool> execute(TimedNode event, StreamController<double> progress, {BuildContext? context}) async {
     var continueProgram = false;
     await showDialog(context: context!, builder: (_) {
       return AlertDialog(
@@ -89,7 +89,7 @@ class MessageNodeHandler extends OrchestraNodeHandler<MessageNode> {
 
   @override
   Future<bool> execute(MessageNode event, StreamController<double> progress, {BuildContext? context}) async {
-    await BluetoothControllerWidget().broadcast(event.message);
+    await BluetoothControllerWidget().broadcastWaiting(event.message);
     return true;
   }
 

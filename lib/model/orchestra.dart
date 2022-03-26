@@ -11,24 +11,27 @@ import 'package:flutter/painting.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/messages/imessage.dart';
+import 'package:uuid/uuid.dart';
 
 enum NodeType {
-  NOT_DEFINED, TIME, MESSAGE, WAIT
+  NOT_DEFINED, TIME, REPEAT, MESSAGE, WAIT
 }
 
 abstract class INode extends StatefulWidget {
   Function? notifyParent;
+  Function(Key id)? onDelete;
   double progress = 0;
-  INode({Key? key, this.notifyParent, this.update}) : super(key: key);
+  INode({Key? key, this.notifyParent, this.update, this.onDelete}) : super(key: key ?? Key(const Uuid().v4()));
   Stream<double>? update;
   abstract NodeType type;
 }
 
 class MessageNode extends INode {
   final List<String> lamps;
+  final List<String> activeLamps = [];
   final IBluetoothMessage message;
 
-  MessageNode({Key? key, required this.lamps, required this.message, update}) : super(key: key, update: update);
+  MessageNode({Key? key, required this.lamps, required this.message, update, onDelete}) : super(key: key, update: update, onDelete: onDelete);
 
   @override
   State<StatefulWidget> createState() => MessageNodeState();
@@ -43,23 +46,13 @@ class TimedNode extends INode {
   }
   final Duration time;
 
-  TimedNode({Key? key, required this.time, update}) : super(key:key, update: update);
+  TimedNode({Key? key, required this.time, update, onDelete, required this.type}) : super(key:key, update: update, onDelete: onDelete);
 
   @override
   State<StatefulWidget> createState() => TimedNodeState();
 
   @override
   NodeType type = NodeType.TIME;
-}
-
-class RepeatNode extends TimedNode {
-  RepeatNode({Key? key, required time}) : super(key:key, time: time);
-}
-
-class WaitUserNode extends TimedNode {
-  @override
-  NodeType type = NodeType.WAIT;
-  WaitUserNode({Key? key, required time}) : super(key:key, time: time);
 }
 
 class AddNode extends INode {
@@ -112,7 +105,6 @@ class AddNodeState extends INodeState<AddNode> {
 
 
 class MessageNodeState extends INodeState<MessageNode> {
-
   String getTitle() {
     switch(widget.message.messageType) {
       case MessageType.color:
@@ -155,16 +147,41 @@ class MessageNodeState extends INodeState<MessageNode> {
           borderRadius: BorderRadius.circular(8.0),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(0.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                getTitle().toUpperCase(),
-                style: Theme.of(context).textTheme.overline,
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0, right: 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      getTitle().toUpperCase(),
+                      style: Theme.of(context).textTheme.overline,
+                    ),
+                    PopupMenuButton<String>(
+                      iconSize: 18,
+                      padding: EdgeInsets.zero,
+                      onSelected: (s) => {
+                        if(s == 'Löschen') {
+                          widget.onDelete?.call(widget.key!)
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return { 'Bearbeiten', 'Löschen'}.map((String choice) {
+                          return PopupMenuItem<String>(
+                            value: choice,
+                            child: Text(choice),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ],
+                ),
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 8.0, bottom: 8),
+                padding: const EdgeInsets.only(left:8, bottom: 8, right: 8),
                 child: Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: 8,
@@ -195,19 +212,23 @@ class MessageNodeState extends INodeState<MessageNode> {
                   ],
                 ),
               ),
-              Text(
-                "Lampen".toUpperCase(),
-                style: Theme.of(context).textTheme.overline,
-              ),
               Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Wrap(
-                  runSpacing: 8,
-                  spacing: 8,
-                  children: [
-                    ChoiceChip(label: Text("Starklicht YDN"), selected: true, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,),
-                    ChoiceChip(label: Text("Starklicht DAC"), selected: false, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,)
-                  ],
+                padding: const EdgeInsets.only(left:8.0, right: 8, bottom: 8),
+                child: Text(
+                  "Lampen".toUpperCase(),
+                  style: Theme.of(context).textTheme.overline,
+                ),
+              ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Padding(
+                  padding: EdgeInsets.zero,
+                  child: Row(
+                    children: widget.lamps.map((e) => Padding(
+                        padding: const EdgeInsets.only(left: 4.0, right: 4),
+                        child: ChoiceChip(label: Text(e), selected: true, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,),
+                      )).toList()
+                  ),
                 ),
               ),
             ],
@@ -219,18 +240,18 @@ class MessageNodeState extends INodeState<MessageNode> {
 
 class TimedNodeState extends INodeState<TimedNode> {
   String getTitle() {
-    if(widget is RepeatNode) {
+    if(widget.type == NodeType.REPEAT) {
       return "Neustart";
-    } else if(widget is WaitUserNode) {
+    } else if(widget.type == NodeType.WAIT) {
       return "Warten";
     }
     return "Verzögerung";
   }
 
   List<Color> getColors() {
-    if(widget is RepeatNode) {
+    if(widget.type == NodeType.REPEAT) {
       return [Color(0xffF7971E), Color(0xffFFD200)];
-    } else if(widget is WaitUserNode) {
+    } else if(widget.type == NodeType.WAIT) {
       return [Color(0xff42275A), Color(0xff734B6D)];
     }
     return [Color(0xff136A8A), Color(0xff267871)];
@@ -272,7 +293,26 @@ class TimedNodeState extends INodeState<TimedNode> {
                     ],
                   ),
                   Spacer(flex: 2),
-                  Icon(getIcon(), color: Colors.white, size: 64,)
+                  Icon(getIcon(), color: Colors.white, size: 64,),
+                  Container(
+                    child: PopupMenuButton<String>(
+                      icon: Icon(Icons.adaptive.more, color: Colors.white,),
+                      padding: EdgeInsets.zero,
+                      onSelected: (s) => {
+                        if(s == 'Löschen') {
+                          widget.onDelete?.call(widget.key!)
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return {'Bearbeiten', 'Löschen'}.map((String choice) {
+                          return PopupMenuItem<String>(
+                            value: choice,
+                            child: Text(choice),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -283,18 +323,18 @@ class TimedNodeState extends INodeState<TimedNode> {
   }
 
   IconData getIcon() {
-    if(widget is RepeatNode) {
+    if(widget.type == NodeType.REPEAT) {
       return Icons.history;
-    } else if(widget is WaitUserNode) {
+    } else if(widget.type == NodeType.WAIT) {
       return Icons.hourglass_empty;
     }
     return Icons.timer;
   }
 
   String getSubtitle() {
-    if(widget is RepeatNode) {
+    if(widget.type == NodeType.REPEAT) {
       return "Nach ${widget.time.inSeconds},${(widget.time.inMilliseconds - widget.time.inSeconds * 1000) ~/ 100} Sekunde(n)";
-    } else if (widget is WaitUserNode) {
+    } else if (widget.type == NodeType.WAIT) {
       return "Auf Benutzereingabe";
     }
     return "${widget.time.inSeconds},${(widget.time.inMilliseconds - widget.time.inSeconds * 1000) ~/ 100} Sekunde(n)";

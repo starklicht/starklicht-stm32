@@ -13,5 +13,10 @@ class BrightnessMessage extends IBluetoothMessage {
   }
 
   @override
+  String retrieveText() {
+    return "$brightness%";
+  }
+
+  @override
   MessageType messageType = MessageType.brightness;
 }

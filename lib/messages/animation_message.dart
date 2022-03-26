@@ -53,6 +53,11 @@ class AnimationMessage extends IBluetoothMessage {
     return b;
   }
 
+  @override
+  String retrieveText() {
+    return "TODO";
+  }
+
   int buildInterpolationType() {
     switch(_config.interpolationType) {
       case InterpolationType.linear:

@@ -22,6 +22,7 @@ import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
 import "package:i18n_extension/i18n_widget.dart";
 import "package:i18n_extension/i18n_extension.dart";
+import 'package:starklicht_flutter/view/orchestra_list_view.dart';
 import "i18n/main.dart";
 
 import 'model/orchestra.dart';
@@ -86,7 +87,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     ColorsWidget(sendOnChange: true),
     Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
     AnimationsWidget(),
-    OrchestraWidget()
+    OrchestraListView()
   ];
 
   void _onItemTapped(int index) {
@@ -127,17 +128,17 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     });
   }
 
-  void saveToLamp(int selectedRadio) {
+  void saveToLamp(int selectedRadio) async {
     print(selectedRadio);
-    int n = controller.broadcast(SaveMessage(true, selectedRadio));
+    int n = await controller.broadcast(SaveMessage(true, selectedRadio));
     var snackBar = SnackBar(
       content: Text('Auf Button %d gespeichert'.i18n.fill([selectedRadio + 1])),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  void loadFromLamp(int selectedRadio) {
-    int n = controller.broadcast(SaveMessage(false, selectedRadio));
+  void loadFromLamp(int selectedRadio) async {
+    int n = await controller.broadcast(SaveMessage(false, selectedRadio));
     var snackBar = SnackBar(
       content: Text('Button %d geladen'.i18n.fill([selectedRadio + 1])),
     );
@@ -152,7 +153,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         title: Text('STARKLICHT'.i18n, style: TextStyle(
           fontFamily: 'MontserratBlack',
         )),
-        backgroundColor: Colors.black87,
         actions: <Widget>[
           if(options.isNotEmpty)...[ IconButton(
             onPressed: () => {

@@ -47,6 +47,7 @@ dependencies:
   dotted_border: ^2.0.0+2
   reorderableitemsview: ^2.0.1
   flutter_speed_dial: ^5.0.0+1
+  uuid: ^3.0.6
 
 dev_dependencies:
   flutter_test:
