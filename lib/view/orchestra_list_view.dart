@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/view/orchestra.dart';
+import 'package:starklicht_flutter/view/time_picker.dart';
 
 class OrchestraListView extends StatefulWidget {
   @override
@@ -18,7 +19,10 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
         TextButton(onPressed: () => {
           Navigator.push(context, MaterialPageRoute(builder: (context) => OrchestraWidget()))
         }
-        , child: Text("Öffne Dialog"))
+        , child: Text("Öffne Dialog")),
+        Container(height: 200, width: MediaQuery.of(context).size.width, child: TimePicker(
+          onChanged: (s) => { print(s) },
+        ))
       ],
     );
   }

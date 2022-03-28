@@ -23,9 +23,10 @@ extension on Color {
 class AnimationMessage extends IBluetoothMessage {
   List<ColorPoint> _colors;
   AnimationSettingsConfig _config;
+  String? title;
   int maxValue = 255;
 
-  AnimationMessage(this._colors, this._config);
+  AnimationMessage(this._colors, this._config, { this.title });
 
   @override
   bool get withoutResponse => false;

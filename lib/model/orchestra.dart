@@ -12,6 +12,7 @@ import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/messages/imessage.dart';
 import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 
 enum NodeType {
   NOT_DEFINED, TIME, REPEAT, MESSAGE, WAIT
@@ -44,8 +45,7 @@ class TimedNode extends INode {
   Stream<double> getProgress() {
     throw UnimplementedError();
   }
-  final Duration time;
-
+  Duration time;
   TimedNode({Key? key, required this.time, update, onDelete, required this.type}) : super(key:key, update: update, onDelete: onDelete);
 
   @override
@@ -257,6 +257,12 @@ class TimedNodeState extends INodeState<TimedNode> {
     return [Color(0xff136A8A), Color(0xff267871)];
   }
 
+  void update() {
+    setState(() {
+
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -301,6 +307,71 @@ class TimedNodeState extends INodeState<TimedNode> {
                       onSelected: (s) => {
                         if(s == 'Löschen') {
                           widget.onDelete?.call(widget.key!)
+                        } else if(s == 'Bearbeiten') {
+                          showDialog(context: context, builder: (_) {
+                            int currentMinutes = widget.time.inMinutes;
+                            int currentSeconds = widget.time.inSeconds;
+                            int currentMillis = widget.time.inMilliseconds - widget.time.inSeconds * 1000;
+                            return StatefulBuilder(builder: (context, StateSetter setState) {
+                              return AlertDialog(
+                                title: Text("Bearbeiten"),
+                                content: Column(
+                                  children: [
+                                    DropdownButton<int>(
+                                      value: (currentMinutes),
+                                      items: [for (var i = 0; i <= 60; i++) i].map((value) =>
+                                          DropdownMenuItem<int>(
+                                              value: value,
+                                              child: Text("$value Minuten")
+                                          )
+                                      ).toList(),
+                                      onChanged: (d) => setState(() {
+                                        currentMinutes = d!;
+                                      }),
+                                    ),
+                                    DropdownButton<int>(
+                                    value: (currentSeconds),
+                                    items: [for (var i = 0; i <= 60; i++) i].map((value) =>
+                                        DropdownMenuItem<int>(
+                                            value: value,
+                                            child: Text("$value Sekunden")
+                                        )
+                                    ).toList(),
+                                    onChanged: (d) => setState(() {
+                                      currentSeconds = d!;
+                                    }),
+                                  ),
+                                    DropdownButton<int>(
+                                      value: currentMillis,
+                                      items: [for (var i = 0; i <= 900; i+=100) i].map((value) =>
+                                          DropdownMenuItem<int>(
+                                              value: value,
+                                              child: Text("$value Millisekunden")
+                                          )
+                                      ).toList(),
+                                      onChanged: (d) => setState(() {
+                                        currentMillis = d!;
+                                      }),
+                                    )
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                  child: Text("Abbrechen"),
+                                  onPressed: () => {Navigator.pop(context)}),
+                                  TextButton(
+                                  child: Text("Speichern"),
+                                  onPressed: () => {
+                                    setState(() {
+                                      widget.time = Duration(seconds: currentSeconds, milliseconds: currentMillis);
+                                    }),
+                                    update(),
+                                    Navigator.pop(context)
+                                  })
+                                ],
+                              );
+                            });
+                          })
                         }
                       },
                       itemBuilder: (BuildContext context) {
@@ -331,12 +402,16 @@ class TimedNodeState extends INodeState<TimedNode> {
     return Icons.timer;
   }
 
+  String formatTime() {
+    return "${widget.time.inMinutes.remainder(60).toString().padLeft(2, '0')}:${widget.time.inSeconds.remainder(60).toString().padLeft(2, '0')},${widget.time.inMilliseconds.remainder(1000)}";
+  }
+
   String getSubtitle() {
     if(widget.type == NodeType.REPEAT) {
       return "Nach ${widget.time.inSeconds},${(widget.time.inMilliseconds - widget.time.inSeconds * 1000) ~/ 100} Sekunde(n)";
     } else if (widget.type == NodeType.WAIT) {
       return "Auf Benutzereingabe";
     }
-    return "${widget.time.inSeconds},${(widget.time.inMilliseconds - widget.time.inSeconds * 1000) ~/ 100} Sekunde(n)";
+    return formatTime();
   }
 }

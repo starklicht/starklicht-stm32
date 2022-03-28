@@ -11,6 +11,7 @@ import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
+import 'package:starklicht_flutter/view/time_picker.dart';
 import '../i18n/animations.dart';
 import 'colors.dart';
 
@@ -120,6 +121,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
   @override
   StreamController<AnimationSettingsConfig> streamSubject = BehaviorSubject();
 
+  var collapseTimeSelection = true;
   List<bool> isSelected = [true, false, false, false];
   List<bool> isSelectedInterpolation = [true, false];
   double _currentSeconds = 1;
@@ -315,11 +317,26 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
         margin: EdgeInsets.all(12),
         child: Column(children: [
           Row(children: [
-            Text("Dauer".i18n,
+            Text("Dauer: ".i18n,
                 style: const TextStyle(fontWeight: FontWeight.bold)),
-            if (_currentMillis + _currentSeconds == 0) ...[Icon(Icons.warning)]
+            TextButton(onPressed: () => {setState(() { collapseTimeSelection = !collapseTimeSelection; })},child: Text("$_currentSeconds Sekunden $_currentMillis Millisekunden"))
           ]),
-          Row(
+          AnimatedContainer(
+              clipBehavior: Clip.none,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              height: collapseTimeSelection ? 0.0001 : 150,
+              child: TimePicker(
+                onChanged: (value) => {
+                  print(value.inMilliseconds),
+                  setState(() {
+                    _currentSeconds = value.inSeconds.remainder(60);
+                    _currentMillis = value.inMilliseconds.remainder(1000);
+                  }),
+                  updateCurrentConfig()
+                }, startDuration: Duration(seconds: _currentSeconds.toInt(), milliseconds: _currentMillis.toInt()),)
+          )
+          /* Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               DropdownButton<double>(
@@ -350,7 +367,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
                 }),
               )
             ]
-          )
+          )*/
         ]),
       )
     ]);
