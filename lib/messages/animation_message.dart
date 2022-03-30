@@ -33,8 +33,8 @@ class AnimationMessage extends IBluetoothMessage {
 
   @override
   List<int> getMessageBody({ bool inverse = false }) {
-    if(_config.seconds == 0 && _config.millis == 0) {
-      throw Exception("Seconds and Millis are both 0!");
+    if(_config.seconds == 0 && _config.millis == 0 && _config.minutes == 0) {
+      throw Exception("Time is 0!");
     }
     var b = [
       // Length of messages

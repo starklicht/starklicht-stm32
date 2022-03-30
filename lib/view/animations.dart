@@ -132,9 +132,9 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
   void initState() {
     super.initState();
     setState(() {
+      _currentMinutes = widget.settings.minutes.toDouble();
       _currentSeconds = widget.settings.seconds.toDouble();
       _currentMillis = widget.settings.millis.toDouble();
-      _currentMinutes = widget.settings.minutes.toDouble();
       isSelectedInterpolation = [false, false];
       isSelectedInterpolation[widget.settings.interpolationType.index] = true;
       isSelected = [false, false, false, false];
@@ -347,38 +347,6 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
                 ),
               )
           )
-          /* Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              DropdownButton<double>(
-                value: _currentSeconds,
-                items: [for (var i = 0; i <= 60; i++) i].map((value) =>
-                    DropdownMenuItem<double>(
-                        value: value.toDouble(),
-                        child: Text("%d Sekunden".plural(value))
-                    )
-                ).toList(),
-                onChanged: (d) => setState(() {
-                  _currentSeconds = d!;
-                  updateCurrentConfig();
-                }),
-              ),
-              Text("+"),
-              DropdownButton<double>(
-                value: _currentMillis,
-                items: [for (var i = 0; i <= 20; i++) i].map((value) =>
-                    DropdownMenuItem<double>(
-                        value: value.toDouble() * 50,
-                        child: Text("%s Millisekunden".i18n.fill([value*50]))
-                    )
-                ).toList(),
-                onChanged: (d) => setState(() {
-                  _currentMillis = d!;
-                  updateCurrentConfig();
-                }),
-              )
-            ]
-          )*/
         ]),
       )
     ]);
