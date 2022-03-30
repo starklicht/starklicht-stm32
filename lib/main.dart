@@ -17,12 +17,15 @@ import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/save_message.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/animation_list.dart';
+import 'package:starklicht_flutter/view/orchestra.dart';
 import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
 import "package:i18n_extension/i18n_widget.dart";
 import "package:i18n_extension/i18n_extension.dart";
+import 'package:starklicht_flutter/view/orchestra_list_view.dart';
 import "i18n/main.dart";
 
+import 'model/orchestra.dart';
 import 'view/animations.dart';
 
 void main() => runApp(const MyApp());
@@ -62,6 +65,7 @@ class MyApp extends StatelessWidget {
 /// This is the stateful widget that the main application instantiates.
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
+  final bool showOrchestra = false;
 
   @override
   State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
@@ -80,10 +84,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   static const TextStyle optionStyle =
   TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   List<Widget> _widgetOptions = <Widget>[
-  ConnectionsWidget(),
-  ColorsWidget(sendOnChange: true),
-  Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
-  AnimationsWidget(),
+    ConnectionsWidget(),
+    ColorsWidget(sendOnChange: true),
+    Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
+    AnimationsWidget(),
+    OrchestraListView()
   ];
 
   void _onItemTapped(int index) {
@@ -124,17 +129,17 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     });
   }
 
-  void saveToLamp(int selectedRadio) {
+  void saveToLamp(int selectedRadio) async {
     print(selectedRadio);
-    int n = controller.broadcast(SaveMessage(true, selectedRadio));
+    int n = await controller.broadcast(SaveMessage(true, selectedRadio));
     var snackBar = SnackBar(
       content: Text('Auf Button %d gespeichert'.i18n.fill([selectedRadio + 1])),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  void loadFromLamp(int selectedRadio) {
-    int n = controller.broadcast(SaveMessage(false, selectedRadio));
+  void loadFromLamp(int selectedRadio) async {
+    int n = await controller.broadcast(SaveMessage(false, selectedRadio));
     var snackBar = SnackBar(
       content: Text('Button %d geladen'.i18n.fill([selectedRadio + 1])),
     );
@@ -149,7 +154,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         title: Text('STARKLICHT'.i18n, style: TextStyle(
           fontFamily: 'MontserratBlack',
         )),
-        backgroundColor: Colors.black87,
         actions: <Widget>[
           if(options.isNotEmpty)...[ IconButton(
             onPressed: () => {
@@ -312,7 +316,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'Bibliothek'.i18n,
-          )
+          ),
+          if(widget.showOrchestra) ... [BottomNavigationBarItem(
+            icon: Icon(Icons.podcasts),
+            label: 'Orchester'
+          )]
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

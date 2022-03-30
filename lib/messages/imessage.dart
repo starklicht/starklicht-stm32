@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 
@@ -75,7 +77,6 @@ abstract class IBluetoothMessage {
           }
         });
       }
-
     } else {
       if(!options.delay || options.delayTimeMillis == 0) {
         return c.write(message, withoutResponse: withoutResponse);
@@ -88,6 +89,14 @@ abstract class IBluetoothMessage {
   }
 
   bool withoutResponse = true;
+
+  String retrieveText() {
+    return "Not defined";
+  }
+
+  Color toColor() {
+    return Colors.red;
+  }
 
   /* void broadcast(List<BluetoothCharacteristic> broadcastList) async {
     for (var b in broadcastList) {

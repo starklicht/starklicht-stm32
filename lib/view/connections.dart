@@ -95,12 +95,15 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                           // Image.asset('assets/searching-for-devices.png'),
                           Text(
                             "${getPlaceholderTitleAndSubtitle()[0]}\n",
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                                fontSize: 20
+                                fontSize: 20,
+
                             ),
                           ),
                           Text(
                             "${getPlaceholderTitleAndSubtitle()[1]}\n",
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Colors.grey
                             ),

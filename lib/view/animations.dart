@@ -11,6 +11,7 @@ import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
+import 'package:starklicht_flutter/view/time_picker.dart';
 import '../i18n/animations.dart';
 import 'colors.dart';
 
@@ -120,8 +121,10 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
   @override
   StreamController<AnimationSettingsConfig> streamSubject = BehaviorSubject();
 
+  var collapseTimeSelection = true;
   List<bool> isSelected = [true, false, false, false];
   List<bool> isSelectedInterpolation = [true, false];
+  double _currentMinutes = 0;
   double _currentSeconds = 1;
   double _currentMillis = 0;
 
@@ -129,6 +132,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
   void initState() {
     super.initState();
     setState(() {
+      _currentMinutes = widget.settings.minutes.toDouble();
       _currentSeconds = widget.settings.seconds.toDouble();
       _currentMillis = widget.settings.millis.toDouble();
       isSelectedInterpolation = [false, false];
@@ -168,6 +172,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
     setState(() {
       widget.settings.seconds = _currentSeconds.round();
       widget.settings.millis = _currentMillis.round();
+      widget.settings.minutes = _currentMinutes.round();
       widget.settings.timefactor = getTimeFactor();
       widget.settings.interpolationType = getInterpolation();
     });
@@ -243,6 +248,10 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
         });
   }
 
+  String formatTime() {
+    return "${widget.settings.minutes.remainder(60)}m ${widget.settings.seconds.remainder(60)}s ${widget.settings.millis.remainder(1000)}ms";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(children: [
@@ -315,41 +324,28 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
         margin: EdgeInsets.all(12),
         child: Column(children: [
           Row(children: [
-            Text("Dauer".i18n,
+            Text("Dauer: ".i18n,
                 style: const TextStyle(fontWeight: FontWeight.bold)),
-            if (_currentMillis + _currentSeconds == 0) ...[Icon(Icons.warning)]
+            TextButton(onPressed: () => {setState(() { collapseTimeSelection = !collapseTimeSelection; })},child: Text("${formatTime()}"))
           ]),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              DropdownButton<double>(
-                value: _currentSeconds,
-                items: [for (var i = 0; i <= 60; i++) i].map((value) =>
-                    DropdownMenuItem<double>(
-                        value: value.toDouble(),
-                        child: Text("%d Sekunden".plural(value))
-                    )
-                ).toList(),
-                onChanged: (d) => setState(() {
-                  _currentSeconds = d!;
-                  updateCurrentConfig();
-                }),
-              ),
-              Text("+"),
-              DropdownButton<double>(
-                value: _currentMillis,
-                items: [for (var i = 0; i <= 20; i++) i].map((value) =>
-                    DropdownMenuItem<double>(
-                        value: value.toDouble() * 50,
-                        child: Text("%s Millisekunden".i18n.fill([value*50]))
-                    )
-                ).toList(),
-                onChanged: (d) => setState(() {
-                  _currentMillis = d!;
-                  updateCurrentConfig();
-                }),
+          AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              height: collapseTimeSelection ? 0 : 150,
+              child: SingleChildScrollView(
+                child: Container(
+                  height: 150,
+                  child: TimePicker(
+                    onChanged: (value) => {
+                      setState(() {
+                        _currentMinutes = value.inMinutes.remainder(60);
+                        _currentSeconds = value.inSeconds.remainder(60);
+                        _currentMillis = value.inMilliseconds.remainder(1000);
+                      }),
+                      updateCurrentConfig()
+                    }, startDuration: Duration(minutes: _currentMinutes.toInt(), seconds: _currentSeconds.toInt(), milliseconds: _currentMillis.toInt()),),
+                ),
               )
-            ]
           )
         ]),
       )
@@ -811,7 +807,7 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
       Persistence().saveEditorAnimation(
           KeyframeAnimation(widget.colors.colors, widget.settings, ''));
     }
-    if (widget.settings.seconds + widget.settings.millis == 0) {
+    if (widget.settings.seconds + widget.settings.millis + widget.settings.minutes == 0) {
       setState(() {
         isAnimationValid = false;
       });
@@ -821,7 +817,7 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
       isAnimationValid = true;
     });
     controller.duration = Duration(
-        seconds: widget.settings.seconds, milliseconds: widget.settings.millis);
+        minutes: widget.settings.minutes, seconds: widget.settings.seconds, milliseconds: widget.settings.millis);
     if (widget.settings.interpolationType == InterpolationType.linear) {
       colorAnimation = BaseColorAnimation(widget.colors.colors,
               widget.settings.timefactor == TimeFactor.shuffle)
@@ -884,7 +880,7 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
   }
 
   bool errorState() {
-    return widget.settings.seconds == 0 && widget.settings.millis == 0;
+    return widget.settings.seconds == 0 && widget.settings.millis == 0 && widget.settings.minutes == 0;
   }
 
   @override

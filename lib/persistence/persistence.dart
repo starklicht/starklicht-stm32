@@ -38,6 +38,7 @@ class Persistence implements IPersistence {
     AnimationSettingsConfig(
       InterpolationType.linear,
       TimeFactor.repeat,
+      0,
       1,
       0
     ),

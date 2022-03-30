@@ -245,6 +245,19 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
   }
 
   @override
+  Future<int> broadcastWaiting(IBluetoothMessage m) async {
+    if (canSend()) {
+      for (var value in connectedDevices) {
+        await m.send(value.characteristic!, value.options);
+      }
+      stopwatch = Stopwatch()..start();
+    }
+    return connectedDevices.length;
+  }
+
+  @override
+
+  @override
   bool send(IBluetoothMessage m, SBluetoothDevice device) {
     return false;
   }

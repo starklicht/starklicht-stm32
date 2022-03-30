@@ -9,6 +9,7 @@ enum Actions {
 class AnimationSettingsConfig {
   InterpolationType interpolationType;
   TimeFactor timefactor;
+  int minutes;
   int seconds;
   int millis;
   Function? callback;
@@ -16,6 +17,7 @@ class AnimationSettingsConfig {
   AnimationSettingsConfig(
       this.interpolationType,
       this.timefactor,
+      this.minutes,
       this.seconds,
       this.millis,
       );
@@ -23,6 +25,7 @@ class AnimationSettingsConfig {
   Map<String, dynamic> toJson() => {
     'interpolationType': interpolationType.index,
     'timeFactor': timefactor.index,
+    'minutes': minutes,
     'millis': millis,
     'seconds': seconds
   };
