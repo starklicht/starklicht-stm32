@@ -20,6 +20,7 @@ class KeyframeAnimationFactory extends Factory<KeyframeAnimation> {
       // TimeFactor.repeat,
       InterpolationType.values[json['config']['interpolationType'] as int],
       TimeFactor.values[json['config']['timeFactor'] as int],
+      json['config']['minutes'] as int? ?? 0,
       json['config']['seconds'] as int,
       json['config']['millis'] as int
     );

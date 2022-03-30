@@ -2,8 +2,8 @@
 import 'package:flutter/cupertino.dart';
 
 class TimePicker extends StatefulWidget {
-  const TimePicker({Key? key, required this.onChanged, this.startDuration}) : super(key: key);
-
+  const TimePicker({Key? key, required this.onChanged, this.startDuration, this.small = false}) : super(key: key);
+  final bool small;
   final ValueChanged<Duration>? onChanged;
   final Duration? startDuration;
 
@@ -50,69 +50,71 @@ class TimePickerState extends State<TimePicker> {
   @override
   Widget build(BuildContext context) {
     return
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 50,
-            child: CupertinoPicker(
-              onSelectedItemChanged: (index) => updateDuration(),
-              // controller: minutesController,
-              itemExtent: 28,
-              // physics:  FixedExtentScrollPhysics(),
-              scrollController: minutesController,
-              children:
-              seconds().map((e) => Padding(
-                padding: const EdgeInsets.only(top: 0.0),
-                child: Text(e.toString()),
-              )).toList()
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text("Minuten"),
-          ),
-          Container(
-            width: 50,
-            child: CupertinoPicker(
+      Container(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 50,
+              child: CupertinoPicker(
                 onSelectedItemChanged: (index) => updateDuration(),
                 // controller: minutesController,
                 itemExtent: 28,
                 // physics:  FixedExtentScrollPhysics(),
-                scrollController: secondsController,
+                scrollController: minutesController,
                 children:
                 seconds().map((e) => Padding(
                   padding: const EdgeInsets.only(top: 0.0),
                   child: Text(e.toString()),
                 )).toList()
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text("Sekunden"),
-          ),
-          Container(
-            width: 50,
-            child: CupertinoPicker(
-                onSelectedItemChanged: (index) => updateDuration(),
-                // controller: minutesController,
-                itemExtent: 28,
-                // physics:  FixedExtentScrollPhysics(),
-                scrollController: millisController,
-                children:
-                millis().map((e) => Padding(
-                  padding: const EdgeInsets.only(top: 0.0),
-                  child: Text(e.toString()),
-                )).toList()
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(widget.small ? "m" : "Minuten"),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text("Millisekunden"),
-          ),
+            Container(
+              width: 50,
+              child: CupertinoPicker(
+                  onSelectedItemChanged: (index) => updateDuration(),
+                  // controller: minutesController,
+                  itemExtent: 28,
+                  // physics:  FixedExtentScrollPhysics(),
+                  scrollController: secondsController,
+                  children:
+                  seconds().map((e) => Padding(
+                    padding: const EdgeInsets.only(top: 0.0),
+                    child: Text(e.toString()),
+                  )).toList()
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 0.0),
+              child: Text(widget.small ? "s" : "Sekunden"),
+            ),
+            Container(
+              width: 50,
+              child: CupertinoPicker(
+                  onSelectedItemChanged: (index) => updateDuration(),
+                  // controller: minutesController,
+                  itemExtent: 28,
+                  // physics:  FixedExtentScrollPhysics(),
+                  scrollController: millisController,
+                  children:
+                  millis().map((e) => Padding(
+                    padding: const EdgeInsets.only(top: 0.0),
+                    child: Text(e.toString()),
+                  )).toList()
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 0.0),
+              child: Text(widget.small ? "ms" : "Millisekunden"),
+            ),
 
-        ],
+          ],
+        ),
       );
   }
 }

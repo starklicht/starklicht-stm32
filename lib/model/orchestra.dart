@@ -11,8 +11,11 @@ import 'package:flutter/painting.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/messages/imessage.dart';
+import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
+
+import '../controller/starklicht_bluetooth_controller.dart';
 
 enum NodeType {
   NOT_DEFINED, TIME, REPEAT, MESSAGE, WAIT
@@ -29,7 +32,7 @@ abstract class INode extends StatefulWidget {
 
 class MessageNode extends INode {
   final List<String> lamps;
-  final List<String> activeLamps = [];
+  List<String> activeLamps = [];
   final IBluetoothMessage message;
 
   MessageNode({Key? key, required this.lamps, required this.message, update, onDelete}) : super(key: key, update: update, onDelete: onDelete);
@@ -105,6 +108,34 @@ class AddNodeState extends INodeState<AddNode> {
 
 
 class MessageNodeState extends INodeState<MessageNode> {
+  List<SBluetoothDevice> connectedDevices = [];
+  Map<String, bool> active = {};
+  StreamSubscription<dynamic>? myStream;
+
+  @override
+  void initState() {
+    myStream?.cancel();
+    myStream = BluetoothControllerWidget().connectedDevicesStream().listen((event) {
+      setState(() {
+        connectedDevices = event;
+        active = { for (var e in event) e.device.id.id : true };
+      });
+    });
+    super.initState();
+  }
+
+  void updateActive() {
+    setState(() {
+      widget.activeLamps = active.entries.where((element) => element.value == true).map((e) => e.key).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    myStream?.cancel();
+    super.dispose();
+  }
+
   String getTitle() {
     switch(widget.message.messageType) {
       case MessageType.color:
@@ -224,10 +255,21 @@ class MessageNodeState extends INodeState<MessageNode> {
                 child: Padding(
                   padding: EdgeInsets.zero,
                   child: Row(
-                    children: widget.lamps.map((e) => Padding(
+                    children: connectedDevices.map((e) => Padding(
                         padding: const EdgeInsets.only(left: 4.0, right: 4),
-                        child: ChoiceChip(label: Text(e), selected: true, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,),
-                      )).toList()
+                      child: FilterChip(
+                                  label: Text(e.options.name ?? e.device.name),
+                                  selected: active[e.device.id.id] ?? false,
+                                  onSelected: (eve) => {
+                                    setState(() {
+                                      active[e.device.id.id] = eve;
+                                    }),
+                                    updateActive()
+                                  },
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              )).toList()
                   ),
                 ),
               ),
@@ -309,51 +351,15 @@ class TimedNodeState extends INodeState<TimedNode> {
                           widget.onDelete?.call(widget.key!)
                         } else if(s == 'Bearbeiten') {
                           showDialog(context: context, builder: (_) {
-                            int currentMinutes = widget.time.inMinutes;
-                            int currentSeconds = widget.time.inSeconds;
-                            int currentMillis = widget.time.inMilliseconds - widget.time.inSeconds * 1000;
+                            var duration = widget.time;
                             return StatefulBuilder(builder: (context, StateSetter setState) {
                               return AlertDialog(
                                 title: Text("Bearbeiten"),
-                                content: Column(
-                                  children: [
-                                    DropdownButton<int>(
-                                      value: (currentMinutes),
-                                      items: [for (var i = 0; i <= 60; i++) i].map((value) =>
-                                          DropdownMenuItem<int>(
-                                              value: value,
-                                              child: Text("$value Minuten")
-                                          )
-                                      ).toList(),
-                                      onChanged: (d) => setState(() {
-                                        currentMinutes = d!;
-                                      }),
-                                    ),
-                                    DropdownButton<int>(
-                                    value: (currentSeconds),
-                                    items: [for (var i = 0; i <= 60; i++) i].map((value) =>
-                                        DropdownMenuItem<int>(
-                                            value: value,
-                                            child: Text("$value Sekunden")
-                                        )
-                                    ).toList(),
-                                    onChanged: (d) => setState(() {
-                                      currentSeconds = d!;
-                                    }),
+                                content: Container(
+                                  height: 150,
+                                  child: TimePicker(
+                                    onChanged: (v) => {duration = v}, small: true, startDuration: duration,
                                   ),
-                                    DropdownButton<int>(
-                                      value: currentMillis,
-                                      items: [for (var i = 0; i <= 900; i+=100) i].map((value) =>
-                                          DropdownMenuItem<int>(
-                                              value: value,
-                                              child: Text("$value Millisekunden")
-                                          )
-                                      ).toList(),
-                                      onChanged: (d) => setState(() {
-                                        currentMillis = d!;
-                                      }),
-                                    )
-                                  ],
                                 ),
                                 actions: [
                                   TextButton(
@@ -363,7 +369,7 @@ class TimedNodeState extends INodeState<TimedNode> {
                                   child: Text("Speichern"),
                                   onPressed: () => {
                                     setState(() {
-                                      widget.time = Duration(seconds: currentSeconds, milliseconds: currentMillis);
+                                      widget.time = duration;
                                     }),
                                     update(),
                                     Navigator.pop(context)
@@ -403,12 +409,12 @@ class TimedNodeState extends INodeState<TimedNode> {
   }
 
   String formatTime() {
-    return "${widget.time.inMinutes.remainder(60).toString().padLeft(2, '0')}:${widget.time.inSeconds.remainder(60).toString().padLeft(2, '0')},${widget.time.inMilliseconds.remainder(1000)}";
+    return "${widget.time.inMinutes.remainder(60)}m ${widget.time.inSeconds.remainder(60)}s ${widget.time.inMilliseconds.remainder(1000)}ms";
   }
 
   String getSubtitle() {
     if(widget.type == NodeType.REPEAT) {
-      return "Nach ${widget.time.inSeconds},${(widget.time.inMilliseconds - widget.time.inSeconds * 1000) ~/ 100} Sekunde(n)";
+      return formatTime();
     } else if (widget.type == NodeType.WAIT) {
       return "Auf Benutzereingabe";
     }

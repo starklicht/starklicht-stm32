@@ -89,6 +89,7 @@ class MessageNodeHandler extends OrchestraNodeHandler<MessageNode> {
 
   @override
   Future<bool> execute(MessageNode event, StreamController<double> progress, {BuildContext? context}) async {
+    print(event.activeLamps);
     await BluetoothControllerWidget().broadcastWaiting(event.message);
     return true;
   }

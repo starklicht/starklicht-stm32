@@ -14,6 +14,7 @@ import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/model/orchestra.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:uuid/uuid.dart';
 class OrchestraWidget extends StatefulWidget {
   List<INode> nodes = [];
@@ -58,8 +59,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
   ValueNotifier<bool> isDialOpen = ValueNotifier(false);
   var running = false;
   var _type = NodeType.WAIT;
-  double _currentSeconds = 1;
-  double _currentMillis = 0;
+  var currentDuration = Duration(minutes: 0, seconds: 0, milliseconds: 0);
 
   Future<void> run() async {
     setState(() {
@@ -184,35 +184,12 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                                 onChanged: (value) => {setState((){ _type = value!; })}),
                             if(_type == NodeType.REPEAT || _type == NodeType.TIME) ...[
                               Text("Verzögerung".toUpperCase(), style: Theme.of(context).textTheme.overline),
-                              Wrap(
-                                children: [
-                                  DropdownButton<double>(
-                                    value: _currentSeconds,
-                                    items: [for (var i = 0; i <= 60; i++) i].map((value) =>
-                                        DropdownMenuItem<double>(
-                                            value: value.toDouble(),
-                                            child: Text("$value Sekunden")
-                                        )
-                                    ).toList(),
-                                    onChanged: (d) => setState(() {
-                                      _currentSeconds = d!;
-                                    }),
-                                  ),
-                                  DropdownButton<double>(
-                                    value: _currentMillis,
-                                    items: [for (var i = 0; i <= 1000; i+=100) i].map((value) =>
-                                        DropdownMenuItem<double>(
-                                            value: value.toDouble(),
-                                            child: Text("$value Millisekunden")
-                                        )
-                                    ).toList(),
-                                    onChanged: (d) => setState(() {
-                                      _currentMillis = d!;
-                                    }),
-                                  )
-                                ],
-                              ),
-                            ]
+                            ],
+                            AnimatedContainer(height: _type == NodeType.REPEAT || _type == NodeType.TIME ? 100 : 0.0001, duration: Duration(milliseconds: 200), child: TimePicker(onChanged: (a) => {
+                              setState(() {
+                                currentDuration = a;
+                              })
+                            }, small: true, startDuration: currentDuration))
                           ],
                         ),
                         actions: [
@@ -223,7 +200,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                               child: Text("Hinzufügen"),
                               onPressed: () {
                                 setState((){
-                                  widget.nodes.add(TimedNode(onDelete: deleteCallback,time: Duration(seconds: _currentSeconds.toInt(), milliseconds: _currentMillis.toInt()), type: _type));
+                                  widget.nodes.add(TimedNode(onDelete: deleteCallback,time: currentDuration, type: _type));
                                 });
                                 refresh();
                                 Navigator.pop(context);
@@ -255,11 +232,6 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
   void initState() {
     Persistence().getAnimationStore().then((value) {
       var nodes = [
-        MessageNode(
-            onDelete: deleteCallback,
-            lamps: [],
-            message:
-                AnimationMessage(value[0].colors, value[0].config)),
         MessageNode(
             onDelete: deleteCallback,
             lamps: [],

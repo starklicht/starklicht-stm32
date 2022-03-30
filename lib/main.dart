@@ -65,6 +65,7 @@ class MyApp extends StatelessWidget {
 /// This is the stateful widget that the main application instantiates.
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
+  final bool showOrchestra = false;
 
   @override
   State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
@@ -316,10 +317,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             icon: Icon(Icons.book),
             label: 'Bibliothek'.i18n,
           ),
-          BottomNavigationBarItem(
+          if(widget.showOrchestra) ... [BottomNavigationBarItem(
             icon: Icon(Icons.podcasts),
             label: 'Orchester'
-          )
+          )]
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

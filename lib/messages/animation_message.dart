@@ -44,6 +44,8 @@ class AnimationMessage extends IBluetoothMessage {
       _config.timefactor==TimeFactor.pingpong?1:_config.timefactor==TimeFactor.once?2:0,
       // Integrate Seamlessly
       0,
+      // MINUTES!
+      _config.minutes,
       // SECONDS
       _config.seconds,
       // Milliseconds

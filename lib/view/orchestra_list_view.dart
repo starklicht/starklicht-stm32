@@ -20,9 +20,6 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
           Navigator.push(context, MaterialPageRoute(builder: (context) => OrchestraWidget()))
         }
         , child: Text("Öffne Dialog")),
-        Container(height: 200, width: MediaQuery.of(context).size.width, child: TimePicker(
-          onChanged: (s) => { print(s) },
-        ))
       ],
     );
   }

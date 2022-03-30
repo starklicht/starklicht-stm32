@@ -245,6 +245,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                     settings: AnimationSettingsConfig(
                       filteredAnimations()[realIndex].config.interpolationType,
                       filteredAnimations()[realIndex].config.timefactor,
+                      filteredAnimations()[realIndex].config.minutes,
                       filteredAnimations()[realIndex].config.seconds,
                       filteredAnimations()[realIndex].config.millis
                     ),
