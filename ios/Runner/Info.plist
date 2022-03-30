@@ -41,7 +41,7 @@
 	</array>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>The app uses bluetooth to connect and manage the Starklicht Lamps</string>
-	<key>NSBluetoothPerpheralUsageDescription</key>
+	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>We need BLE Permission to connect and manage the Starklicht Lamps</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Bluetooth Low Energy requires location to work</string>
