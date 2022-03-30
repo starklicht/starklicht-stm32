@@ -1,10 +1,10 @@
 
 import 'dart:ui';
 
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
@@ -104,112 +104,125 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     }
   }
 
+  double wheelDiameter() {
+    var width = MediaQuery.of(context).size.width * .5;
+    if(width > 500) {
+      return 500;
+    } else if(width < 100){
+      return 100;
+    }
+    return width;
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     if(isLoading) {
       return Text("Lädt...".i18n);
     }
-    return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-      Slider(
-          value: _red,
-          min: 0,
-          activeColor: Colors.red,
-          max: 255,
-          onChanged: (value) {
-            setState(() {
-              _red = value;
-              changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
-            });
-          }
-      ),
-      Slider(
-          value: _green,
-          min: 0,
-          activeColor: Colors.green,
-          max: 255,
-          onChanged: (value) {
-            setState(() {
-              _green = value;
-              changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
-            });
-          }
-      ),
-      Slider(
-          value: _blue,
-          min: 0,
-          activeColor: Colors.blue,
-          max: 255,
-          onChanged: (value) {
-            setState(() {
-              _blue = value;
-              changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
-            });
-          }
-      ),
-      ColorPicker(
-        pickerColor: pickerColor,
-        onColorChanged: changeColor,
-        pickerAreaBorderRadius: BorderRadius.all(Radius.circular(12)),
-        showLabel: false,
-        displayThumbColor: true,
-        enableAlpha: false,
-        pickerAreaHeightPercent: 1,
-        colorPickerWidth: 300,
-        paletteType: PaletteType.hsv
-      ),
-      TextButton(
-          onPressed: () {
-        showDialog(context: context, builder: (_) {
-          return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-            title: Text("Farbcode eingeben".i18n),
-            content: Form(
-              key: _formKey,
-              onChanged: () => setState(() {
-                _hexValid = _formKey.currentState!.validate();
-              }),
-                child: TextFormField(
-                  onSaved: (v) => { _currentHex = v! },
-              initialValue: getColorText(),
-              validator: (value) {
-                if (value == null || value.length < 6) {
-                  return 'Hex-Code unvollständig'.i18n;
-                }
-                if(!RegExp(r'^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$').hasMatch(value)) {
-                  return 'Kein valider Hex-Code';
-                }
-                return null;
-              },
-              inputFormatters: [
-                LengthLimitingTextInputFormatter(6)
-              ],
-              decoration: const InputDecoration(
-                isDense: true,
-                prefixIcon:Text("#"),
-                prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
-              ),
-            )),
-            actions: [
-              TextButton(child:Text("Abbrechen".i18n), onPressed: () => {
-                Navigator.pop(context)
-              }),
-              TextButton(child:Text("Übernehmen".i18n),
-                  onPressed: _hexValid?
-                  () => {
-                    _formKey.currentState?.save(),
-                    changeColor(_getColorFromHex(_currentHex)),
-                    Navigator.pop(context)
+    return SingleChildScrollView(
+      child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+        Slider(
+            value: _red,
+            min: 0,
+            activeColor: Colors.red,
+            max: 255,
+            onChanged: (value) {
+              setState(() {
+                _red = value;
+                changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
+              });
+            }
+        ),
+        Slider(
+            value: _green,
+            min: 0,
+            activeColor: Colors.green,
+            max: 255,
+            onChanged: (value) {
+              setState(() {
+                _green = value;
+                changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
+              });
+            }
+        ),
+        Slider(
+            value: _blue,
+            min: 0,
+            activeColor: Colors.blue,
+            max: 255,
+            onChanged: (value) {
+              setState(() {
+                _blue = value;
+                changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
+              });
+            }
+        ),
+        ColorPicker(
+          color: pickerColor,
+          onColorChanged: (color) => {
+            changeColor(color)
+          },
+          pickersEnabled: const <ColorPickerType, bool> {
+            ColorPickerType.wheel: true,
+            ColorPickerType.primary: false,
+            ColorPickerType.accent: false
+          },
+          wheelDiameter: wheelDiameter()
+        ),
+        TextButton(
+            onPressed: () {
+          showDialog(context: context, builder: (_) {
+            return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+              return AlertDialog(
+              title: Text("Farbcode eingeben".i18n),
+              content: Form(
+                key: _formKey,
+                onChanged: () => setState(() {
+                  _hexValid = _formKey.currentState!.validate();
+                }),
+                  child: TextFormField(
+                    onSaved: (v) => { _currentHex = v! },
+                initialValue: getColorText(),
+                validator: (value) {
+                  if (value == null || value.length < 6) {
+                    return 'Hex-Code unvollständig'.i18n;
                   }
-                                :
-                  null
-              )
-            ],
-          );});
-        });
-      }, child: Text("#${getColorText()}"))
-    ]);
+                  if(!RegExp(r'^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$').hasMatch(value)) {
+                    return 'Kein valider Hex-Code';
+                  }
+                  return null;
+                },
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(6)
+                ],
+                decoration: const InputDecoration(
+                  isDense: true,
+                  prefixIcon:Text("#"),
+                  prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+                ),
+              )),
+              actions: [
+                TextButton(child:Text("Abbrechen".i18n), onPressed: () => {
+                  Navigator.pop(context)
+                }),
+                TextButton(child:Text("Übernehmen".i18n),
+                    onPressed: _hexValid?
+                    () => {
+                      _formKey.currentState?.save(),
+                      changeColor(_getColorFromHex(_currentHex)),
+                      Navigator.pop(context)
+                    }
+                                  :
+                    null
+                )
+              ],
+            );});
+          });
+        }, child: Text("#${getColorText()}"))
+      ]),
+    );
   }
 }
