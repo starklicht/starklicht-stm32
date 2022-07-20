@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import 'imessage.dart';
 
 class BrightnessMessage extends IBluetoothMessage {
@@ -10,6 +12,12 @@ class BrightnessMessage extends IBluetoothMessage {
     return [
       brightness
     ];
+  }
+
+  @override
+  Color toColor() {
+    var col = ((brightness / 100.0) * 255).round();
+    return Color.fromARGB(255, col, col, col);
   }
 
   @override

@@ -11,11 +11,16 @@ import 'package:starklicht_flutter/controller/orchestra_handler.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
+import 'package:starklicht_flutter/messages/imessage.dart';
+import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/orchestra.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:starklicht_flutter/view/animations.dart';
 import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:uuid/uuid.dart';
+
+import 'colors.dart';
 class OrchestraWidget extends StatefulWidget {
   List<INode> nodes = [];
 
@@ -59,6 +64,9 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
   ValueNotifier<bool> isDialOpen = ValueNotifier(false);
   var running = false;
   var _type = NodeType.WAIT;
+  var _messageType = MessageType.brightness;
+  var _currentBrightness = 100.0;
+  List<KeyframeAnimation> _animationStore = [];
   var currentDuration = Duration(minutes: 0, seconds: 0, milliseconds: 0);
 
   Future<void> run() async {
@@ -160,7 +168,6 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                 label: "Zeitevent",
                 onTap: () {
                   showDialog(context: context, builder: (_) {
-
                     return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
                       return AlertDialog(
                         scrollable: true,
@@ -218,9 +225,86 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
               child: Icon(Icons.settings_remote),
                 label: "Nachrichtenevent",
               onTap: () {
-                setState(() {
-                  widget.nodes.add(MessageNode(onDelete: deleteCallback, lamps: ["a", "b"], message: BrightnessMessage(100)));
+                showDialog(context: context, builder: (_) {
+                  Persistence().getAnimationStore().then((value) => _animationStore = value);
+                  return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+                    return AlertDialog(
+                      scrollable: true,
+                      title: Text("Zeitevent hinzufügen"),
+                      content: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // TODO Export this into an own fucker
+                          RadioListTile<MessageType>(value: MessageType.brightness,
+                              title: Text("Helligkeit"),
+                              groupValue: _messageType,
+                              onChanged: (value) => {setState((){ _messageType = value!; })}),
+                          RadioListTile<MessageType>(value: MessageType.color,
+                              title: Text("Farbe"),
+                              groupValue: _messageType,
+                              onChanged: (value) => {setState((){ _messageType = value!; })}),
+                          RadioListTile<MessageType>(value: MessageType.interpolated,
+                              title: Text("Animation"),
+                              groupValue: _messageType,
+                              onChanged: (value) => {setState((){ _messageType = value!; })}),
+                          if(_messageType == MessageType.brightness) ... [
+                            Text("Helligkeit bestimmen".toUpperCase(), style: Theme.of(context).textTheme.overline),
+                            Column(children: [
+                              Slider(
+                                max: 100,
+                                onChangeEnd: (d) => {
+                                  setState(() {
+                                    _currentBrightness = d;
+                                  }),
+                                },
+                                onChanged: (d) => {
+                                  setState(() {
+                                    _currentBrightness = d;
+                                  }),
+                                },
+                                value: _currentBrightness,
+                              ),
+                              Text("${_currentBrightness.toInt()}%", style: TextStyle(
+                                  fontSize: 32
+                              ),)
+                            ],)
+                          ]
+                          else if(_messageType == MessageType.color) ...[
+                            Text("Farbe auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
+                            ColorsWidget(
+                              sendOnChange: false,
+                              startColor: Colors.white,
+                            )
+                          ]
+                          else if (_messageType == MessageType.interpolated) ...[
+                            Text("Animation aus Liste auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
+                            // Persistence
+                            //DropdownButton<String>(items: _animationStore.map((e) => DropdownMenuItem(child: Text(e.title))).toList(), onChanged: (i) => {})
+                          ]
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                            child: Text("Abbrechen"),
+                            onPressed: () => {Navigator.pop(context)}),
+                        TextButton(
+                            child: Text("Hinzufügen"),
+                            onPressed: () {
+                              setState((){
+                                widget.nodes.add(
+                                  MessageNode(lamps: [], message: BrightnessMessage(_currentBrightness.toInt()))
+                                );
+                              });
+                              refresh();
+                              Navigator.pop(context);
+                            })
+                      ],
+                    );
+                  });
                 });
+                /* setState(() {
+                  widget.nodes.add(MessageNode(onDelete: deleteCallback, lamps: ["a", "b"], message: BrightnessMessage(100)));
+                }); */
               }
             ),
           ],

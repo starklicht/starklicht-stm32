@@ -45,6 +45,7 @@ class Persistence implements IPersistence {
     "Default"
   );
   static const String animationStore = "animations";
+  static const String colors = "colors";
   static const String editorAnimation = "editor-animation";
   Future<List<KeyframeAnimation>> getAnimationStore() async {
     final prefs = await SharedPreferences.getInstance();
@@ -54,6 +55,20 @@ class Persistence implements IPersistence {
       return [];
     }
     return animations.map((e) => fac.build(e)).toList();
+  }
+
+  Future<void> saveCustomColors(List<Color> c) async {
+    var sPrefs = await SharedPreferences.getInstance();
+    sPrefs.setStringList(colors, c.map((e) => e.value.toString()).toList());
+  }
+
+  Future<List<Color>> loadCustomColors() async {
+    var sPrefs = await SharedPreferences.getInstance();
+    if(!sPrefs.containsKey(colors)) {
+      return [];
+    }
+    var colorList = sPrefs.getStringList(colors);
+    return colorList!.map((e) => Color(int.parse(e))).toList();
   }
 
   Future<void> saveAnimation(KeyframeAnimation a) async {

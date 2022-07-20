@@ -65,7 +65,7 @@ class MyApp extends StatelessWidget {
 /// This is the stateful widget that the main application instantiates.
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
-  final bool showOrchestra = false;
+  final bool showOrchestra = true;
 
   @override
   State<MyStatefulWidget> createState() => _MyStatefulWidgetState();

@@ -1,4 +1,5 @@
 
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flex_color_picker/flex_color_picker.dart';
@@ -27,15 +28,19 @@ class _ColorsWidgetState extends State<ColorsWidget> {
   double _alpha = 0;
   bool isLoading = false;
 
+  Map<ColorSwatch<Object>, String> colorsNameMap =
+  <ColorSwatch<Object>, String>{
+  };
+
   bool _hexValid = true;
   String _currentHex = "";
-
+  bool _colorIsSaved = false;
   var _formKey = GlobalKey<FormState>();
 
   // create some values
   Color pickerColor = Color(0xff000000);
   BluetoothController controller = BluetoothControllerWidget();
-
+  List<Color> recentColors = [];
 
 
 // ValueChanged<Color> callback
@@ -74,6 +79,12 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     throw Exception("Hex code is wrong");
   }
 
+  void updateIsColorSaved() {
+    setState(() {
+      _colorIsSaved = ColorTools.isCustomColor(pickerColor, colorsNameMap);
+    });
+  }
+
 
   @override
   void initState() {
@@ -91,27 +102,28 @@ class _ColorsWidgetState extends State<ColorsWidget> {
       setState(() {
         isLoading = true;
       });
+      // TODO: Error logs
       Persistence().getColor().then((i) => {
       setState(() {
         pickerColor = i;
+        updateIsColorSaved();
         _red = i.red.toDouble();
         _green = i.green.toDouble();
         _blue = i.blue.toDouble();
         _alpha = i.alpha.toDouble();
-        isLoading = false;
       })
-      });
+      }).then((value) => Persistence().loadCustomColors().then((e) => {
+        setState(() {
+          var nMap = e.map((e) => MapEntry(ColorTools.createPrimarySwatch(e), ""));
+          colorsNameMap = { for (var item in nMap) item.key : item.value };
+          isLoading = false;
+        })
+      }));
     }
   }
 
   double wheelDiameter() {
-    var width = MediaQuery.of(context).size.width * .5;
-    if(width > 500) {
-      return 500;
-    } else if(width < 100){
-      return 100;
-    }
-    return width;
+    return min(500, MediaQuery.of(context).size.width);
   }
 
   @override
@@ -120,109 +132,147 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     if(isLoading) {
       return Text("Lädt...".i18n);
     }
-    return SingleChildScrollView(
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-        Slider(
-            value: _red,
-            min: 0,
-            activeColor: Colors.red,
-            max: 255,
-            onChanged: (value) {
-              setState(() {
-                _red = value;
-                changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
-              });
-            }
-        ),
-        Slider(
-            value: _green,
-            min: 0,
-            activeColor: Colors.green,
-            max: 255,
-            onChanged: (value) {
-              setState(() {
-                _green = value;
-                changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
-              });
-            }
-        ),
-        Slider(
-            value: _blue,
-            min: 0,
-            activeColor: Colors.blue,
-            max: 255,
-            onChanged: (value) {
-              setState(() {
-                _blue = value;
-                changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
-              });
-            }
-        ),
-        ColorPicker(
-          color: pickerColor,
-          onColorChanged: (color) => {
-            changeColor(color)
-          },
-          pickersEnabled: const <ColorPickerType, bool> {
-            ColorPickerType.wheel: true,
-            ColorPickerType.primary: false,
-            ColorPickerType.accent: false
-          },
-          wheelDiameter: wheelDiameter()
-        ),
-        TextButton(
-            onPressed: () {
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
           showDialog(context: context, builder: (_) {
-            return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+            return StatefulBuilder(builder: (context, StateSetter setState) {
               return AlertDialog(
-              title: Text("Farbcode eingeben".i18n),
-              content: Form(
-                key: _formKey,
-                onChanged: () => setState(() {
-                  _hexValid = _formKey.currentState!.validate();
-                }),
-                  child: TextFormField(
-                    onSaved: (v) => { _currentHex = v! },
-                initialValue: getColorText(),
-                validator: (value) {
-                  if (value == null || value.length < 6) {
-                    return 'Hex-Code unvollständig'.i18n;
-                  }
-                  if(!RegExp(r'^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$').hasMatch(value)) {
-                    return 'Kein valider Hex-Code';
-                  }
-                  return null;
-                },
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(6)
-                ],
-                decoration: const InputDecoration(
-                  isDense: true,
-                  prefixIcon:Text("#"),
-                  prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+                title: Text("Farbe einstellen"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Column(
+                      children: [
+                        Slider(
+                          value: _red,
+                          min: 0,
+                          activeColor: Colors.red,
+                          max: 255,
+                          onChanged: (value) {
+                            setState(() {
+                              _red = value;
+                              changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
+                            });
+                          }
+                        ),
+                          Slider(
+                              value: _green,
+                              min: 0,
+                              activeColor: Colors.green,
+                              max: 255,
+                              onChanged: (value) {
+                                setState(() {
+                                  _green = value;
+                                  changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
+                                });
+                              }
+                          ),
+                          Slider(
+                              value: _blue,
+                              min: 0,
+                              activeColor: Colors.blue,
+                              max: 255,
+                              onChanged: (value) {
+                                setState(() {
+                                  _blue = value;
+                                  changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
+                                });
+                              }
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
-              )),
-              actions: [
-                TextButton(child:Text("Abbrechen".i18n), onPressed: () => {
-                  Navigator.pop(context)
-                }),
-                TextButton(child:Text("Übernehmen".i18n),
-                    onPressed: _hexValid?
-                    () => {
-                      _formKey.currentState?.save(),
-                      changeColor(_getColorFromHex(_currentHex)),
-                      Navigator.pop(context)
-                    }
-                                  :
-                    null
-                )
-              ],
-            );});
+              );
+            });
           });
-        }, child: Text("#${getColorText()}"))
-      ]),
+        },
+        child: Icon(Icons.tune),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 56),
+          child: Column(
+            children: [
+              ColorPicker(
+                heading: Text(
+                  'Farbauswahl',
+                  style: Theme.of(context).textTheme.headline5,
+                ),
+                color: pickerColor,
+                onColorChanged: (color) => {
+                  changeColor(color)
+                },
+                onColorChangeEnd: (color) {
+                  print("Hi");
+                  updateIsColorSaved();
+                },
+
+                pickerTypeLabels: const <ColorPickerType, String>{
+                  ColorPickerType.both: "Palette",
+                  ColorPickerType.custom: "Gespeichert",
+                  ColorPickerType.wheel: "Farbrad"
+                },
+                maxRecentColors: 6,
+                recentColorsSubheading: Text("Zuletzt verwendete Farben", style: Theme.of(context).textTheme.subtitle1),
+                recentColors: recentColors,
+                onRecentColorsChanged: (List<Color> colors) {
+                  setState(() {
+                    recentColors = colors;
+                    updateIsColorSaved();
+                  });
+                },
+                copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+                  copyFormat: ColorPickerCopyFormat.numHexRRGGBB,
+                ),
+                showRecentColors: true,
+                wheelDiameter: wheelDiameter(),
+                enableShadesSelection: true,
+                tonalSubheading: Text("Helligkeit"),
+                showColorCode: true,
+                showColorName: true,
+                pickersEnabled: const <ColorPickerType, bool> {
+                  ColorPickerType.wheel: true,
+                  ColorPickerType.primary: false,
+                  ColorPickerType.accent: false,
+                  ColorPickerType.both: true,
+                  ColorPickerType.custom: true,
+                },
+                customColorSwatchesAndNames: colorsNameMap,
+              ),
+              if(_colorIsSaved) ...[
+                TextButton.icon(
+                    onPressed: () => {
+                      setState(() {
+                        var nMap = colorsNameMap.entries.where((element) => element.key.value != pickerColor.value);
+                        colorsNameMap = { for (var item in nMap) item.key : item.value };
+                        Persistence().saveCustomColors(colorsNameMap.keys.map((e) => e).toList());
+                        updateIsColorSaved();
+                      })
+                    },
+                    label: Text("Löschen"),
+                    icon: Icon(Icons.delete)
+                )
+              ] else ...[
+                TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        var nMap = colorsNameMap.entries.toList();
+                        nMap.add(MapEntry(ColorTools.createPrimarySwatch(pickerColor), "New Color"));
+                        colorsNameMap = { for (var item in nMap) item.key : item.value };
+                        Persistence().saveCustomColors(colorsNameMap.keys.map((e) => e).toList());
+                        updateIsColorSaved();
+                      });
+                    },
+                    label: Text("Speichern"),
+                    icon: Icon(Icons.save)
+                )
+              ]
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
