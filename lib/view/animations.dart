@@ -80,26 +80,35 @@ class ColorPoint {
 class _ColorPickerWidgetState extends State<ColorPickerWidget> {
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      scrollable: true,
-      title: Text("Farbe ändern".i18n),
-      content: Container(
-        child: ColorsWidget(
-            sendOnChange: false,
-            changeCallback: (color) => {widget.color = color},
-            startColor: widget.color),
-      ),
-      actions: [
-        TextButton(
-            child: Text("Abbrechen".i18n),
-            onPressed: () => {Navigator.pop(context)}),
-        TextButton(
-            child: Text("Speichern".i18n),
-            onPressed: () {
-              widget.saveCallback(widget.color);
-              Navigator.pop(context);
-            })
-      ],
+    return StatefulBuilder(
+      builder: (context, snapshot) {
+        return AlertDialog(
+          scrollable: true,
+          insetPadding: EdgeInsets.all(8),
+          title: Text("Farbe ändern".i18n),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ColorsWidget(
+                  sendOnChange: false,
+                  hideLayout: true,
+                  changeCallback: (color) => {widget.color = color},
+                  startColor: widget.color),
+            ],
+          ),
+          actions: [
+            TextButton(
+                child: Text("Abbrechen".i18n),
+                onPressed: () => {Navigator.pop(context)}),
+            TextButton(
+                child: Text("Speichern".i18n),
+                onPressed: () {
+                  widget.saveCallback(widget.color);
+                  Navigator.pop(context);
+                })
+          ],
+        );
+      }
     );
   }
 }

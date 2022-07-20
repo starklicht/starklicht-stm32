@@ -15,7 +15,8 @@ class ColorsWidget extends StatefulWidget {
   bool sendOnChange;
   Color? startColor;
   Function? changeCallback;
-  ColorsWidget({Key? key, required this.sendOnChange, this.startColor, this.changeCallback}) : super(key: key);
+  bool hideLayout;
+  ColorsWidget({Key? key, required this.sendOnChange, this.startColor, this.changeCallback, this.hideLayout = false}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ColorsWidgetState();
@@ -91,11 +92,19 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     super.initState();
     if(widget.startColor != null) {
       setState(() {
-        pickerColor = widget.startColor!;
-        _red = widget.startColor!.red.toDouble();
-        _green = widget.startColor!.green.toDouble();
-        _blue = widget.startColor!.blue.toDouble();
-        _alpha = widget.startColor!.alpha.toDouble();
+        isLoading = true;
+      });
+      Persistence().loadCustomColors().then((e) => {
+        setState(() {
+          var nMap = e.map((e) => MapEntry(ColorTools.createPrimarySwatch(e), ""));
+          colorsNameMap = { for (var item in nMap) item.key : item.value };
+          isLoading = false;
+          pickerColor = widget.startColor!;
+          _red = widget.startColor!.red.toDouble();
+          _green = widget.startColor!.green.toDouble();
+          _blue = widget.startColor!.blue.toDouble();
+          _alpha = widget.startColor!.alpha.toDouble();
+        })
       });
     } else if(widget.sendOnChange) {
       // Load from state
@@ -132,67 +141,9 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     if(isLoading) {
       return Text("Lädt...".i18n);
     }
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(context: context, builder: (_) {
-            return StatefulBuilder(builder: (context, StateSetter setState) {
-              return AlertDialog(
-                title: Text("Farbe einstellen"),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Column(
-                      children: [
-                        Slider(
-                          value: _red,
-                          min: 0,
-                          activeColor: Colors.red,
-                          max: 255,
-                          onChanged: (value) {
-                            setState(() {
-                              _red = value;
-                              changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
-                            });
-                          }
-                        ),
-                          Slider(
-                              value: _green,
-                              min: 0,
-                              activeColor: Colors.green,
-                              max: 255,
-                              onChanged: (value) {
-                                setState(() {
-                                  _green = value;
-                                  changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
-                                });
-                              }
-                          ),
-                          Slider(
-                              value: _blue,
-                              min: 0,
-                              activeColor: Colors.blue,
-                              max: 255,
-                              onChanged: (value) {
-                                setState(() {
-                                  _blue = value;
-                                  changeColor(Color.fromARGB(pickerColor.alpha, _red.toInt(), _green.toInt(), _blue.toInt()));
-                                });
-                              }
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            });
-          });
-        },
-        child: Icon(Icons.tune),
-      ),
-      body: SingleChildScrollView(
+    return SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 56),
+          padding: widget.hideLayout ? const EdgeInsets.all(0) : const EdgeInsets.only(bottom: 56),
           child: Column(
             children: [
               ColorPicker(
@@ -241,7 +192,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
                 },
                 customColorSwatchesAndNames: colorsNameMap,
               ),
-              if(_colorIsSaved) ...[
+              if(_colorIsSaved && !widget.hideLayout) ...[
                 TextButton.icon(
                     onPressed: () => {
                       setState(() {
@@ -254,7 +205,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
                     label: Text("Löschen"),
                     icon: Icon(Icons.delete)
                 )
-              ] else ...[
+              ] else if(!widget.hideLayout)...[
                 TextButton.icon(
                     onPressed: () {
                       setState(() {
@@ -271,8 +222,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
               ]
             ],
           ),
-        ),
-      ),
+        )
     );
   }
 }
