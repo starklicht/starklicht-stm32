@@ -11,22 +11,23 @@ import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import '../i18n/colors.dart';
 
+class ColorSaveController {
+  Function? save;
+  Function? delete;
+}
+
 class ColorsWidget extends StatefulWidget {
-  bool sendOnChange;
   Color? startColor;
-  Function? changeCallback;
-  bool hideLayout;
-  ColorsWidget({Key? key, required this.sendOnChange, this.startColor, this.changeCallback, this.hideLayout = false}) : super(key: key);
+  ValueChanged<Color>? onChanged;
+  ValueChanged<bool>? onColorExistsChange;
+  ColorSaveController? controller;
+  ColorsWidget({Key? key, this.startColor, this.onChanged, this.onColorExistsChange, this.controller}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ColorsWidgetState();
 }
 
 class _ColorsWidgetState extends State<ColorsWidget> {
-  double _red = 0;
-  double _green = 0;
-  double _blue = 0;
-  double _alpha = 0;
   bool isLoading = false;
 
   Map<ColorSwatch<Object>, String> colorsNameMap =
@@ -40,7 +41,6 @@ class _ColorsWidgetState extends State<ColorsWidget> {
 
   // create some values
   Color pickerColor = Color(0xff000000);
-  BluetoothController controller = BluetoothControllerWidget();
   List<Color> recentColors = [];
 
 
@@ -48,17 +48,8 @@ class _ColorsWidgetState extends State<ColorsWidget> {
   void changeColor(Color color) {
     setState(() {
       pickerColor = color;
-      _red = color.red.toDouble();
-      _green = color.green.toDouble();
-      _blue = color.blue.toDouble();
-      _alpha = color.alpha.toDouble();
     });
-    widget.changeCallback?.call(pickerColor);
-    if(widget.sendOnChange) {
-      // Also, save the color...
-      Persistence().setColor(pickerColor);
-      controller.broadcast(ColorMessage(_red.toInt(), _green.toInt(), _blue.toInt(), _alpha.toInt()));
-    }
+    widget.onChanged?.call(pickerColor);
   }
 
   String getColorText() {
@@ -84,12 +75,36 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     setState(() {
       _colorIsSaved = ColorTools.isCustomColor(pickerColor, colorsNameMap);
     });
+    widget.onColorExistsChange?.call(_colorIsSaved);
+  }
+
+  void saveColor() {
+    print("I AM SAVING A COLOR");
+    setState(() {
+      var nMap = colorsNameMap.entries.toList();
+      nMap.add(MapEntry(ColorTools.createPrimarySwatch(pickerColor), "New Color"));
+      colorsNameMap = { for (var item in nMap) item.key : item.value };
+      Persistence().saveCustomColors(colorsNameMap.keys.map((e) => e).toList());
+      updateIsColorSaved();
+    });
+  }
+
+  void deleteColor() {
+    print("I AM DELETING A COLOR");
+    setState(() {
+      var nMap = colorsNameMap.entries.where((element) => element.key.value != pickerColor.value);
+      colorsNameMap = { for (var item in nMap) item.key : item.value };
+      Persistence().saveCustomColors(colorsNameMap.keys.map((e) => e).toList());
+      updateIsColorSaved();
+    });
   }
 
 
   @override
   void initState() {
     super.initState();
+    widget.controller?.save = saveColor;
+    widget.controller?.delete = deleteColor;
     if(widget.startColor != null) {
       setState(() {
         isLoading = true;
@@ -100,13 +115,9 @@ class _ColorsWidgetState extends State<ColorsWidget> {
           colorsNameMap = { for (var item in nMap) item.key : item.value };
           isLoading = false;
           pickerColor = widget.startColor!;
-          _red = widget.startColor!.red.toDouble();
-          _green = widget.startColor!.green.toDouble();
-          _blue = widget.startColor!.blue.toDouble();
-          _alpha = widget.startColor!.alpha.toDouble();
         })
       });
-    } else if(widget.sendOnChange) {
+    } else {
       // Load from state
       setState(() {
         isLoading = true;
@@ -116,15 +127,12 @@ class _ColorsWidgetState extends State<ColorsWidget> {
       setState(() {
         pickerColor = i;
         updateIsColorSaved();
-        _red = i.red.toDouble();
-        _green = i.green.toDouble();
-        _blue = i.blue.toDouble();
-        _alpha = i.alpha.toDouble();
       })
       }).then((value) => Persistence().loadCustomColors().then((e) => {
         setState(() {
           var nMap = e.map((e) => MapEntry(ColorTools.createPrimarySwatch(e), ""));
           colorsNameMap = { for (var item in nMap) item.key : item.value };
+          updateIsColorSaved();
           isLoading = false;
         })
       }));
@@ -143,7 +151,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     }
     return SingleChildScrollView(
         child: Padding(
-          padding: widget.hideLayout ? const EdgeInsets.all(0) : const EdgeInsets.only(bottom: 56),
+          padding: const EdgeInsets.all(0),
           child: Column(
             children: [
               ColorPicker(
@@ -192,37 +200,48 @@ class _ColorsWidgetState extends State<ColorsWidget> {
                 },
                 customColorSwatchesAndNames: colorsNameMap,
               ),
-              if(_colorIsSaved && !widget.hideLayout) ...[
-                TextButton.icon(
-                    onPressed: () => {
-                      setState(() {
-                        var nMap = colorsNameMap.entries.where((element) => element.key.value != pickerColor.value);
-                        colorsNameMap = { for (var item in nMap) item.key : item.value };
-                        Persistence().saveCustomColors(colorsNameMap.keys.map((e) => e).toList());
-                        updateIsColorSaved();
-                      })
-                    },
-                    label: Text("Löschen"),
-                    icon: Icon(Icons.delete)
-                )
-              ] else if(!widget.hideLayout)...[
-                TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        var nMap = colorsNameMap.entries.toList();
-                        nMap.add(MapEntry(ColorTools.createPrimarySwatch(pickerColor), "New Color"));
-                        colorsNameMap = { for (var item in nMap) item.key : item.value };
-                        Persistence().saveCustomColors(colorsNameMap.keys.map((e) => e).toList());
-                        updateIsColorSaved();
-                      });
-                    },
-                    label: Text("Speichern"),
-                    icon: Icon(Icons.save)
-                )
-              ]
-            ],
+            ]
           ),
         )
+    );
+  }
+}
+
+class ColorScaffoldWidget extends StatefulWidget {
+  Function? save;
+  Function? delete;
+  @override
+  State<StatefulWidget> createState() => _ColorScaffoldWidgetState();
+}
+
+class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget> {
+  BluetoothController controller = BluetoothControllerWidget();
+  bool _colorExists = false;
+  final ColorSaveController saveController = ColorSaveController();
+
+  @override
+  Widget build(BuildContext context) {
+    ValueChanged<bool>? onColorSave;
+    return Scaffold(
+      body: ColorsWidget(
+        controller: saveController,
+        onChanged: (color) {
+          Persistence().setColor(color);
+          controller.broadcast(ColorMessage(color.red.toInt(), color.green.toInt(), color.blue.toInt(), color.alpha.toInt()));
+        },
+        onColorExistsChange: (exists) => setState(() { _colorExists = exists; }),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          if(_colorExists) {
+            saveController.delete?.call();
+          } else {
+            saveController.save?.call();
+          }
+        },
+        child: _colorExists ? Icon(Icons.delete) : Icon(Icons.save),
+
+      ),
     );
   }
 }

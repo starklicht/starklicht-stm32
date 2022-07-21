@@ -90,9 +90,7 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ColorsWidget(
-                  sendOnChange: false,
-                  hideLayout: true,
-                  changeCallback: (color) => {widget.color = color},
+                  onChanged: (color) => {widget.color = color},
                   startColor: widget.color),
             ],
           ),

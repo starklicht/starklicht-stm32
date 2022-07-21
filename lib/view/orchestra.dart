@@ -272,7 +272,6 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                           else if(_messageType == MessageType.color) ...[
                             Text("Farbe auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
                             ColorsWidget(
-                              sendOnChange: false,
                               startColor: Colors.white,
                             )
                           ]

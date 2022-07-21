@@ -85,7 +85,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   List<Widget> _widgetOptions = <Widget>[
     ConnectionsWidget(),
-    ColorsWidget(sendOnChange: true, hideLayout: false),
+    ColorScaffoldWidget(),
     Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
     AnimationsWidget(),
     OrchestraListView()
