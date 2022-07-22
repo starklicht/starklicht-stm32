@@ -132,45 +132,48 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
 
 
   void registerHandlers() {
-    print("REGISTER HANDLERS!!!");
-    Timer.periodic(const Duration(seconds: 2), (_) {
-      flutterBlue.connectedDevices.then((value) async {
-        if(makingConnectOperation) {
-          return;
-        }
-        // Find all devices that disconnected
-        var disconnections = connectedDevices.map((e) => e.device.id.id).where((element) =>
-          !value.map((e1) => e1.id.id).contains(element)
-        );
-        var newConnections = value.map((e) => e.id.id).where((element) =>
-          !connectedDevices.map((e1) => e1.device.id.id).contains(element)
-        );
-        if(disconnections.isNotEmpty) {
-          // Notify user
-          for(var d in disconnections) {
-            var currentD = connectedDevices.firstWhere((element) =>
-                d == element.device.id.id
-            );
-            connectionChanges.add(
-              ConnectionDiff(currentD, ConnectionType.DISCONNECT, true)
-            );
-            // remove from connections
+    Timer.periodic(const Duration(seconds: 100), (_) {
+      try {
+        flutterBlue.connectedDevices.then((value) async {
+          if (makingConnectOperation) {
+            return;
           }
-          connectedDevices.removeWhere((e) => disconnections.contains(e.device.id.id));
-          connectionStream.add(connectedDevices);
-        }
-        if(newConnections.isNotEmpty) {
-          var a = <SBluetoothDevice>[];
-          for(var d in newConnections) {
-            var con = value.firstWhere((element) => d == element.id.id);
-            var b = await postConnect(con);
-            a.add(b);
-            connectionChanges.add(ConnectionDiff(b, ConnectionType.CONNECT, true));
+          // Find all devices that disconnected
+          var disconnections = connectedDevices
+              .map((e) => e.device.id.id)
+              .where(
+                  (element) => !value.map((e1) => e1.id.id).contains(element));
+          var newConnections = value.map((e) => e.id.id).where((element) =>
+              !connectedDevices.map((e1) => e1.device.id.id).contains(element));
+          if (disconnections.isNotEmpty) {
+            // Notify user
+            for (var d in disconnections) {
+              var currentD = connectedDevices
+                  .firstWhere((element) => d == element.device.id.id);
+              connectionChanges.add(
+                  ConnectionDiff(currentD, ConnectionType.DISCONNECT, true));
+              // remove from connections
+            }
+            connectedDevices
+                .removeWhere((e) => disconnections.contains(e.device.id.id));
+            connectionStream.add(connectedDevices);
           }
-          connectedDevices.addAll(a);
-          connectionStream.add(connectedDevices);
-        }
-      });
+          if (newConnections.isNotEmpty) {
+            var a = <SBluetoothDevice>[];
+            for (var d in newConnections) {
+              var con = value.firstWhere((element) => d == element.id.id);
+              var b = await postConnect(con);
+              a.add(b);
+              connectionChanges
+                  .add(ConnectionDiff(b, ConnectionType.CONNECT, true));
+            }
+            connectedDevices.addAll(a);
+            connectionStream.add(connectedDevices);
+          }
+        });
+      } catch(e) {
+        print("Could not connect to devices. nvm");
+      }
     });
   }
 

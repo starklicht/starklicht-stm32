@@ -23,6 +23,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
   final BluetoothController controller = BluetoothControllerWidget();
   String currentNameRename = "";
   var t = TextEditingController();
+  final RestartController restartController = RestartController();
 
 
   void edit() {
@@ -77,6 +78,27 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
     );
   }
 
+  var isValidAnimation = true;
+
+
+  void setAnimations(List<KeyframeAnimation> an) {
+    print("SETTING ANIMATIONS NEW...");
+    an.forEach((element) {
+      print("ELEMENT");
+      print(element.colors.map((e) => e.point));
+    });
+    setState(() {
+      animations = [];
+    });
+    // FIXME: Can we do this more beautiful?
+    Future.delayed(Duration(milliseconds: 1), () => {
+      setState(() {
+        animations = an;
+      })
+    });
+
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -93,7 +115,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                     children: [
                       Lottie.asset(
                       'assets/server.json',
-		      width: 500
+		                    width: 500
                       ),
                       Text(
                         "Keine gespeicherten Animationen\n".i18n,
@@ -152,6 +174,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                           title: Text("Editieren".i18n),
                         ),
                           onTap: () {
+                            var currentAnimation = filteredAnimations()[realIndex].copy();
                             Future.delayed(
                                 const Duration(seconds: 0),
                                     () =>
@@ -159,25 +182,35 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                                       return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
                                         return AlertDialog(
                                           title: Text("Bearbeiten".i18n),
-                                          content: AnimationsEditorWidget(
-                                            onAnimationsValidChanged: (bool value) {  },
-                                            animation: filteredAnimations()[realIndex],
+                                          insetPadding: EdgeInsets.all(16),
+                                          contentPadding: EdgeInsets.zero,
+                                          content: Container(
+                                            child: AnimationsEditorWidget(
+                                              showSendingOptions: false,
+                                              onAnimationsValidChanged: (bool value) {
+                                                Future.delayed(Duration.zero, () async {
+                                                  setState(() {
+                                                    isValidAnimation = value;
+                                                  });
+                                                });
+                                              },
+                                              onAnimationChanged: (a) => setState(() {
+                                                currentAnimation = a.copy();
+                                              }),
+                                              animation: currentAnimation,
+                                            ),
                                           ),
                                           actions: [
                                             TextButton(onPressed: () =>{
                                               Navigator.pop(context)
                                             }, child: Text("Abbrechen".i18n)),
-                                            TextButton(onPressed: filteredAnimations()[realIndex].title == currentNameRename? null : () {
-                                              var old = filteredAnimations()[realIndex].title;
-                                              Persistence().rename(filteredAnimations()[realIndex].title, t.text).then((value) =>
-                                              {
-                                                load(),
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(content:
-                                                    Text('Animation "%s" wurde zu "%s" umbenannt'.i18n.fill([old, t.text]))
-                                                    )
-                                                ),
-                                                Navigator.pop(context)
+                                            TextButton(onPressed: !isValidAnimation? null : () {
+                                              print(currentAnimation);
+                                              Persistence().saveAnimation(currentAnimation).then((value) {
+                                                Future.delayed(Duration.zero, () => {
+                                                  setAnimations(value)
+                                                });
+                                                Navigator.pop(context);
                                               });
                                             }, child: Text("Speichern".i18n)),
                                           ],
@@ -185,12 +218,6 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                                       });
                                     })
                             );
-                            /*Persistence().saveEditorAnimation(filteredAnimations()[realIndex]);
-
-                            var snackBar = SnackBar(
-                              content: Text('Animation kann jetzt im Abschnitt "Animation" bearbeitet werden'.i18n),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(snackBar);*/
                           },
                           value: 0
                         ),
@@ -240,21 +267,6 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                                   });
                                 })
                               );
-                              /* setState(() {
-                                currentNameRename = filteredAnimations()[realIndex].title;
-                              });
-                              showDialog(context: context, builder: (_) {
-                                return AlertDialog(
-                                  title: Text("Umbenennen"),
-                                  content: TextField(
-                                    onChanged: (text) {
-                                      setState(() {
-                                        currentNameRename = text;
-                                      });
-                                    }
-                                  ),
-                                );
-                              }); */
                             },
                             value: 1
                         ),
@@ -284,8 +296,9 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       filteredAnimations()[realIndex].colors.map((e) => ColorPoint(e.color, e.point)).toList()
                     ),
                     callback: null,
-                    restartCallback: const {},
-                    notify: const {},
+                    restartController: restartController,
+                    restartCallback: {},
+                    notify: {},
                     isEditorPreview: false,
                     onAnimationsValidChanged: (val) => {},
                   ),

@@ -1,11 +1,11 @@
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387 is not a valid Dart package name.
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "starklicht-flutter",
+            "name": "starklicht_flutter",
             "request": "launch",
             "type": "dart",
             "program": "lib/view/main.dart",
@@ -15,7 +15,7 @@
             ]
         },
         {
-            "name": "starklicht-flutter (profile mode)",
+            "name": "starklicht_flutter (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"

@@ -56,4 +56,18 @@ class KeyframeAnimation {
   }
 
   AnimationSettingsConfig get config => _config;
+
+  copy() {
+    return KeyframeAnimation(
+      _colors.map((e) => ColorPoint(e.color, e.point)).toList(),
+      AnimationSettingsConfig(
+        _config.interpolationType,
+        _config.timefactor,
+        _config.minutes,
+        _config.seconds,
+        _config.millis
+      ),
+      title
+    );
+  }
 }

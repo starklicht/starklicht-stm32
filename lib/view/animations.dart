@@ -260,18 +260,19 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
   Widget build(BuildContext context) {
     return Column(children: [
       Container(
-        child: Row(
-          children: [
-            Column(
-              children: [
-                Row(
-                  children: [
-                    const Text("Interpolation: ",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text(getAnimationText()),
-                  ],
-                ),
-                const SizedBox(height: 12),
+        width: double.infinity,
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          runSpacing: 8,
+          spacing: 8,
+          children: <Widget>[
+            Container(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                const Text("Interpolation:", style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(getAnimationText()),
+                SizedBox(height: 12),
                 ToggleButtons(
                   borderRadius: const BorderRadius.all(Radius.circular(10)),
                   children: const <Widget>[
@@ -288,39 +289,39 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
                       updateCurrentConfig();
                     });
                   },
-                )
-              ],
-              crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+              ],),
             ),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Text("Zeitfaktor: ".i18n,
+            Container(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Zeitfaktor: ".i18n,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 Text(getRepeatText()),
-              ]),
-              const SizedBox(height: 12),
-              ToggleButtons(
-                borderRadius: const BorderRadius.all(Radius.circular(10)),
-                children: const <Widget>[
-                  Icon(Icons.repeat),
-                  Icon(Icons.swap_horiz),
-                  Icon(Icons.shuffle),
-                  Icon(Icons.looks_one)
-                ],
-                isSelected: isSelected,
-                onPressed: (int index) {
-                  setState(() {
-                    for (int i = 0; i < isSelected.length; i++) {
-                      isSelected[i] = false;
-                    }
-                    isSelected[index] = true;
-                    updateCurrentConfig();
-                  });
-                },
-              )
-            ])
+                SizedBox(height: 12),
+                  ToggleButtons(
+                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  children: const <Widget>[
+                    Icon(Icons.repeat),
+                    Icon(Icons.swap_horiz),
+                    Icon(Icons.shuffle),
+                    Icon(Icons.looks_one)
+                  ],
+                  isSelected: isSelected,
+                  onPressed: (int index) {
+                    setState(() {
+                      for (int i = 0; i < isSelected.length; i++) {
+                        isSelected[i] = false;
+                      }
+                      isSelected[index] = true;
+                      updateCurrentConfig();
+                    });
+                  },
+                )
+              ],),
+            ),
           ],
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
         ),
         margin: const EdgeInsets.all(12),
       ),
@@ -468,11 +469,15 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   }
 
   double getCanvasPosition(double pointPos) {
-    return map(pointPos, (-boundingBoxSize + circleRadius) / 2, getCurrentContainerSize().width - (boundingBoxSize + circleRadius) / 2, 0, 1);
+    return map(pointPos,(-boundingBoxSize + circleRadius) / 2 + getCurrentContainerPosition().dx, (getCurrentContainerSize().width - (boundingBoxSize + circleRadius) / 2) + getCurrentContainerPosition().dx, 0, 1);
+  }
+
+  Offset getCurrentContainerPosition() {
+    return _currentOffset;
   }
 
   Size getCurrentContainerSize() {
-    return MediaQuery.of(context).size;
+    return _currentSize;
   }
 
   void storePosition(TapDownDetails details) =>
@@ -537,6 +542,32 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
     notify();
   }
 
+  final GlobalKey _widgetKey = GlobalKey();
+  Size _currentSize = Size(0, 0);
+  Offset _currentOffset = Offset(0, 0);
+
+  void _getWidgetInfo(_) {
+    final RenderBox renderBox = _widgetKey.currentContext?.findRenderObject() as RenderBox;
+
+    final Size size = renderBox.size; // or _widgetKey.currentContext?.size
+    print('Size: ${size.width}, ${size.height}');
+
+    final Offset offset = renderBox.localToGlobal(Offset.zero);
+    print('Offset: ${offset.dx}, ${offset.dy}');
+    print('Position: ${(offset.dx + size.width) / 2}, ${(offset.dy + size.height) / 2}');
+    setState(() {
+      _currentSize = renderBox.size;
+      _currentOffset = offset;
+    });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    WidgetsBinding.instance.addPostFrameCallback(_getWidgetInfo);
+    super.initState();
+  }
+
   void onDragUpdate(DragUpdateDetails d, int pointIndex) {
     var pointPos = constrain(getCanvasPosition(d.globalPosition.dx));
     setState(() {
@@ -562,120 +593,124 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   Widget build(BuildContext context) {
     // TODO: implement build
     return Column(children: [
-      Stack(
-        clipBehavior: Clip.none,
-          children: [
-        GestureDetector(
-            onTapUp: (e) => {addPoint(e.globalPosition.dx)},
-            child: Container(
-                height: widgetHeight,
-                margin: EdgeInsets.only(
-                    left: circleRadius / 2, right: circleRadius / 2),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors:
-                          List.from(widget.gradient.colors.map((e) => e.color)),
-                      stops: List.from(
-                          widget.gradient.colors.map((e) => e.point))),
-                  borderRadius: const BorderRadius.all(Radius.circular(4)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black,
-                      blurRadius: 2.0,
-                      spreadRadius: 0.0,
-                      offset:
-                          Offset(2.0, 2.0), // shadow direction: bottom right
-                    ),
-                  ],
-                ))),
-        ...widget.gradient.colors.mapIndexed((e, currentIndex) => Positioned(
-            left: getPointPosition(e.point),
-            top: (widgetHeight - boundingBoxSize) / 2,
-            child: Draggable(
-              child: GestureDetector(
-                  onTap: () {
-                    // Show Color Selection Dialog only when tapping item and is active already
-                    if (currentIndex == _activeIndex) {
-                      showDialog(
-                          context: context,
-                          builder: (_) {
-                            return ColorPickerWidget(
-                                color:
-                                    widget.gradient.colors[_activeIndex!].color,
-                                saveCallback: updateColor);
-                          });
-                    }
-                    setState(() {
-                      _activeIndex = currentIndex;
-                    });
-                  },
-                  onTapDown: (details) {
-                    storePosition(details);
-                  },
-                  onLongPress: () {
-                    setState(() {
-                      _activeIndex = currentIndex;
-                    });
-                    // Open context menu
-                    _showCustomMenu();
-                  },
-                  child: Container(
-                      width: boundingBoxSize,
-                      alignment: Alignment.center,
-                      color: Colors.transparent,
-                      height: boundingBoxSize,
-                      child: Container(
-                          width: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
-                          height: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
-                          decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: e.color,
-                              border: Border.all(color: Colors.white, width: 3),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black,
-                                  blurRadius: 0.0,
-                                  spreadRadius: 1.0,
-                                  offset: Offset(0,
-                                      0), // shadow direction: bottom right
-                                )
-                              ])))),
-              feedback: Container(
-                  width: boundingBoxSize,
-                  alignment: Alignment.center,
-                  color: Colors.transparent,
-                  height: boundingBoxSize,
-                  child: Container(
-                  width: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
-                  height: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
-                  padding: const EdgeInsets.all(10),
+      Padding(
+        padding: const EdgeInsets.only(left:8.0, right: 8.0),
+        child: Stack(
+          key: _widgetKey,
+          clipBehavior: Clip.none,
+            children: [
+          GestureDetector(
+              onTapUp: (e) => {addPoint(e.globalPosition.dx)},
+              child: Container(
+                  height: widgetHeight,
+                  margin: EdgeInsets.only(
+                      left: circleRadius / 2, right: circleRadius / 2),
                   decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: e.color,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Colors.black,
-                            blurRadius: 1.0,
-                            spreadRadius: 1.0,
-                            offset: Offset(0,
-                                0),  // shadow direction: bottom right
-                        )
-                      ]))),
-              childWhenDragging: Container(),
-              axis: Axis.horizontal,
-              onDragEnd: (d) => onDragEnd(d.offset.dx, currentIndex),
-              onDragStarted: ()  {
-                setState(() {
-                  _activeIndex = currentIndex;
-                });
-              },
-              // TODO: Make Dragupdate work, so users see gradient in real time
-              onDragUpdate: (d) => onDragUpdate(d, currentIndex),
-            )))
-      ]),
+                    gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors:
+                            List.from(widget.gradient.colors.map((e) => e.color)),
+                        stops: List.from(
+                            widget.gradient.colors.map((e) => e.point))),
+                    borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black,
+                        blurRadius: 2.0,
+                        spreadRadius: 0.0,
+                        offset:
+                            Offset(2.0, 2.0), // shadow direction: bottom right
+                      ),
+                    ],
+                  ))),
+          ...widget.gradient.colors.mapIndexed((e, currentIndex) => Positioned(
+              left: getPointPosition(e.point),
+              top: (widgetHeight - boundingBoxSize) / 2,
+              child: Draggable(
+                child: GestureDetector(
+                    onTap: () {
+                      // Show Color Selection Dialog only when tapping item and is active already
+                      if (currentIndex == _activeIndex) {
+                        showDialog(
+                            context: context,
+                            builder: (_) {
+                              return ColorPickerWidget(
+                                  color:
+                                      widget.gradient.colors[_activeIndex!].color,
+                                  saveCallback: updateColor);
+                            });
+                      }
+                      setState(() {
+                        _activeIndex = currentIndex;
+                      });
+                    },
+                    onTapDown: (details) {
+                      storePosition(details);
+                    },
+                    onLongPress: () {
+                      setState(() {
+                        _activeIndex = currentIndex;
+                      });
+                      // Open context menu
+                      _showCustomMenu();
+                    },
+                    child: Container(
+                        width: boundingBoxSize,
+                        alignment: Alignment.center,
+                        color: Colors.transparent,
+                        height: boundingBoxSize,
+                        child: Container(
+                            width: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
+                            height: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: e.color,
+                                border: Border.all(color: Colors.white, width: 3),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black,
+                                    blurRadius: 0.0,
+                                    spreadRadius: 1.0,
+                                    offset: Offset(0,
+                                        0), // shadow direction: bottom right
+                                  )
+                                ])))),
+                feedback: Container(
+                    width: boundingBoxSize,
+                    alignment: Alignment.center,
+                    color: Colors.transparent,
+                    height: boundingBoxSize,
+                    child: Container(
+                    width: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
+                    height: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: e.color,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Colors.black,
+                              blurRadius: 1.0,
+                              spreadRadius: 1.0,
+                              offset: Offset(0,
+                                  0),  // shadow direction: bottom right
+                          )
+                        ]))),
+                childWhenDragging: Container(),
+                axis: Axis.horizontal,
+                onDragEnd: (d) => onDragEnd(d.offset.dx, currentIndex),
+                onDragStarted: ()  {
+                  setState(() {
+                    _activeIndex = currentIndex;
+                  });
+                },
+                // TODO: Make Dragupdate work, so users see gradient in real time
+                onDragUpdate: (d) => onDragUpdate(d, currentIndex),
+              )))
+        ]),
+      ),
       Column(children: [
         if (true) ...[
           /* Container(
@@ -752,6 +787,10 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   }
 }
 
+class RestartController {
+  Function? restart;
+}
+
 class AnimationPreviewWidget extends StatefulWidget {
   AnimationSettingsConfig settings;
   GradientSettingsConfig colors;
@@ -762,6 +801,7 @@ class AnimationPreviewWidget extends StatefulWidget {
   ValueChanged<bool> onAnimationsValidChanged;
   ValueChanged<KeyframeAnimation>? onAnimationChanged;
   String? title;
+  RestartController? restartController;
 
   AnimationPreviewWidget(
       {
@@ -774,7 +814,8 @@ class AnimationPreviewWidget extends StatefulWidget {
         required this.isEditorPreview,
         required this.onAnimationsValidChanged,
         this.onAnimationChanged,
-        this.title
+        this.title,
+        this.restartController
       })
       : super(key: key);
 
@@ -1067,7 +1108,8 @@ class AnimationsEditorWidget extends StatefulWidget {
   bool persistChanges;
   KeyframeAnimation? animation;
   bool isScaffold;
-  AnimationsEditorWidget({Key? key, this.animationsController, required this.onAnimationsValidChanged, this.isScaffold = false, this.animation, this.onAnimationChanged, this.persistChanges = false}) : super(key: key);
+  bool showSendingOptions;
+  AnimationsEditorWidget({Key? key, this.animationsController, required this.onAnimationsValidChanged, this.isScaffold = false, this.animation, this.onAnimationChanged, this.persistChanges = false, this.showSendingOptions = true}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _AnimationsEditorWidgetState();
@@ -1154,11 +1196,13 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
             onAnimationChanged: widget.onAnimationChanged,
             title: widget.animation?.title
         ),
-        const Divider(height: 32),
-        Text("Einstellungen".i18n),
-        const SizedBox(height: 12),
-        AnimationTaskbarWidget(
-            settings: settings!, colors: gradient!, notify: notifyChanges)
+        if(widget.showSendingOptions)...[
+          const Divider(height: 32),
+          Text("Einstellungen".i18n),
+          const SizedBox(height: 12),
+          AnimationTaskbarWidget(
+              settings: settings!, colors: gradient!, notify: notifyChanges)
+        ]
       ]));
     }
   }

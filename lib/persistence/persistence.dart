@@ -12,7 +12,7 @@ import 'package:starklicht_flutter/view/animations.dart';
 
 abstract class IPersistence {
   Future<List<KeyframeAnimation>> getAnimationStore();
-  void saveAnimation(KeyframeAnimation a);
+  Future<List<KeyframeAnimation>> saveAnimation(KeyframeAnimation a);
   Future<List<KeyframeAnimation>> deleteAnimation(String title);
   Future<KeyframeAnimation?> findByName(String name);
   Future<bool> existsByName(String name);
@@ -72,8 +72,7 @@ class Persistence implements IPersistence {
   }
 
   @override
-  Future<void> saveAnimation(KeyframeAnimation a) async {
-    // TODO: implement saveAnimation
+  Future<List<KeyframeAnimation>> saveAnimation(KeyframeAnimation a) async {
     var currentAnimations = await getAnimationStore();
     var i = currentAnimations.indexWhere((element) => element.title == a.title);
     if(i > -1) {
@@ -86,6 +85,7 @@ class Persistence implements IPersistence {
         animationStore,
         currentAnimations.map((e) => jsonEncode(e.toJson())).toList()
     );
+    return currentAnimations;
   }
   
   Future<KeyframeAnimation> getEditorAnimation() async {
