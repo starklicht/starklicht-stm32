@@ -1,7 +1,6 @@
 
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart'; // You have to add this manually, for some reason it cannot be added automatically
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,6 +46,7 @@ class Persistence implements IPersistence {
   static const String animationStore = "animations";
   static const String colors = "colors";
   static const String editorAnimation = "editor-animation";
+  @override
   Future<List<KeyframeAnimation>> getAnimationStore() async {
     final prefs = await SharedPreferences.getInstance();
     var animations = prefs.getStringList(animationStore);
@@ -71,6 +71,7 @@ class Persistence implements IPersistence {
     return colorList!.map((e) => Color(int.parse(e))).toList();
   }
 
+  @override
   Future<void> saveAnimation(KeyframeAnimation a) async {
     // TODO: implement saveAnimation
     var currentAnimations = await getAnimationStore();
@@ -158,11 +159,11 @@ class Persistence implements IPersistence {
     }
     var l = await getAnimationStore();
     if(l.indexWhere((element) => element.title == newName) > -1) {
-      throw Exception("Konnte nicht umbenannt werden, da Animation ${newName} schon existiert");
+      throw Exception("Konnte nicht umbenannt werden, da Animation $newName schon existiert");
     }
     var index = l.indexWhere((element) => element.title == name);
     if(index == -1) {
-      throw Exception("Konnte nicht umbenannt werden, da Animation ${name} nicht existiert");
+      throw Exception("Konnte nicht umbenannt werden, da Animation $name nicht existiert");
     }
     l[index].title = newName;
     save(l);

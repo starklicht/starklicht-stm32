@@ -3,7 +3,7 @@ import 'package:i18n_extension/i18n_extension.dart';
 
 extension Localization on String {
 
-  static var _t = Translations("de_de") +
+  static final _t = Translations("de_de") +
       {
         "de_de": "Bluetooth ist nicht verfügbar",
         "en_us": "Bluetooth is not available"

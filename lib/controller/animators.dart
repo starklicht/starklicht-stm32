@@ -1,13 +1,12 @@
 import 'dart:math';
 
-import 'package:flutter/animation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/view/animations.dart';
 
 class BaseColorAnimation extends Animatable<Color?> {
   List<ColorPoint> _points;
-  bool _randomize;
+  final bool _randomize;
   final _random = Random();
   double lastValue = 0;
   double nextValue = 0;
@@ -31,8 +30,8 @@ class BaseColorAnimation extends Animatable<Color?> {
   }
 
   double map(
-      double x, double in_min, double in_max, double out_min, double out_max) {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+      double x, double inMin, double inMax, double outMin, double outMax) {
+    return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
   }
 
   Color? gradientScale(double t) {
@@ -83,6 +82,7 @@ class BaseColorAnimation extends Animatable<Color?> {
 class ConstantColorAnimator extends BaseColorAnimation {
   ConstantColorAnimator(List<ColorPoint> points, bool randomize) : super(points, randomize);
 
+  @override
   double interpolate(double t) {
     if(_randomize) {
       if (t < lastTime) {

@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'package:collection/src/iterable_extensions.dart';
-import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:starklicht_flutter/model/factory.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
@@ -136,7 +133,7 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
 
   void registerHandlers() {
     print("REGISTER HANDLERS!!!");
-    Timer.periodic(Duration(seconds: 2), (_) {
+    Timer.periodic(const Duration(seconds: 2), (_) {
       flutterBlue.connectedDevices.then((value) async {
         if(makingConnectOperation) {
           return;
@@ -161,7 +158,7 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
           }
           connectedDevices.removeWhere((e) => disconnections.contains(e.device.id.id));
           connectionStream.add(connectedDevices);
-        };
+        }
         if(newConnections.isNotEmpty) {
           var a = <SBluetoothDevice>[];
           for(var d in newConnections) {
@@ -225,6 +222,7 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
     return d;
   }
 
+  @override
   Future stopScan() {
     return flutterBlue.stopScan();
   }

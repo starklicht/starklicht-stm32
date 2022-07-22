@@ -1,19 +1,11 @@
 
 import 'dart:async';
-import 'dart:collection';
-import 'dart:math';
 
-import 'package:collection/src/iterable_extensions.dart';
 import 'package:dotted_border/dotted_border.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:starklicht_flutter/messages/brightness_message.dart';
-import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/messages/imessage.dart';
 import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:uuid/uuid.dart';
-import 'package:intl/intl.dart';
 
 import '../controller/starklicht_bluetooth_controller.dart';
 
@@ -88,16 +80,16 @@ class AddNodeState extends INodeState<AddNode> {
   Widget build(BuildContext context) {
     return DottedBorder(
       borderType: BorderType.RRect,
-      dashPattern: [5, 5],
-      radius: Radius.circular(8),
+      dashPattern: const [5, 5],
+      radius: const Radius.circular(8),
       color: Colors.blueAccent,
       child: Padding(
-        padding: EdgeInsets.all(58),
+        padding: const EdgeInsets.all(58),
         child: Center(
           child: IconButton(
             onPressed: () => {},
             color: Colors.blueAccent,
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add),
           )
         )
       )
@@ -170,7 +162,7 @@ class MessageNodeState extends INodeState<MessageNode> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.all(0),
+      margin: const EdgeInsets.all(0),
         shape: RoundedRectangleBorder(
           side: BorderSide(
             color: Theme.of(context).dividerColor
@@ -229,7 +221,7 @@ class MessageNodeState extends INodeState<MessageNode> {
                             blurRadius: 3.0,
                             spreadRadius: 0.0,
                             offset:
-                            Offset(2.0, 2.0), // shadow direction: bottom right
+                            const Offset(2.0, 2.0), // shadow direction: bottom right
                           ),
                         ],
                       ),
@@ -238,7 +230,7 @@ class MessageNodeState extends INodeState<MessageNode> {
                       getText(),
                       style: Theme.of(context).textTheme.bodyText1
                     ),
-                    if(widget.progress > 0) ...[SizedBox(width: 12, height: 12,child: CircularProgressIndicator(strokeWidth: 2,))]
+                    if(widget.progress > 0) ...[const SizedBox(width: 12, height: 12,child: CircularProgressIndicator(strokeWidth: 2,))]
 
                   ],
                 ),
@@ -292,11 +284,11 @@ class TimedNodeState extends INodeState<TimedNode> {
 
   List<Color> getColors() {
     if(widget.type == NodeType.REPEAT) {
-      return [Color(0xffF7971E), Color(0xffFFD200)];
+      return [const Color(0xffF7971E), const Color(0xffFFD200)];
     } else if(widget.type == NodeType.WAIT) {
-      return [Color(0xff42275A), Color(0xff734B6D)];
+      return [const Color(0xff42275A), const Color(0xff734B6D)];
     }
-    return [Color(0xff136A8A), Color(0xff267871)];
+    return [const Color(0xff136A8A), const Color(0xff267871)];
   }
 
   void update() {
@@ -308,7 +300,7 @@ class TimedNodeState extends INodeState<TimedNode> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.all(0),
+      margin: const EdgeInsets.all(0),
       clipBehavior: Clip.antiAlias,
       child: Container(
         width: 340,
@@ -340,7 +332,7 @@ class TimedNodeState extends INodeState<TimedNode> {
                       style: Theme.of(context).textTheme.headline6!.copyWith(color: Colors.white))
                     ],
                   ),
-                  Spacer(flex: 2),
+                  const Spacer(flex: 2),
                   Icon(getIcon(), color: Colors.white, size: 64,),
                   Container(
                     child: PopupMenuButton<String>(
@@ -354,8 +346,8 @@ class TimedNodeState extends INodeState<TimedNode> {
                             var duration = widget.time;
                             return StatefulBuilder(builder: (context, StateSetter setState) {
                               return AlertDialog(
-                                title: Text("Bearbeiten"),
-                                content: Container(
+                                title: const Text("Bearbeiten"),
+                                content: SizedBox(
                                   height: 150,
                                   child: TimePicker(
                                     onChanged: (v) => {duration = v}, small: true, startDuration: duration,
@@ -363,10 +355,10 @@ class TimedNodeState extends INodeState<TimedNode> {
                                 ),
                                 actions: [
                                   TextButton(
-                                  child: Text("Abbrechen"),
+                                  child: const Text("Abbrechen"),
                                   onPressed: () => {Navigator.pop(context)}),
                                   TextButton(
-                                  child: Text("Speichern"),
+                                  child: const Text("Speichern"),
                                   onPressed: () => {
                                     setState(() {
                                       widget.time = duration;

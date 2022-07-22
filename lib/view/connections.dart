@@ -1,13 +1,9 @@
 import 'dart:async';
-import 'package:collection/src/iterable_extensions.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
-import 'package:i18n_extension/i18n_extension.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:lottie/lottie.dart';
-import 'package:starklicht_flutter/persistence/persistence.dart';
 import "../i18n/connections.dart";
 
 class _ConnectionsWidgetState extends State<ConnectionsWidget> {
@@ -79,11 +75,11 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
             itemBuilder: (BuildContext context, int index) {
               print(index);
               if (_isLoading) {
-                return CircularProgressIndicator();
+                return const CircularProgressIndicator();
               }
               else if (connectedDevices.isEmpty) {
                 return Padding(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -96,7 +92,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                           Text(
                             "${getPlaceholderTitleAndSubtitle()[0]}\n",
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 20,
 
                             ),
@@ -104,7 +100,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                           Text(
                             "${getPlaceholderTitleAndSubtitle()[1]}\n",
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 color: Colors.grey
                             ),
                           ),
@@ -123,10 +119,10 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                 var d = connectedDevices.toList()[index];
                 var option = d.options;
                   return Card(
-                    margin: EdgeInsets.all(8.0),
+                    margin: const EdgeInsets.all(8.0),
                     elevation: 8,
                     child: Padding(
-                      padding: EdgeInsets.only(top: 16, left: 8, right: 8),
+                      padding: const EdgeInsets.only(top: 16, left: 8, right: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -137,7 +133,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                 children: [
                                   Text(
                                     option.name ?? d.device.name
-                                    , style: TextStyle(
+                                    , style: const TextStyle(
                                     fontSize: 32,
                                     overflow: TextOverflow.ellipsis
                                   )),
@@ -156,11 +152,11 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                         ),
                                       );
                                     })
-                                  }, icon: Icon(Icons.info_outlined))
+                                  }, icon: const Icon(Icons.info_outlined))
                                 ],
                               )),
                               if(option != null) ...[
-                                Divider(
+                                const Divider(
                                   height: 32
                                 ),
                                 Wrap(
@@ -169,7 +165,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                   children: [
                                     ChoiceChip(
                                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                        avatar: CircleAvatar(
+                                        avatar: const CircleAvatar(
                                             child: Icon(Icons.invert_colors)
                                         ),
                                         selected: option.inverse,
@@ -191,7 +187,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                               controller: t,
                                               decoration: InputDecoration(
                                                   labelText: 'Verzögerung in ms'.i18n,
-                                                  border: OutlineInputBorder()
+                                                  border: const OutlineInputBorder()
                                               ),
                                               keyboardType: TextInputType.number,
                                               inputFormatters: <TextInputFormatter>[
@@ -217,7 +213,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                       },
                                       child: ChoiceChip(
                                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                          avatar: CircleAvatar(
+                                          avatar: const CircleAvatar(
                                               child: Icon(Icons.schedule)
                                           ),
                                           selected: option.delay,
@@ -231,7 +227,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                     ),
                                     ChoiceChip(
                                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                        avatar: CircleAvatar(
+                                        avatar: const CircleAvatar(
                                             child: Icon(Icons.visibility)
                                         ),
                                         selected: option.active,
@@ -250,7 +246,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                     children: [
                                       TextButton(
                                         child: Text("Verbindung trennen".i18n.toUpperCase(), style:
-                                        TextStyle(
+                                        const TextStyle(
                                           color: Colors.redAccent
                                         )),
                                         onPressed: () => {
@@ -274,7 +270,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                                 decoration: InputDecoration(
                                                     labelText: 'Name'.i18n,
                                                     hintText: d.device.name,
-                                                    border: OutlineInputBorder()
+                                                    border: const OutlineInputBorder()
                                                 ),
                                               ),
                                               actions: [
@@ -395,7 +391,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
 }
 
 class ConnectionsWidget extends StatefulWidget {
-  ConnectionsWidget({Key? key}) : super(key: key);
+  const ConnectionsWidget({Key? key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ConnectionsWidgetState();

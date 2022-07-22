@@ -1,7 +1,5 @@
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_blue/flutter_blue.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/view/animations.dart';
@@ -21,8 +19,8 @@ extension on Color {
 }
 
 class AnimationMessage extends IBluetoothMessage {
-  List<ColorPoint> _colors;
-  AnimationSettingsConfig _config;
+  final List<ColorPoint> _colors;
+  final AnimationSettingsConfig _config;
   String? title;
   int maxValue = 255;
 

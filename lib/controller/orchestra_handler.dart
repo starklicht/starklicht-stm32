@@ -1,7 +1,6 @@
 
 import 'dart:async';
 
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
@@ -25,7 +24,7 @@ class TimedNodeHandler extends OrchestraNodeHandler<TimedNode> {
     running = true;
     var elapsedMillis = 0;
     do {
-      await Future.delayed(Duration(milliseconds: 10), () {
+      await Future.delayed(const Duration(milliseconds: 10), () {
         elapsedMillis = DateTime.now().millisecondsSinceEpoch - startTime;
         progress.add(elapsedMillis / event.time.inMilliseconds);
       });
@@ -39,7 +38,7 @@ class TimedNodeHandler extends OrchestraNodeHandler<TimedNode> {
   Future<void> cancel() async {
     stopThread = true;
     do {
-      await Future.delayed(Duration(milliseconds: 10), () => {});
+      await Future.delayed(const Duration(milliseconds: 10), () => {});
     } while(running);
     controller?.add(0);
   }
@@ -57,10 +56,10 @@ class UserInputHandler extends OrchestraNodeHandler<TimedNode> {
     var continueProgram = false;
     await showDialog(context: context!, builder: (_) {
       return AlertDialog(
-        title: Text("Programm ist pausiert"),
+        title: const Text("Programm ist pausiert"),
         content: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: const [
             CircularProgressIndicator(strokeWidth: 2,),
           ],
         ),
@@ -69,11 +68,11 @@ class UserInputHandler extends OrchestraNodeHandler<TimedNode> {
           {
             continueProgram = false,
             Navigator.pop(context)
-          }, child: Text("Abbrechen")),
+          }, child: const Text("Abbrechen")),
           TextButton(onPressed: () => {
             continueProgram = true,
             Navigator.pop(context)
-          }, child: Text("Fortsetzen"))
+          }, child: const Text("Fortsetzen"))
         ],
       );
     }).then((value) => {
@@ -98,7 +97,7 @@ class MessageNodeHandler extends OrchestraNodeHandler<MessageNode> {
   Future<void> cancel() async {
     stopThread = true;
     do {
-      await Future.delayed(Duration(milliseconds: 1), () => {});
+      await Future.delayed(const Duration(milliseconds: 1), () => {});
     } while(running);
     controller?.add(0);
   }

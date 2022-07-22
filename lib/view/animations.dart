@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:starklicht_flutter/controller/animators.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
@@ -84,9 +83,9 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
       builder: (context, snapshot) {
         return AlertDialog(
           scrollable: true,
-          insetPadding: EdgeInsets.all(16),
+          insetPadding: const EdgeInsets.all(16),
           title: Text("Farbe ändern".i18n),
-          content: Container(
+          content: SizedBox(
             width: 500,
             child: ColorsWidget(
                 onChanged: (color) => {widget.color = color},
@@ -299,9 +298,9 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 Text(getRepeatText()),
               ]),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               ToggleButtons(
-                borderRadius: BorderRadius.all(Radius.circular(10)),
+                borderRadius: const BorderRadius.all(Radius.circular(10)),
                 children: const <Widget>[
                   Icon(Icons.repeat),
                   Icon(Icons.swap_horiz),
@@ -323,22 +322,22 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
           ],
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
         ),
-        margin: EdgeInsets.all(12),
+        margin: const EdgeInsets.all(12),
       ),
       Container(
-        margin: EdgeInsets.all(12),
+        margin: const EdgeInsets.all(12),
         child: Column(children: [
           Row(children: [
             Text("Dauer: ".i18n,
                 style: const TextStyle(fontWeight: FontWeight.bold)),
-            TextButton(onPressed: () => {setState(() { collapseTimeSelection = !collapseTimeSelection; })},child: Text("${formatTime()}"))
+            TextButton(onPressed: () => {setState(() { collapseTimeSelection = !collapseTimeSelection; })},child: Text(formatTime()))
           ]),
           AnimatedContainer(
-              duration: Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               height: collapseTimeSelection ? 0 : 150,
               child: SingleChildScrollView(
-                child: Container(
+                child: SizedBox(
                   height: 150,
                   child: TimePicker(
                     onChanged: (value) => {
@@ -381,8 +380,8 @@ class ColorPickerWidget extends StatefulWidget {
 class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   // final _startState = [ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)];
   int? _activeIndex;
-  double circleRadius = 32;
-  double circleActiveRadius = 42;
+  double circleRadius = 24;
+  double circleActiveRadius = 30;
   double boundingBoxSize = 80;
   double widgetHeight = 80;
   bool _hasBeenTouched = false;
@@ -398,7 +397,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   }
 
   void duplicatePoint() {
-    var p;
+    double p;
     if (_activeIndex == null) {
       return;
     }
@@ -433,7 +432,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
         items: <PopupMenuEntry<int>>[
           PopupMenuItem(
             child: ListTile(
-              leading: Icon(Icons.content_copy), // your icon
+              leading: const Icon(Icons.content_copy), // your icon
               title: Text("Duplizieren".i18n),
             ),
             value: 1,
@@ -441,16 +440,16 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
           ),
           PopupMenuItem(
             child: ListTile(
-              leading: Icon(Icons.delete), // your icon
+              leading: const Icon(Icons.delete), // your icon
               title: Text("Löschen".i18n),
             ),
             value: 2,
             onTap: deletePoint,
           ),
-          PopupMenuDivider(),
+          const PopupMenuDivider(),
           PopupMenuItem(
             child: ListTile(
-              leading: Icon(Icons.horizontal_distribute), // your icon
+              leading: const Icon(Icons.horizontal_distribute), // your icon
               title: Text("Ausbreiten".i18n),
             ),
             value: 3,
@@ -464,8 +463,8 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   }
 
   double map(
-      double x, double in_min, double in_max, double out_min, double out_max) {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+      double x, double inMin, double inMax, double outMin, double outMax) {
+    return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
   }
 
   double getCanvasPosition(double pointPos) {
@@ -651,7 +650,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                   child: Container(
                   width: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
                   height: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
-                  padding: EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: e.color,
@@ -885,7 +884,7 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
                   blurRadius: 32,
                   spreadRadius: 3)
             ]),
-        child: isAnimationValid ? null : Icon(Icons.warning));
+        child: isAnimationValid ? null : const Icon(Icons.warning));
   }
 }
 
@@ -978,7 +977,7 @@ class _SaveWidgetState extends State<SaveWidget> {
         title: Text('Animation speichern'.i18n),
         content: TextField(
           decoration: InputDecoration(
-            border: OutlineInputBorder(),
+            border: const OutlineInputBorder(),
             labelText: 'Name der Animation'.i18n,
           ),
           onChanged: (text) {
@@ -1202,7 +1201,7 @@ class _AnimationsEditorWidgetScaffoldState extends State<AnimationsEditorScaffol
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               FloatingActionButton(
-                child: Icon(
+                child: const Icon(
                     Icons.settings_remote
                 ),
                 onPressed: !animationValid ? null : () {
@@ -1210,11 +1209,11 @@ class _AnimationsEditorWidgetScaffoldState extends State<AnimationsEditorScaffol
                 },
                 heroTag: null,
               ),
-              SizedBox(
+              const SizedBox(
                 height: 10,
               ),
               FloatingActionButton(
-                child: Icon(
+                child: const Icon(
                     Icons.save
                 ),
                 onPressed: !animationValid ? null : () => {

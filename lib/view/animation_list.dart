@@ -1,7 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:lottie/lottie.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
@@ -20,7 +17,7 @@ class AnimationsWidget extends StatefulWidget {
 }
 
 class _AnimationsWidgetState extends State<AnimationsWidget> {
-  Offset _tapDownPosition = Offset(0, 0);
+  Offset _tapDownPosition = const Offset(0, 0);
   List<KeyframeAnimation> animations = [];
   String query = "";
   final BluetoothController controller = BluetoothControllerWidget();
@@ -91,7 +88,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
         itemBuilder: (BuildContext context, int index) {
           if(animations.isEmpty) {
             return Padding(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 child: Column(
                     children: [
                       Lottie.asset(
@@ -100,13 +97,13 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       ),
                       Text(
                         "Keine gespeicherten Animationen\n".i18n,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 20
                         ),
                       ),
                       Text(
                         'Im Bereich "Animation" kannst du Animationen erstellen und speichern'.i18n,
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.grey,
                         ),
                         textAlign: TextAlign.center,
@@ -121,8 +118,8 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
               child: TextField(
                 decoration: InputDecoration(
                   labelText: 'Suche'.i18n,
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder()
+                  prefixIcon: const Icon(Icons.search),
+                  border: const OutlineInputBorder()
                 ),
                 onChanged: (text) {
                   setState(() {
@@ -136,10 +133,10 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
           else {
             var realIndex = index - 1;
             return Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
-              margin: EdgeInsets.all(6.0),
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+              margin: const EdgeInsets.all(6.0),
               child: InkWell(
-                borderRadius: BorderRadius.all(Radius.circular(12)),
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
                 onTapDown: (TapDownDetails details) {
                   _tapDownPosition = details.globalPosition;
                 },
@@ -151,7 +148,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       position: RelativeRect.fromRect(_tapDownPosition & const Size(40, 40), Offset.zero & overlay.size),
                       items: <PopupMenuEntry> [
                         PopupMenuItem(child: ListTile(
-                          leading: Icon(Icons.edit),
+                          leading: const Icon(Icons.edit),
                           title: Text("Editieren".i18n),
                         ),
                           onTap: () {
@@ -198,7 +195,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                           value: 0
                         ),
                         PopupMenuItem(child: ListTile(
-                          leading: Icon(Icons.drive_file_rename_outline_sharp),
+                          leading: const Icon(Icons.drive_file_rename_outline_sharp),
                           title: Text("Umbenennen".i18n),
                         ),
                             onTap: () {
@@ -263,7 +260,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                         ),
                         PopupMenuItem(
                           child: ListTile(
-                            leading: Icon(Icons.delete), // your icon
+                            leading: const Icon(Icons.delete), // your icon
                             title: Text("Löschen".i18n),
                           ),
                           value: 2,
@@ -272,7 +269,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       ]
                   );
                 },
-                child: Padding(padding: EdgeInsets.only(top: 12, bottom: 12), child: Column(
+                child: Padding(padding: const EdgeInsets.only(top: 12, bottom: 12), child: Column(
                     children: [
                 ListTile(
                   leading: AnimationPreviewWidget(
@@ -287,13 +284,13 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       filteredAnimations()[realIndex].colors.map((e) => ColorPoint(e.color, e.point)).toList()
                     ),
                     callback: null,
-                    restartCallback: {},
-                    notify: {},
+                    restartCallback: const {},
+                    notify: const {},
                     isEditorPreview: false,
                     onAnimationsValidChanged: (val) => {},
                   ),
                   title: Text(filteredAnimations()[realIndex].title),
-                  subtitle: Text('${filteredAnimations()[realIndex].toString()}'),
+                  subtitle: Text(filteredAnimations()[realIndex].toString()),
                 ),
                 /* Row(
                   mainAxisAlignment: MainAxisAlignment.end,

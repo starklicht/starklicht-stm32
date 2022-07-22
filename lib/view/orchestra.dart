@@ -2,13 +2,10 @@
 
 import 'dart:async';
 import 'dart:collection';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:reorderableitemsview/reorderableitemsview.dart';
 import 'package:starklicht_flutter/controller/orchestra_handler.dart';
-import 'package:starklicht_flutter/messages/animation_message.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/messages/imessage.dart';
@@ -16,9 +13,7 @@ import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/orchestra.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:starklicht_flutter/view/animations.dart';
 import 'package:starklicht_flutter/view/time_picker.dart';
-import 'package:uuid/uuid.dart';
 
 import 'colors.dart';
 class OrchestraWidget extends StatefulWidget {
@@ -32,21 +27,21 @@ class OrchestraWidget extends StatefulWidget {
 }
 
 class _Example01Tile extends StatelessWidget {
-  _Example01Tile(Key key, this.backgroundColor, this.iconData): super(key: key);
+  const _Example01Tile(Key key, this.backgroundColor, this.iconData): super(key: key);
 
   final Color backgroundColor;
   final IconData iconData;
 
   @override
   Widget build(BuildContext context) {
-    return new Card(
+    return Card(
       color: backgroundColor,
-      child: new InkWell(
+      child: InkWell(
         onTap: () {},
-        child: new Center(
-          child: new Padding(
-            padding: EdgeInsets.all(4.0),
-            child: new Icon(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: Icon(
               iconData,
               color: Colors.white,
             ),
@@ -67,7 +62,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
   var _messageType = MessageType.brightness;
   var _currentBrightness = 100.0;
   List<KeyframeAnimation> _animationStore = [];
-  var currentDuration = Duration(minutes: 0, seconds: 0, milliseconds: 0);
+  var currentDuration = const Duration(minutes: 0, seconds: 0, milliseconds: 0);
 
   Future<void> run() async {
     setState(() {
@@ -104,7 +99,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
     setState(() {
       widget.nodes.removeWhere((element) => element.key == id);
     });
-    var snackBar = SnackBar(
+    var snackBar = const SnackBar(
       content: Text('Event wurde gelöscht'),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -125,11 +120,11 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Orchester"),
+        title: const Text("Orchester"),
         actions: [
           IconButton(onPressed: running ? stop : run,
             icon: Icon(running ? Icons.stop : Icons.play_arrow),),
-          IconButton(onPressed: () => {}, icon: Icon(Icons.save))
+          IconButton(onPressed: () => {}, icon: const Icon(Icons.save))
         ],
       ),
       body:
@@ -137,7 +132,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
               onLongPress: () => {print("Hallo welt")},
               onLongPressEnd: (s) => {},
               child: ReorderableItemsView(
-                padding: EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 80),
+                padding: const EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 80),
                 onReorder: (int oldIndex, int newIndex) {
                   setState(() {
                     widget.nodes.insert(newIndex, widget.nodes.removeAt(oldIndex));
@@ -164,35 +159,35 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
         openCloseDial: isDialOpen,
           children: [
             SpeedDialChild(
-                child: Icon(Icons.timer),
+                child: const Icon(Icons.timer),
                 label: "Zeitevent",
                 onTap: () {
                   showDialog(context: context, builder: (_) {
                     return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
                       return AlertDialog(
                         scrollable: true,
-                        title: Text("Zeitevent hinzufügen"),
+                        title: const Text("Zeitevent hinzufügen"),
                         content: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // TODO Export this into an own fucker
                             RadioListTile<NodeType>(value: NodeType.WAIT,
-                                title: Text("Auf Benutzereingabe warten"),
+                                title: const Text("Auf Benutzereingabe warten"),
                                 groupValue: _type,
                                 onChanged: (value) => {setState((){ _type = value!; })}),
                             RadioListTile<NodeType>(value: NodeType.TIME,
-                                title: Text("Zeitverzögerung"),
+                                title: const Text("Zeitverzögerung"),
                                 groupValue: _type,
                                 onChanged: (value) => {setState((){ _type = value!; })}),
 
                             RadioListTile<NodeType>(value: NodeType.REPEAT,
-                                title: Text("Neustart nach Zeitverzögerung"),
+                                title: const Text("Neustart nach Zeitverzögerung"),
                                 groupValue: _type,
                                 onChanged: (value) => {setState((){ _type = value!; })}),
                             if(_type == NodeType.REPEAT || _type == NodeType.TIME) ...[
                               Text("Verzögerung".toUpperCase(), style: Theme.of(context).textTheme.overline),
                             ],
-                            AnimatedContainer(height: _type == NodeType.REPEAT || _type == NodeType.TIME ? 100 : 0.0001, duration: Duration(milliseconds: 200), child: TimePicker(onChanged: (a) => {
+                            AnimatedContainer(height: _type == NodeType.REPEAT || _type == NodeType.TIME ? 100 : 0.0001, duration: const Duration(milliseconds: 200), child: TimePicker(onChanged: (a) => {
                               setState(() {
                                 currentDuration = a;
                               })
@@ -201,10 +196,10 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                         ),
                         actions: [
                           TextButton(
-                              child: Text("Abbrechen"),
+                              child: const Text("Abbrechen"),
                               onPressed: () => {Navigator.pop(context)}),
                           TextButton(
-                              child: Text("Hinzufügen"),
+                              child: const Text("Hinzufügen"),
                               onPressed: () {
                                 setState((){
                                   widget.nodes.add(TimedNode(onDelete: deleteCallback,time: currentDuration, type: _type));
@@ -222,7 +217,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                 }
             ),
             SpeedDialChild(
-              child: Icon(Icons.settings_remote),
+              child: const Icon(Icons.settings_remote),
                 label: "Nachrichtenevent",
               onTap: () {
                 showDialog(context: context, builder: (_) {
@@ -230,21 +225,21 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                   return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
                     return AlertDialog(
                       scrollable: true,
-                      title: Text("Zeitevent hinzufügen"),
+                      title: const Text("Zeitevent hinzufügen"),
                       content: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // TODO Export this into an own fucker
                           RadioListTile<MessageType>(value: MessageType.brightness,
-                              title: Text("Helligkeit"),
+                              title: const Text("Helligkeit"),
                               groupValue: _messageType,
                               onChanged: (value) => {setState((){ _messageType = value!; })}),
                           RadioListTile<MessageType>(value: MessageType.color,
-                              title: Text("Farbe"),
+                              title: const Text("Farbe"),
                               groupValue: _messageType,
                               onChanged: (value) => {setState((){ _messageType = value!; })}),
                           RadioListTile<MessageType>(value: MessageType.interpolated,
-                              title: Text("Animation"),
+                              title: const Text("Animation"),
                               groupValue: _messageType,
                               onChanged: (value) => {setState((){ _messageType = value!; })}),
                           if(_messageType == MessageType.brightness) ... [
@@ -264,7 +259,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                                 },
                                 value: _currentBrightness,
                               ),
-                              Text("${_currentBrightness.toInt()}%", style: TextStyle(
+                              Text("${_currentBrightness.toInt()}%", style: const TextStyle(
                                   fontSize: 32
                               ),)
                             ],)
@@ -284,14 +279,14 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                       ),
                       actions: [
                         TextButton(
-                            child: Text("Abbrechen"),
+                            child: const Text("Abbrechen"),
                             onPressed: () => {Navigator.pop(context)}),
                         TextButton(
-                            child: Text("Hinzufügen"),
+                            child: const Text("Hinzufügen"),
                             onPressed: () {
                               setState((){
                                 widget.nodes.add(
-                                  MessageNode(lamps: [], message: BrightnessMessage(_currentBrightness.toInt()))
+                                  MessageNode(lamps: const [], message: BrightnessMessage(_currentBrightness.toInt()))
                                 );
                               });
                               refresh();
@@ -317,33 +312,33 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
       var nodes = [
         MessageNode(
             onDelete: deleteCallback,
-            lamps: [],
+            lamps: const [],
             message:
             ColorMessage.fromColor(Colors.orange)),
         MessageNode(
             onDelete: deleteCallback,
-            lamps: [],
+            lamps: const [],
             message:
             ColorMessage.fromColor(Colors.blue)),
         MessageNode(
             onDelete: deleteCallback,
-            lamps: [],
+            lamps: const [],
             message:
             ColorMessage.fromColor(Colors.green)),
         TimedNode(onDelete: deleteCallback,
-            time: Duration(milliseconds: 1000), type: NodeType.TIME),
-        TimedNode(onDelete: deleteCallback,time: Duration(milliseconds: 1000), type: NodeType.WAIT),
-        TimedNode(onDelete: deleteCallback,time: Duration(milliseconds: 1000), type: NodeType.REPEAT),
+            time: const Duration(milliseconds: 1000), type: NodeType.TIME),
+        TimedNode(onDelete: deleteCallback,time: const Duration(milliseconds: 1000), type: NodeType.WAIT),
+        TimedNode(onDelete: deleteCallback,time: const Duration(milliseconds: 1000), type: NodeType.REPEAT),
       ];
       handlers[NodeType.TIME] = TimedNodeHandler();
       handlers[NodeType.REPEAT] = TimedNodeHandler();
       handlers[NodeType.MESSAGE] = MessageNodeHandler();
       handlers[NodeType.WAIT] = UserInputHandler();
-      nodes.forEach((element) {
+      for (var element in nodes) {
         var s = StreamController<double>.broadcast();
         streams[element] = s;
         element.update = s.stream;
-      });
+      }
       setState(() {
         widget.nodes = nodes;
       });

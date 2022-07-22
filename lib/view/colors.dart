@@ -1,11 +1,8 @@
 
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flex_color_picker/flex_color_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
@@ -34,13 +31,13 @@ class _ColorsWidgetState extends State<ColorsWidget> {
   <ColorSwatch<Object>, String>{
   };
 
-  bool _hexValid = true;
-  String _currentHex = "";
+  final bool _hexValid = true;
+  final String _currentHex = "";
   bool _colorIsSaved = false;
-  var _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   // create some values
-  Color pickerColor = Color(0xff000000);
+  Color pickerColor = const Color(0xff000000);
   List<Color> recentColors = [];
 
 
@@ -188,7 +185,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
                 showRecentColors: true,
                 wheelDiameter: wheelDiameter(),
                 enableShadesSelection: true,
-                tonalSubheading: Text("Helligkeit"),
+                tonalSubheading: const Text("Helligkeit"),
                 showColorCode: true,
                 showColorName: true,
                 pickersEnabled: const <ColorPickerType, bool> {
@@ -239,7 +236,7 @@ class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget> {
             saveController.save?.call();
           }
         },
-        child: _colorExists ? Icon(Icons.delete) : Icon(Icons.save),
+        child: _colorExists ? const Icon(Icons.delete) : const Icon(Icons.save),
 
       ),
     );

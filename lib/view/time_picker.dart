@@ -20,7 +20,7 @@ class TimePickerState extends State<TimePicker> {
   @override
   void initState() {
     super.initState();
-    duration = widget.startDuration ?? Duration();
+    duration = widget.startDuration ?? const Duration();
     minutesController = FixedExtentScrollController(initialItem: duration.inMinutes.remainder(60));
     secondsController = FixedExtentScrollController(initialItem: duration.inSeconds.remainder(60));
     millisController = FixedExtentScrollController(initialItem: duration.inMilliseconds.remainder(1000) ~/ 50);
@@ -55,7 +55,7 @@ class TimePickerState extends State<TimePicker> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
+            SizedBox(
               width: 50,
               child: CupertinoPicker(
                 onSelectedItemChanged: (index) => updateDuration(),
@@ -74,7 +74,7 @@ class TimePickerState extends State<TimePicker> {
               padding: const EdgeInsets.only(top: 8.0),
               child: Text(widget.small ? "m" : "Minuten"),
             ),
-            Container(
+            SizedBox(
               width: 50,
               child: CupertinoPicker(
                   onSelectedItemChanged: (index) => updateDuration(),
@@ -93,7 +93,7 @@ class TimePickerState extends State<TimePicker> {
               padding: const EdgeInsets.only(top: 0.0),
               child: Text(widget.small ? "s" : "Sekunden"),
             ),
-            Container(
+            SizedBox(
               width: 50,
               child: CupertinoPicker(
                   onSelectedItemChanged: (index) => updateDuration(),

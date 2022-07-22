@@ -34,8 +34,8 @@ class KeyframeAnimationFactory extends Factory<KeyframeAnimation> {
 }
 
 class KeyframeAnimation {
-  List<ColorPoint> _colors;
-  AnimationSettingsConfig _config;
+  final List<ColorPoint> _colors;
+  final AnimationSettingsConfig _config;
   String title;
 
   List<ColorPoint> get colors => _colors;

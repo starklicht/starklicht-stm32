@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/view/animations.dart';
 
