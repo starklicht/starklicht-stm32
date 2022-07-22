@@ -57,6 +57,7 @@ class MyApp extends StatelessWidget {
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
+        accentColor: Colors.blueAccent
       ),
     );
   }
@@ -86,7 +87,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   List<Widget> _widgetOptions = <Widget>[
     ConnectionsWidget(),
     ColorScaffoldWidget(),
-    Padding(padding: EdgeInsets.only(top: 12),child:AnimationsEditorWidget()),
+    AnimationsEditorScaffoldWidget(),
     AnimationsWidget(),
     OrchestraListView()
   ];

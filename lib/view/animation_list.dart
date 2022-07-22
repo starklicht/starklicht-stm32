@@ -155,11 +155,45 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                           title: Text("Editieren".i18n),
                         ),
                           onTap: () {
-                            Persistence().saveEditorAnimation(filteredAnimations()[realIndex]);
+                            Future.delayed(
+                                const Duration(seconds: 0),
+                                    () =>
+                                    showDialog(context: context, builder: (_) {
+                                      return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+                                        return AlertDialog(
+                                          title: Text("Bearbeiten".i18n),
+                                          content: AnimationsEditorWidget(
+                                            onAnimationsValidChanged: (bool value) {  },
+                                            animation: filteredAnimations()[realIndex],
+                                          ),
+                                          actions: [
+                                            TextButton(onPressed: () =>{
+                                              Navigator.pop(context)
+                                            }, child: Text("Abbrechen".i18n)),
+                                            TextButton(onPressed: filteredAnimations()[realIndex].title == currentNameRename? null : () {
+                                              var old = filteredAnimations()[realIndex].title;
+                                              Persistence().rename(filteredAnimations()[realIndex].title, t.text).then((value) =>
+                                              {
+                                                load(),
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content:
+                                                    Text('Animation "%s" wurde zu "%s" umbenannt'.i18n.fill([old, t.text]))
+                                                    )
+                                                ),
+                                                Navigator.pop(context)
+                                              });
+                                            }, child: Text("Speichern".i18n)),
+                                          ],
+                                        );
+                                      });
+                                    })
+                            );
+                            /*Persistence().saveEditorAnimation(filteredAnimations()[realIndex]);
+
                             var snackBar = SnackBar(
                               content: Text('Animation kann jetzt im Abschnitt "Animation" bearbeitet werden'.i18n),
                             );
-                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);*/
                           },
                           value: 0
                         ),
@@ -256,6 +290,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                     restartCallback: {},
                     notify: {},
                     isEditorPreview: false,
+                    onAnimationsValidChanged: (val) => {},
                   ),
                   title: Text(filteredAnimations()[realIndex].title),
                   subtitle: Text('${filteredAnimations()[realIndex].toString()}'),

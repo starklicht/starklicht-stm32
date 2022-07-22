@@ -84,15 +84,13 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
       builder: (context, snapshot) {
         return AlertDialog(
           scrollable: true,
-          insetPadding: EdgeInsets.all(8),
+          insetPadding: EdgeInsets.all(16),
           title: Text("Farbe ändern".i18n),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ColorsWidget(
-                  onChanged: (color) => {widget.color = color},
-                  startColor: widget.color),
-            ],
+          content: Container(
+            width: 500,
+            child: ColorsWidget(
+                onChanged: (color) => {widget.color = color},
+                startColor: widget.color),
           ),
           actions: [
             TextButton(
@@ -384,6 +382,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   // final _startState = [ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)];
   int? _activeIndex;
   double circleRadius = 32;
+  double circleActiveRadius = 42;
   double boundingBoxSize = 80;
   double widgetHeight = 80;
   bool _hasBeenTouched = false;
@@ -470,7 +469,11 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   }
 
   double getCanvasPosition(double pointPos) {
-    return map(pointPos, (-boundingBoxSize + circleRadius) / 2, MediaQuery.of(context).size.width - (boundingBoxSize + circleRadius) / 2, 0, 1);
+    return map(pointPos, (-boundingBoxSize + circleRadius) / 2, getCurrentContainerSize().width - (boundingBoxSize + circleRadius) / 2, 0, 1);
+  }
+
+  Size getCurrentContainerSize() {
+    return MediaQuery.of(context).size;
   }
 
   void storePosition(TapDownDetails details) =>
@@ -505,7 +508,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   }
 
   double getPointPosition(double pos) {
-    return map(pos, 0, 1, (-boundingBoxSize + circleRadius) / 2, MediaQuery.of(context).size.width - (boundingBoxSize + circleRadius) / 2);
+    return map(pos, 0, 1, (-boundingBoxSize + circleRadius) / 2, getCurrentContainerSize().width - (boundingBoxSize + circleRadius) / 2);
   }
 
   void addPoint(double globalPositionX) {
@@ -609,7 +612,9 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                       _activeIndex = currentIndex;
                     });
                   },
-                  onTapDown: storePosition,
+                  onTapDown: (details) {
+                    storePosition(details);
+                  },
                   onLongPress: () {
                     setState(() {
                       _activeIndex = currentIndex;
@@ -623,21 +628,19 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                       color: Colors.transparent,
                       height: boundingBoxSize,
                       child: Container(
-                          width: circleRadius,
-                          height: circleRadius,
+                          width: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
+                          height: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
                           decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: currentIndex == _activeIndex
-                                  ? Colors.blueGrey
-                                  : Colors.black,
+                              color: e.color,
                               border: Border.all(color: Colors.white, width: 3),
                               boxShadow: const [
                                 BoxShadow(
                                   color: Colors.black,
-                                  blurRadius: 2.0,
-                                  spreadRadius: 0.0,
-                                  offset: Offset(2.0,
-                                      2.0), // shadow direction: bottom right
+                                  blurRadius: 0.0,
+                                  spreadRadius: 1.0,
+                                  offset: Offset(0,
+                                      0), // shadow direction: bottom right
                                 )
                               ])))),
               feedback: Container(
@@ -646,30 +649,30 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                   color: Colors.transparent,
                   height: boundingBoxSize,
                   child: Container(
-                  width: circleRadius,
-                  height: circleRadius,
+                  width: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
+                  height: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
                   padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: currentIndex == _activeIndex
-                          ? Colors.blueGrey
-                          : Colors.black,
+                      color: e.color,
                       border: Border.all(color: Colors.white, width: 3),
                       boxShadow: const [
                         BoxShadow(
-                          color: Colors.black,
-                          blurRadius: 2.0,
-                          spreadRadius: 0.0,
-                          offset: Offset(
-                              2.0, 2.0), // shadow direction: bottom right
+                            color: Colors.black,
+                            blurRadius: 1.0,
+                            spreadRadius: 1.0,
+                            offset: Offset(0,
+                                0),  // shadow direction: bottom right
                         )
                       ]))),
               childWhenDragging: Container(),
               axis: Axis.horizontal,
               onDragEnd: (d) => onDragEnd(d.offset.dx, currentIndex),
-              onDragStarted: () => setState(() {
-                _activeIndex = currentIndex;
-              }),
+              onDragStarted: ()  {
+                setState(() {
+                  _activeIndex = currentIndex;
+                });
+              },
               // TODO: Make Dragupdate work, so users see gradient in real time
               onDragUpdate: (d) => onDragUpdate(d, currentIndex),
             )))
@@ -757,15 +760,23 @@ class AnimationPreviewWidget extends StatefulWidget {
   Set<Function> restartCallback;
   Set<Function> notify;
   bool isEditorPreview = false;
+  ValueChanged<bool> onAnimationsValidChanged;
+  ValueChanged<KeyframeAnimation>? onAnimationChanged;
+  String? title;
 
   AnimationPreviewWidget(
-      {Key? key,
-      required this.settings,
-      required this.colors,
-      this.callback,
-      required this.restartCallback,
-      required this.notify,
-      required this.isEditorPreview})
+      {
+        Key? key,
+        required this.settings,
+        required this.colors,
+        this.callback,
+        required this.restartCallback,
+        required this.notify,
+        required this.isEditorPreview,
+        required this.onAnimationsValidChanged,
+        this.onAnimationChanged,
+        this.title
+      })
       : super(key: key);
 
   @override
@@ -803,6 +814,13 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
 
   void updateAnimationCallbackAndSend() {
     updateAnimationCallback();
+    widget.onAnimationChanged?.call(
+      KeyframeAnimation(
+        widget.colors.colors,
+        widget.settings,
+        widget.title == null? "":widget.title!
+      )
+    );
     for (var element in widget.notify) {
       element.call();
     }
@@ -818,6 +836,7 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
       setState(() {
         isAnimationValid = false;
       });
+      widget.onAnimationsValidChanged.call(isAnimationValid);
       return;
     }
     setState(() {
@@ -840,6 +859,7 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
       controller.repeat(
           reverse: widget.settings.timefactor == TimeFactor.pingpong);
     }
+    widget.onAnimationsValidChanged.call(isAnimationValid);
   }
 
   @override
@@ -869,13 +889,6 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
   }
 }
 
-class AnimationsEditorWidget extends StatefulWidget {
-  const AnimationsEditorWidget({Key? key}) : super(key: key);
-
-  @override
-  State<StatefulWidget> createState() => _AnimationsEditorWidgetState();
-}
-
 class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
   bool _syncWithLamp = false;
   bool _integrateAnimations = false;
@@ -899,26 +912,6 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      Row(children: [
-        TextButton.icon(
-            label: Text("Senden".i18n),
-            onPressed: errorState() ? null : send,
-            icon: Icon(Icons.settings_remote)),
-        TextButton.icon(
-            label: Text("Speichern".i18n),
-            onPressed: errorState()
-                ? null
-                : () => {
-                      showDialog(
-                          context: context,
-                          builder: (_) {
-                            return SaveWidget(
-                                animation: KeyframeAnimation(
-                                    widget.colors.colors, widget.settings, ""));
-                          })
-                    },
-            icon: Icon(Icons.save)),
-      ], mainAxisAlignment: MainAxisAlignment.center),
       CheckboxListTile(
           value: _syncWithLamp,
           onChanged: (e) {
@@ -1067,21 +1060,62 @@ class SaveWidget extends StatefulWidget {
   State<StatefulWidget> createState() => _SaveWidgetState();
 }
 
+// Wrapper for Animations Editor
+class AnimationsEditorWidget extends StatefulWidget {
+  AnimationEventsController? animationsController;
+  ValueChanged<bool> onAnimationsValidChanged;
+  ValueChanged<KeyframeAnimation>? onAnimationChanged;
+  bool persistChanges;
+  KeyframeAnimation? animation;
+  bool isScaffold;
+  AnimationsEditorWidget({Key? key, this.animationsController, required this.onAnimationsValidChanged, this.isScaffold = false, this.animation, this.onAnimationChanged, this.persistChanges = false}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _AnimationsEditorWidgetState();
+}
+
 class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
   AnimationSettingsConfig? settings;
   GradientSettingsConfig? gradient;
   Set<Function> restartCallback = {};
+  String currentTitle = "";
   Set<Function> notifyChanges = {};
+  BluetoothController controller = BluetoothControllerWidget();
 
   @override
   void initState() {
     super.initState();
-    Persistence().getEditorAnimation().then((value) {
+    if(widget.animation != null) {
       setState(() {
-        settings = value.config;
-        gradient = GradientSettingsConfig(value.colors);
+        settings = widget.animation!.config;
+        gradient = GradientSettingsConfig(widget.animation!.colors);
       });
-    });
+    }
+    else {
+      Persistence().getEditorAnimation().then((value) {
+        setState(() {
+          settings = value.config;
+          gradient = GradientSettingsConfig(value.colors);
+        });
+      });
+    }
+
+    widget.animationsController?.save = save;
+    widget.animationsController?.send = send;
+  }
+
+  void send() {
+    controller
+        .broadcast(AnimationMessage(gradient!.colors, settings!));
+  }
+
+  void save() {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return SaveWidget(
+              animation: KeyframeAnimation(gradient!.colors, settings!, ""));
+      });
   }
 
   @override
@@ -1093,9 +1127,9 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
     if (settings == null || gradient == null) {
       return Container(child: Text("Lädt...".i18n));
     } else {
-      return Container(
-          child: SingleChildScrollView(
-              child: Column(children: [
+      return SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: widget.isScaffold ? 140 : 0, top: 8),
+          child: Column(children: [
         Text(
           "Zeitverlauf\n".i18n,
           textAlign: TextAlign.start,
@@ -1111,18 +1145,86 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
         Text("Animationsvorschau".i18n),
         const SizedBox(height: 12),
         AnimationPreviewWidget(
+            onAnimationsValidChanged: widget.onAnimationsValidChanged,
             settings: settings!,
             colors: gradient!,
             callback: callback,
             restartCallback: restartCallback,
             notify: notifyChanges,
-            isEditorPreview: true),
+            isEditorPreview: widget.persistChanges,
+            onAnimationChanged: widget.onAnimationChanged,
+            title: widget.animation?.title
+        ),
         const Divider(height: 32),
-        Text("Aktionen".i18n),
+        Text("Einstellungen".i18n),
         const SizedBox(height: 12),
         AnimationTaskbarWidget(
             settings: settings!, colors: gradient!, notify: notifyChanges)
-      ])));
+      ]));
     }
   }
+}
+
+class AnimationsEditorScaffoldWidget extends StatefulWidget {
+  const AnimationsEditorScaffoldWidget({Key? key}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _AnimationsEditorWidgetScaffoldState();
+}
+
+class AnimationEventsController {
+  Function? save;
+  Function? send;
+}
+
+class _AnimationsEditorWidgetScaffoldState extends State<AnimationsEditorScaffoldWidget> {
+  final AnimationEventsController controller = AnimationEventsController();
+  bool animationValid = true;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: AnimationsEditorWidget(
+            persistChanges: true,
+            isScaffold: true,
+            animationsController: controller,
+            onAnimationsValidChanged: (valid) => {
+              Future.delayed(Duration.zero, () async {
+                if(animationValid != valid) {
+                  setState(() {
+                    animationValid = valid;
+                  });
+                }
+              })
+            }
+        ),
+        floatingActionButton:
+        animationValid ? Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FloatingActionButton(
+                child: Icon(
+                    Icons.settings_remote
+                ),
+                onPressed: !animationValid ? null : () {
+                  controller.send?.call();
+                },
+                heroTag: null,
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              FloatingActionButton(
+                child: Icon(
+                    Icons.save
+                ),
+                onPressed: !animationValid ? null : () => {
+                  controller.save?.call()
+                },
+                heroTag: null,
+              )
+            ]
+        ) : null
+    );
+  }
+
 }
