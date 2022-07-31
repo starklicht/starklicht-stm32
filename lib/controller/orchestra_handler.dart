@@ -12,12 +12,12 @@ abstract class OrchestraNodeHandler<T extends INode> {
   bool stopThread = false;
 }
 
-class TimedNodeHandler extends OrchestraNodeHandler<TimedNode> {
+class ParentNodeHandler extends OrchestraNodeHandler<ParentNode> {
   bool running = false;
   StreamController<double>? controller;
 
   @override
-  Future<bool> execute(TimedNode event, StreamController<double> progress, {BuildContext? context}) async {
+  Future<bool> execute(ParentNode event, StreamController<double> progress, {BuildContext? context}) async {
     stopThread = false;
     controller = progress;
     var startTime = DateTime.now().millisecondsSinceEpoch;
@@ -44,7 +44,7 @@ class TimedNodeHandler extends OrchestraNodeHandler<TimedNode> {
   }
 }
 
-class UserInputHandler extends OrchestraNodeHandler<TimedNode> {
+class UserInputHandler extends OrchestraNodeHandler<ParentNode> {
   @override
   Future<void> cancel() {
     // TODO: implement cancel
@@ -52,7 +52,7 @@ class UserInputHandler extends OrchestraNodeHandler<TimedNode> {
   }
 
   @override
-  Future<bool> execute(TimedNode event, StreamController<double> progress, {BuildContext? context}) async {
+  Future<bool> execute(ParentNode event, StreamController<double> progress, {BuildContext? context}) async {
     var continueProgram = false;
     await showDialog(context: context!, builder: (_) {
       return AlertDialog(

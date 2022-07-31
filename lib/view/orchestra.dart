@@ -106,7 +106,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
   }
 
   int getWidth(e) {
-    if(e is TimedNode) {
+    if(e is ParentNode) {
       return 8;
     }
     return 4;
@@ -132,7 +132,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                   });
                 },
                 staggeredTiles: widget.nodes.map((e) =>
-                  StaggeredTileExtended.count(getWidth(e),e is TimedNode? 2 : 4)
+                  StaggeredTileExtended.count(getWidth(e),e is ParentNode? 2 : 4)
                 ).toList(),
                 mainAxisSpacing: 4,
                 crossAxisSpacing: 4,
@@ -195,7 +195,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                               child: const Text("Hinzufügen"),
                               onPressed: () {
                                 setState((){
-                                  widget.nodes.add(TimedNode(onDelete: deleteCallback,time: currentDuration, type: _type));
+                                  widget.nodes.add(ParentNode(onDelete: deleteCallback,time: currentDuration, type: _type));
                                 });
                                 refresh();
                                 Navigator.pop(context);
@@ -205,7 +205,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
                     });
                   });
                   /* setState(() {
-                    widget.nodes.add(TimedNode(time: Duration(seconds: 1)));
+                    widget.nodes.add(ParentNode(time: Duration(seconds: 1)));
                   }); */
                 }
             ),
@@ -318,13 +318,13 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
             lamps: const [],
             message:
             ColorMessage.fromColor(Colors.green)),
-        TimedNode(onDelete: deleteCallback,
+        ParentNode(onDelete: deleteCallback,
             time: const Duration(milliseconds: 1000), type: NodeType.TIME),
-        TimedNode(onDelete: deleteCallback,time: const Duration(milliseconds: 1000), type: NodeType.WAIT),
-        TimedNode(onDelete: deleteCallback,time: const Duration(milliseconds: 1000), type: NodeType.REPEAT),
+        ParentNode(onDelete: deleteCallback,time: const Duration(milliseconds: 1000), type: NodeType.WAIT),
+        ParentNode(onDelete: deleteCallback,time: const Duration(milliseconds: 1000), type: NodeType.REPEAT),
       ];
-      handlers[NodeType.TIME] = TimedNodeHandler();
-      handlers[NodeType.REPEAT] = TimedNodeHandler();
+      handlers[NodeType.TIME] = ParentNodeHandler();
+      handlers[NodeType.REPEAT] = ParentNodeHandler();
       handlers[NodeType.MESSAGE] = MessageNodeHandler();
       handlers[NodeType.WAIT] = UserInputHandler();
       for (var element in nodes) {

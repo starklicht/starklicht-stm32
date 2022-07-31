@@ -49,6 +49,7 @@ dependencies:
   reorderableitemsview: ^2.0.1
   flutter_speed_dial: ^6.0.0
   uuid: ^3.0.6
+  timelines: ^0.1.0
 
 dev_dependencies:
   flutter_test:

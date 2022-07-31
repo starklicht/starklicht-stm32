@@ -1,6 +1,9 @@
 
+import 'package:timelines/timelines.dart';
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/view/orchestra.dart';
+
+import 'orchestra_timeline_view.dart';
 
 class OrchestraListView extends StatefulWidget {
   @override
@@ -43,11 +46,16 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
                 return AlertDialog(
                   insetPadding: EdgeInsets.all(16),
                   contentPadding: EdgeInsets.all(16),
-                  title: Text("Bearbeiten"),
+                  title: Text(widget.animations[index]),
                   content: Container(
-                      width: MediaQuery.of(context).size.width,
-                      child: OrchestraWidget()
+                    height: 20000,
+                    width: 2000,
+                    child: OrchestraTimeline()
                   ),
+                  actions: [
+                    TextButton(onPressed: () => {}, child: Text("Abbrechen")),
+                    TextButton(onPressed: () => {}, child: Text("Speichern"))
+                  ],
                 );
               })
             },

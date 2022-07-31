@@ -36,18 +36,37 @@ class MessageNode extends INode {
   NodeType type = NodeType.MESSAGE;
 }
 
-class TimedNode extends INode {
+class ParentNode extends INode {
   Stream<double> getProgress() {
     throw UnimplementedError();
   }
+
+  String getSubtitle() {
+    if(type == NodeType.REPEAT) {
+      return formatTime();
+    } else if (type == NodeType.WAIT) {
+      return "Auf Benutzereingabe";
+    }
+    return formatTime();
+  }
+
+  String formatTime() {
+    return "${time.inMinutes.remainder(60)}m ${time.inSeconds.remainder(60)}s ${time.inMilliseconds.remainder(1000)}ms";
+  }
+
+  bool hasSubtitle() {
+    return time.inMicroseconds > 0 || type == NodeType.WAIT;
+  }
+
+  List<MessageNode> messages;
   Duration time;
-  TimedNode({Key? key, required this.time, update, onDelete, required this.type}) : super(key:key, update: update, onDelete: onDelete);
+  ParentNode({Key? key, this.time = const Duration(), update, onDelete, this.type = NodeType.NOT_DEFINED, this.messages = const []}) : super(key:key, update: update, onDelete: onDelete);
 
   @override
-  State<StatefulWidget> createState() => TimedNodeState();
+  State<StatefulWidget> createState() => ParentNodeState();
 
   @override
-  NodeType type = NodeType.TIME;
+  NodeType type;
 }
 
 class AddNode extends INode {
@@ -151,6 +170,10 @@ class MessageNodeState extends INodeState<MessageNode> {
     return "Nicht definiert";
   }
 
+  String getPostfix() {
+    return "senden";
+  }
+
   String getText() {
     return widget.message.retrieveText();
   }
@@ -161,118 +184,67 @@ class MessageNodeState extends INodeState<MessageNode> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(0),
-        shape: RoundedRectangleBorder(
-          side: BorderSide(
-            color: Theme.of(context).dividerColor
-          ),
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(0.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      getTitle().toUpperCase(),
-                      style: Theme.of(context).textTheme.overline,
-                    ),
-                    PopupMenuButton<String>(
-                      iconSize: 18,
-                      padding: EdgeInsets.zero,
-                      onSelected: (s) => {
-                        if(s == 'Löschen') {
-                          widget.onDelete?.call(widget.key!)
-                        }
-                      },
-                      itemBuilder: (BuildContext context) {
-                        return { 'Bearbeiten', 'Löschen'}.map((String choice) {
-                          return PopupMenuItem<String>(
-                            value: choice,
-                            child: Text(choice),
-                          );
-                        }).toList();
-                      },
+              Text(
+                "${getTitle()} ${getPostfix()}: ",
+              ),
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: getColor(),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      blurRadius: 0.0,
+                      spreadRadius: 1,
+                      offset:
+                      const Offset(0.0, 0.0), // shadow direction: bottom right
                     ),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(left:8, bottom: 8, right: 8),
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: getColor(),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 3.0,
-                            spreadRadius: 0.0,
-                            offset:
-                            const Offset(2.0, 2.0), // shadow direction: bottom right
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      getText(),
-                      style: Theme.of(context).textTheme.bodyText1
-                    ),
-                    if(widget.progress > 0) ...[const SizedBox(width: 12, height: 12,child: CircularProgressIndicator(strokeWidth: 2,))]
-
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left:8.0, right: 8, bottom: 8),
-                child: Text(
-                  "Lampen".toUpperCase(),
-                  style: Theme.of(context).textTheme.overline,
-                ),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Padding(
-                  padding: EdgeInsets.zero,
-                  child: Row(
-                    children: connectedDevices.map((e) => Padding(
-                        padding: const EdgeInsets.only(left: 4.0, right: 4),
-                      child: FilterChip(
-                                  label: Text(e.options.name ?? e.device.name),
-                                  selected: active[e.device.id.id] ?? false,
-                                  onSelected: (eve) => {
-                                    setState(() {
-                                      active[e.device.id.id] = eve;
-                                    }),
-                                    updateActive()
-                                  },
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                              )).toList()
-                  ),
-                ),
-              ),
+              Text(" (${getText()})", style: Theme.of(context).textTheme.labelSmall,)
             ],
           ),
-        )
-    );
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: widget.lamps.map((e) => Chip(
+              avatar: CircleAvatar(
+                child: Text(e[0].toUpperCase())
+              ),
+              label: Text(e),
+              materialTapTargetSize:
+              MaterialTapTargetSize.shrinkWrap,
+              onDeleted: () => {
+                setState((){
+                  widget.lamps.remove(e);
+                })
+              },
+            ) as Widget).toList()..add(
+              ActionChip(
+                materialTapTargetSize:
+                MaterialTapTargetSize.shrinkWrap,
+                padding: EdgeInsets.zero,
+                onPressed: () {},
+                label: Icon(Icons.add),
+              )
+            )
+        ),
+
+        ],
+      );
   }
 }
 
-class TimedNodeState extends INodeState<TimedNode> {
+class ParentNodeState extends INodeState<ParentNode> {
   String getTitle() {
     if(widget.type == NodeType.REPEAT) {
       return "Neustart";
@@ -280,6 +252,10 @@ class TimedNodeState extends INodeState<TimedNode> {
       return "Warten";
     }
     return "Verzögerung";
+  }
+
+  bool hasSubtitle() {
+    return widget.time.inMicroseconds > 0;
   }
 
   List<Color> getColors() {
@@ -299,96 +275,23 @@ class TimedNodeState extends INodeState<TimedNode> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(0),
-      clipBehavior: Clip.antiAlias,
-      child: Container(
-        width: 340,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: getColors(),
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight
-          )
-        ),
-        child: Stack(
-          children: [
-            Container(
-              width: MediaQuery.of(context).size.width * widget.progress,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(getTitle(),
-                      style: Theme.of(context).textTheme.headline5!.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                      Text(getSubtitle(),
-                      style: Theme.of(context).textTheme.headline6!.copyWith(color: Colors.white))
-                    ],
-                  ),
-                  const Spacer(flex: 2),
-                  Icon(getIcon(), color: Colors.white, size: 64,),
-                  Container(
-                    child: PopupMenuButton<String>(
-                      icon: Icon(Icons.adaptive.more, color: Colors.white,),
-                      padding: EdgeInsets.zero,
-                      onSelected: (s) => {
-                        if(s == 'Löschen') {
-                          widget.onDelete?.call(widget.key!)
-                        } else if(s == 'Bearbeiten') {
-                          showDialog(context: context, builder: (_) {
-                            var duration = widget.time;
-                            return StatefulBuilder(builder: (context, StateSetter setState) {
-                              return AlertDialog(
-                                title: const Text("Bearbeiten"),
-                                content: SizedBox(
-                                  height: 150,
-                                  child: TimePicker(
-                                    onChanged: (v) => {duration = v}, small: true, startDuration: duration,
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                  child: const Text("Abbrechen"),
-                                  onPressed: () => {Navigator.pop(context)}),
-                                  TextButton(
-                                  child: const Text("Speichern"),
-                                  onPressed: () => {
-                                    setState(() {
-                                      widget.time = duration;
-                                    }),
-                                    update(),
-                                    Navigator.pop(context)
-                                  })
-                                ],
-                              );
-                            });
-                          })
-                        }
-                      },
-                      itemBuilder: (BuildContext context) {
-                        return {'Bearbeiten', 'Löschen'}.map((String choice) {
-                          return PopupMenuItem<String>(
-                            value: choice,
-                            child: Text(choice),
-                          );
-                        }).toList();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      )
-    );
+    return
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(getTitle(),
+              style: Theme.of(context).textTheme.headline5!),
+              if(hasSubtitle()) ...[
+                Text(getSubtitle(),
+                    style: Theme.of(context).textTheme.subtitle1!)
+              ]
+            ],
+          ),
+        ],
+      );
   }
 
   IconData getIcon() {
