@@ -281,9 +281,10 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       ]
                   );
                 },
-                child: Padding(padding: const EdgeInsets.only(top: 12, bottom: 12), child: Column(
+                child: Column(
                     children: [
                 ListTile(
+                  contentPadding: EdgeInsets.all(12),
                   leading: AnimationPreviewWidget(
                     settings: AnimationSettingsConfig(
                       filteredAnimations()[realIndex].config.interpolationType,
@@ -315,7 +316,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                         onPressed: edit, icon: const Icon(Icons.arrow_forward))
                   ],
                 )*/
-              ]))));
+              ])));
           }
         }));
   }

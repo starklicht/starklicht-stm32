@@ -119,14 +119,7 @@ class _OrchestraWidgetState extends State<OrchestraWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Orchester"),
-        actions: [
-          IconButton(onPressed: running ? stop : run,
-            icon: Icon(running ? Icons.stop : Icons.play_arrow),),
-          IconButton(onPressed: () => {}, icon: const Icon(Icons.save))
-        ],
-      ),
+      backgroundColor: Colors.transparent,
       body:
             GestureDetector(
               onLongPress: () => {print("Hallo welt")},

@@ -52,7 +52,7 @@ class KeyframeAnimation {
   @override
   String toString() {
     return ''
-        '${config.seconds}s ${config.millis}ms';
+        '${config.seconds}s ${config.millis}ms (${config.interpolationType.toString().split('.')[1]}) - ${colors.length} Farben';
   }
 
   AnimationSettingsConfig get config => _config;
