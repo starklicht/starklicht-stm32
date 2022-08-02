@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'imessage.dart';
 
-class BrightnessMessage extends IBluetoothMessage {
+class BrightnessMessage extends IBluetoothMessage<int> {
   int brightness;
 
   BrightnessMessage(this.brightness);
@@ -12,6 +12,26 @@ class BrightnessMessage extends IBluetoothMessage {
     return [
       brightness
     ];
+  }
+
+  @override
+  void setValue(int value) {
+    brightness = value;
+    if(brightness > 100) {
+      brightness = 100;
+    } else if(brightness < 0) {
+      brightness = 0;
+    }
+  }
+
+  @override
+  double toPercentage() {
+    return brightness.toDouble() / 100.0;
+  }
+
+  @override
+  bool displayAsProgressBar() {
+    return true;
   }
 
   @override

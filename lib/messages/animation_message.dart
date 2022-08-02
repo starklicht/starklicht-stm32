@@ -1,5 +1,6 @@
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/view/animations.dart';
@@ -26,8 +27,32 @@ class AnimationMessage extends IBluetoothMessage {
 
   AnimationMessage(this._colors, this._config, { this.title });
 
+  static AnimationMessage buildDefault() {
+    return AnimationMessage([ColorPoint(Colors.white, 0), ColorPoint(Colors.black, 1)], AnimationSettingsConfig(
+      InterpolationType.linear,
+      TimeFactor.repeat,
+      0,
+      1,
+      0,
+    ), title: "Kleiner Test");
+  }
+
+  @override
+  Gradient? toGradient() {
+    return LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors:
+        List.from(_colors.map((e) => e.color)),
+        stops: List.from(
+        _colors.map((e) => e.point)));
+  }
+
   @override
   bool get withoutResponse => false;
+
+  @override
+  bool get isGradient => true;
 
   @override
   List<int> getMessageBody({ bool inverse = false }) {
@@ -56,7 +81,10 @@ class AnimationMessage extends IBluetoothMessage {
 
   @override
   String retrieveText() {
-    return "TODO";
+    if(title == null) {
+      return "Unbenannt";
+    }
+    return title!;
   }
 
   int buildInterpolationType() {

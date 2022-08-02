@@ -31,10 +31,15 @@ extension MessageTypeExtension on MessageType {
   }
 }
 
-abstract class IBluetoothMessage {
+abstract class IBluetoothMessage<T> {
   abstract MessageType messageType;
   static const int endChar = 10;
   static const int escapeChar = 0;
+  bool isGradient = false;
+
+  Gradient? toGradient() {
+    return null;
+  }
 
   static const List<int> endOfMessageSign = [escapeChar, endChar];
 
@@ -95,6 +100,18 @@ abstract class IBluetoothMessage {
 
   Color toColor() {
     return Colors.red;
+  }
+
+  bool displayAsProgressBar() {
+    return false;
+  }
+
+  void setValue(T value) {
+    // Return
+  }
+
+  double toPercentage() {
+    return 1.0;
   }
 
   /* void broadcast(List<BluetoothCharacteristic> broadcastList) async {

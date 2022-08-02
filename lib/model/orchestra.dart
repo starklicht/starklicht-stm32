@@ -27,6 +27,35 @@ class MessageNode extends INode {
   List<String> activeLamps = [];
   final IBluetoothMessage message;
 
+  String getTitle() {
+    switch(message.messageType) {
+
+      case MessageType.color:
+        return "Farbe";
+      case MessageType.interpolated:
+        return "Animation";
+      case MessageType.request:
+        // TODO: Handle this case.
+        break;
+      case MessageType.onoff:
+        // TODO: Handle this case.
+        break;
+      case MessageType.poti:
+        // TODO: Handle this case.
+        break;
+      case MessageType.brightness:
+        return "Helligkeit";
+        break;
+      case MessageType.save:
+        // TODO: Handle this case.
+        break;
+      case MessageType.clear:
+        // TODO: Handle this case.
+        break;
+    }
+    return "Unbekannt";
+  }
+
   MessageNode({Key? key, required this.lamps, required this.message, update, onDelete}) : super(key: key, update: update, onDelete: onDelete);
 
   @override
@@ -34,6 +63,59 @@ class MessageNode extends INode {
 
   @override
   NodeType type = NodeType.MESSAGE;
+
+  RichText getSubtitle(BuildContext context, TextStyle baseStyle) {
+    switch(message.messageType) {
+      case MessageType.color:
+        return RichText(
+            text: TextSpan(
+                style: baseStyle,
+                children: [
+                  TextSpan(text: "Setze die Lampen auf die Farbe "),
+                  TextSpan(text: message.retrieveText(), style: TextStyle(fontWeight: FontWeight.bold))
+                ]
+            )
+        );
+      case MessageType.interpolated:
+        return RichText(
+            text: TextSpan(
+                style: baseStyle,
+                children: [
+                  TextSpan(text: "Spiele die Animation "),
+                  TextSpan(text: message.retrieveText(), style: TextStyle(fontWeight: FontWeight.bold)),
+                  TextSpan(text: " ab")
+                ]
+            )
+        );
+      case MessageType.request:
+      // TODO: Handle this case.
+        break;
+      case MessageType.onoff:
+      // TODO: Handle this case.
+        break;
+      case MessageType.poti:
+      // TODO: Handle this case.
+        break;
+      case MessageType.brightness:
+        return RichText(text: TextSpan(
+            style: baseStyle,
+            children: [
+              TextSpan(text: "Setze die Helligkeit der Lampen auf "),
+              TextSpan(text: message.retrieveText(), style: TextStyle(fontWeight: FontWeight.bold)),
+            ]
+        ));
+      case MessageType.save:
+      // TODO: Handle this case.
+        break;
+      case MessageType.clear:
+      // TODO: Handle this case.
+        break;
+    }
+    return RichText(text: TextSpan(
+        style: baseStyle,
+        text: "Unbekannt")
+    );
+  }
 }
 
 class ParentNode extends INode {
@@ -42,20 +124,46 @@ class ParentNode extends INode {
   }
 
   String getSubtitle() {
-    if(type == NodeType.REPEAT) {
-      return formatTime();
+    if(hasTime()) {
+      return "${formatTime()} warten";
     } else if (type == NodeType.WAIT) {
-      return "Auf Benutzereingabe";
+      return "Auf Benutzereingabe warten";
     }
-    return formatTime();
+    return "Sofort";
+  }
+
+  IconData? getIcon() {
+    if(hasTime()) {
+      return Icons.timer;
+    } else if(type == NodeType.WAIT) {
+      return Icons.hourglass_empty;
+    }
+    return Icons.arrow_downward;
   }
 
   String formatTime() {
-    return "${time.inMinutes.remainder(60)}m ${time.inSeconds.remainder(60)}s ${time.inMilliseconds.remainder(1000)}ms";
+    var minutes = time.inMinutes.remainder(60);
+    var seconds = time.inSeconds.remainder(60);
+    var millis = time.inMilliseconds.remainder(1000);
+    var str = "";
+    if(minutes > 0) {
+      str+= "${minutes}m ";
+    }
+    if(seconds > 0) {
+      str+= "${seconds}s ";
+    }
+    if(millis > 0) {
+      str+= "${millis}ms ";
+    }
+    return str.trim();
   }
 
   bool hasSubtitle() {
-    return time.inMicroseconds > 0 || type == NodeType.WAIT;
+    return hasTime() || type == NodeType.WAIT;
+  }
+
+  bool hasTime() {
+    return time.inMicroseconds > 0;
   }
 
   List<MessageNode> messages;
@@ -184,63 +292,37 @@ class MessageNodeState extends INodeState<MessageNode> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Text(
-                "${getTitle()} ${getPostfix()}: ",
-              ),
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: getColor(),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black,
-                      blurRadius: 0.0,
-                      spreadRadius: 1,
-                      offset:
-                      const Offset(0.0, 0.0), // shadow direction: bottom right
-                    ),
-                  ],
+    return
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: widget.lamps.map((e) => Padding(
+            padding: const EdgeInsets.only(left: 4, right: 4),
+            child: Chip(
+                avatar: CircleAvatar(
+                  child: Text(e[0].toUpperCase())
                 ),
-              ),
-              Text(" (${getText()})", style: Theme.of(context).textTheme.labelSmall,)
-            ],
-          ),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: widget.lamps.map((e) => Chip(
-              avatar: CircleAvatar(
-                child: Text(e[0].toUpperCase())
-              ),
-              label: Text(e),
-              materialTapTargetSize:
-              MaterialTapTargetSize.shrinkWrap,
-              onDeleted: () => {
-                setState((){
-                  widget.lamps.remove(e);
-                })
-              },
-            ) as Widget).toList()..add(
-              ActionChip(
+                label: Text(e),
                 materialTapTargetSize:
                 MaterialTapTargetSize.shrinkWrap,
-                padding: EdgeInsets.zero,
-                onPressed: () {},
-                label: Icon(Icons.add),
+                onDeleted: () => {
+                  setState((){
+                    widget.lamps.remove(e);
+                  })
+                },
+              ) as Widget,
+          )).toList()..add(
+              Padding(
+                padding: const EdgeInsets.only(left: 4, right: 4),
+                child: ActionChip(
+                  materialTapTargetSize:
+                  MaterialTapTargetSize.shrinkWrap,
+                  padding: EdgeInsets.zero,
+                  onPressed: () {},
+                  label: Icon(Icons.add),
+                ),
               )
-            )
-        ),
-
-        ],
-      );
+            ))
+        );
   }
 }
 

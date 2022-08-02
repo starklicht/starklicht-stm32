@@ -1,3 +1,4 @@
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'imessage.dart';
@@ -48,7 +49,7 @@ class ColorMessage extends IBluetoothMessage {
 
   @override
   String retrieveText() {
-    return "#" + toColor().toString().substring(10, 16);
+    return ColorTools.nameThatColor(toColor());
   }
 
   @override

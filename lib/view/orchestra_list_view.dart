@@ -44,6 +44,7 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
             onTap: () => {
               showDialog(context: context, builder: (_) {
                 return AlertDialog(
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   insetPadding: EdgeInsets.all(16),
                   contentPadding: EdgeInsets.all(16),
                   title: Text(widget.animations[index]),
@@ -53,6 +54,7 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
                     child: OrchestraTimeline()
                   ),
                   actions: [
+                    IconButton(onPressed: () => {}, icon: Icon(Icons.play_circle)),
                     TextButton(onPressed: () => {}, child: Text("Abbrechen")),
                     TextButton(onPressed: () => {}, child: Text("Speichern"))
                   ],
