@@ -80,6 +80,13 @@ public:
   void attachDoubleClick(parameterizedCallbackFunction newFunction, void *parameter);
 
   /**
+   * Attach an event to be called after a double click is detected.
+   * @param newFunction This function will be called when the event has been detected.
+   */
+  void attachClickStart(callbackFunction newFunction);
+  void attachClickStart(parameterizedCallbackFunction newFunction, void *parameter);
+
+  /**
    * Attach an event to be called after a multi click is detected.
    * @param newFunction This function will be called when the event has been detected.
    */
@@ -155,6 +162,7 @@ private:
   unsigned int _clickTicks = 400;   // number of msecs before a click is detected.
   unsigned int _pressTicks = 800;   // number of msecs before a long button press is detected
   int max(int a, int b);
+  bool clickFired = false;
   int _buttonPressed;
 
   // These variables will hold functions acting as event source.
@@ -181,6 +189,10 @@ private:
   callbackFunction _duringLongPressFunc = NULL;
   parameterizedCallbackFunction _paramDuringLongPressFunc = NULL;
   void *_duringLongPressFuncParam = NULL;
+
+  callbackFunction _startClickFunc = NULL;
+  parameterizedCallbackFunction _paramStartClickFunc = NULL;
+  void *_startClickFuncParam = NULL;
 
   // These variables that hold information across the upcoming tick calls.
   // They are initialized once on program start and are updated every time the

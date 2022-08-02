@@ -102,6 +102,7 @@ public:
 
 private:
     int duration;
+    bool seamless;
 public:
     void setDuration(int duration);
 
@@ -110,12 +111,15 @@ private:
     uint8_t interpolationType;
 public:
     uint8_t getInterpolationType() const;
+    bool getSeamless();
 
     void setInterpolationType(uint8_t interpolationType);
 
     bool getPingpong() const;
 
     void setPingpong(bool pingpong);
+    bool repeating;
+    void setSeamless(bool seamless);
 
 private:
     bool pingpong;

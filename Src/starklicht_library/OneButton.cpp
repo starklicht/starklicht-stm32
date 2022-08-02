@@ -78,7 +78,6 @@ void OneButton::attachClick(callbackFunction newFunction)
   _clickFunc = newFunction;
 } // attachClick
 
-
 // save function for parameterized click event
 void OneButton::attachClick(parameterizedCallbackFunction newFunction, void *parameter)
 {
@@ -86,6 +85,20 @@ void OneButton::attachClick(parameterizedCallbackFunction newFunction, void *par
   _clickFuncParam = parameter;
 } // attachClick
 
+
+
+
+void OneButton::attachClickStart(callbackFunction newFunction)
+{
+	_startClickFunc = newFunction;
+}
+
+
+void OneButton::attachClickStart(parameterizedCallbackFunction newFunction, void *parameter)
+{
+	_paramStartClickFunc = newFunction;
+	_startClickFuncParam = parameter;
+}
 
 // save function for doubleClick event
 void OneButton::attachDoubleClick(callbackFunction newFunction)
@@ -234,7 +247,10 @@ void OneButton::tick(bool activeLevel)
     } else if (!activeLevel) {
       _newState(OneButton::OCS_UP);
       _startTime = now; // remember starting time
-
+    } else if((activeLevel) && !clickFired) {
+		if (_startClickFunc) _startClickFunc();
+		if (_paramStartClickFunc) _paramStartClickFunc(_startClickFuncParam);
+		clickFired = true;
     } else if ((activeLevel) && (waitTime > _pressTicks)) {
       if (_longPressStartFunc) _longPressStartFunc();
       if (_paramLongPressStartFunc) _paramLongPressStartFunc(_longPressStartFuncParam);
@@ -253,6 +269,7 @@ void OneButton::tick(bool activeLevel)
       // count as a short button down
       _nClicks++;
       _newState(OneButton::OCS_COUNT);
+      clickFired = false;
     } // if
     break;
 

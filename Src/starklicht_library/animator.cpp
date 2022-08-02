@@ -99,6 +99,10 @@ void Animator::setStartPoint(unsigned long displacement) {
     this->displacement = displacement;
 }
 
+void Animator::setPong(bool pong) {
+	this->pong = pong;
+}
+
 bool Animator::isPingpong() const {
     return pingpong;
 }

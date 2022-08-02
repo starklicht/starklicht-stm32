@@ -36,6 +36,7 @@ public:
     void setInterpolatorType(int type);
 
     void setStartPoint(unsigned long displacement);
+    void setPong(bool pong);
 
 
 private:

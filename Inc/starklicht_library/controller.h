@@ -24,7 +24,7 @@ public:
     void changeOnlyColor(Color *c);
     int batteryPower();
 
-    void changeKeyframes(bool pingpong, int interpolation, int n, Keyframe *c[32], int time);
+    void changeKeyframes(bool pingpong, int interpolation, int n, Keyframe *c[32], int time, bool repeating, bool seamless = true);
 
     void sendData(HAL_StatusTypeDef tx, HAL_UART_StateTypeDef rx);
 

@@ -49,7 +49,7 @@ uint16_t ColorMessage::w() {
 }
 
 void ColorMessage::execute(Controller *controller) {
-    controller->changeColor(&color);
+    controller->changeOnlyColor(&color);
 }
 
 void ColorMessage::setColor(uint16_t r, uint16_t g, uint16_t b, uint16_t w) {
@@ -99,7 +99,7 @@ void KeyframeMessage::putFrame(int index, float t, uint16_t r, uint16_t g, uint1
 }
 
 void KeyframeMessage::execute(Controller *controller) {
-    controller->changeKeyframes(getPingpong(), getInterpolationType(), getNumKeyframes(), keyframes, duration);
+    controller->changeKeyframes(getPingpong(), getInterpolationType(), getNumKeyframes(), keyframes, duration, repeating, getSeamless());
 }
 
 Keyframe *KeyframeMessage::getFrames() {
@@ -122,6 +122,14 @@ void KeyframeMessage::setPingpong(bool pingpong) {
     KeyframeMessage::pingpong = pingpong;
 }
 
+void KeyframeMessage::setSeamless(bool seamless) {
+	KeyframeMessage::seamless = seamless;
+}
+
+bool KeyframeMessage::getSeamless() {
+	return seamless;
+}
+
 void KeyframeMessage::setDuration(int duration) {
     KeyframeMessage::duration = duration;
 }
@@ -138,23 +146,34 @@ void KeyframeMessage::build(uint8_t *receivedChars) {
     setInterpolationType((int) receivedChars[2]);
 
     // Set if it is pingpong
-    setPingpong((int) receivedChars[3] == 1);
+    if(receivedChars[3] == 0) {
+    	setPingpong(false);
+    	repeating = true;
+    } else if(receivedChars[3] == 1) {
+    	setPingpong(true);
+    	repeating = true;
+    } else if(receivedChars[3] == 2) {
+    	setPingpong(false);
+    	repeating = false;
+    }
 
-
-    int seconds = (int) ((uint8_t) receivedChars[4] & 0xFF);
-    int millis = (int) ((uint8_t) receivedChars[5] & 0xFF);
+    // Set seamless
+    setSeamless(receivedChars[4] == 1);
+    int minutes = (int) ((uint8_t) receivedChars[5] & 0xFF);
+    int seconds = (int) ((uint8_t) receivedChars[6] & 0xFF);
+    int millis = (int) ((uint8_t) receivedChars[7] & 0xFF);
 
     // Set the duration of the scene
-    setDuration(seconds * 1000 + millis * 50);
+    setDuration(minutes * 60000 + seconds * 1000 + millis * 50);
 
 
     // Build the keyframes
     for (int i = 0; i < n; i++) {
-        int t = (int) (receivedChars[6 + i * 5] & 0xFF);
-        uint16_t r = receivedChars[7 + i * 5] * 16;
-        uint16_t g = receivedChars[8 + i * 5] * 16;
-        uint16_t b = receivedChars[9 + i * 5] * 16;
-        uint16_t w = receivedChars[10 + i * 5] * 16;
+        int t = (int) (receivedChars[8 + i * 5] & 0xFF);
+        uint16_t r = receivedChars[9 + i * 5] * 16;
+        uint16_t g = receivedChars[10 + i * 5] * 16;
+        uint16_t b = receivedChars[11 + i * 5] * 16;
+        uint16_t w = receivedChars[12 + i * 5] * 16;
         float delta = (float) t / 255.0;
         putFrame(i, delta, r, g, b, w);
     }
@@ -263,7 +282,10 @@ void SaveMessage::execute(Controller *controller) {
     if (save) {
         controller->animatorToEEPROM(index);
     } else {
-        controller->animatorFromEEPROM(index);
+    	Controller::MODE m = controller->animatorFromEEPROM(index);
+		if(m != Controller::NOT_DEFINED) {
+			controller->setMode(m);
+		}
     }
 }
 

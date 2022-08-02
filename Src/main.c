@@ -169,6 +169,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
 
   TIM2->CCR1 = 0;
   if(HAL_ADC_Start_DMA(&hadc1, (uint32_t*)analogInputs, 10) != HAL_OK)
@@ -177,14 +178,15 @@ int main(void)
       Error_Handler();
     }
 
-  for(int i = 0; i < 7; i++) {
+  for(int i = 0; i < 3; i++) {
 	  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-	  HAL_Delay(50);
+	  HAL_Delay(10);
   }
 
 
   u8g2_Setup_sh1106_128x64_noname_f(&u8g2, U8G2_R0, u8x8_byte_4wire_hw_spi, u8x8_stm32_gpio_and_delay);
   u8g2_InitDisplay(&u8g2);
+  u8g2_SetFlipMode(&u8g2, 0);
   u8g2_SetPowerSave(&u8g2, 0);
   setup(&analogInputs, &u8g2, USE_BUTTONS);
   int batteryEnergy = getBatteryEnergy();
@@ -564,8 +566,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : BT1_Pin BT2_Pin BT3_Pin BT4_Pin */
-  GPIO_InitStruct.Pin = BT1_Pin|BT2_Pin|BT3_Pin|BT4_Pin;
+  /*Configure GPIO pins : BT4_Pin BT3_Pin BT2_Pin BT1_Pin */
+  GPIO_InitStruct.Pin = BT4_Pin|BT3_Pin|BT2_Pin|BT1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);

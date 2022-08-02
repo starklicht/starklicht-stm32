@@ -29,8 +29,8 @@ FanControl::FanControl(uint16_t *array, int thermistorpin, int r_pin, int g_pin,
 float FanControl::update() {
 	//time++;
 	//if(time % interval == 0) {
-	temp = max(getTemperatureCelsius(r_pin), getTemperatureCelsius(g_pin));
-	temp = max(temp, getTemperatureCelsius(b_pin));
+	temp = max(getTemperatureCelsius(r_pin) / 2, getTemperatureCelsius(g_pin) / 2);
+	temp = max(temp, getTemperatureCelsius(b_pin) / 2);
 	temp = max(temp, getTemperatureCelsius(thermistor_pin));
 	//}
 	return temp;

@@ -86,10 +86,10 @@ void setup_internal(uint16_t* dma_array, u8g2_t *u8g2, uint8_t activateButtons =
 	  b = new OneButton(BT2_GPIO_Port, BT2_Pin, 0);
 	  c = new OneButton(BT3_GPIO_Port, BT3_Pin, 0);
 	  d = new OneButton(BT4_GPIO_Port, BT4_Pin, 0);
-	  a->attachClick(clickA);
-	  b->attachClick(clickB);
-	  c->attachClick(clickC);
-	  d->attachClick(clickD);
+	  a->attachClickStart(clickA);
+	  b->attachClickStart(clickB);
+	  c->attachClickStart(clickC);
+	  d->attachClickStart(clickD);
   }
 
   controller->update(0);
@@ -124,6 +124,7 @@ Color* loop_internal(uint32_t tick) {
 
 	display->setMode(controller->getMode());
 	display->setColor(controller->getColor());
+	display->setActiveButton(controller->getButton());
 	// display->setDebug(dma_array);
 	display->setBatteryPercentage(controller->getBatteryPercentage());
 	if(HAL_GPIO_ReadPin(BT_STATE_GPIO_Port, BT_STATE_Pin)) {
@@ -145,7 +146,6 @@ Color* loop_internal(uint32_t tick) {
 		fanSpeed = 0;
 	}
 
-	TIM2->CCR1 = 4095 - fanSpeed;
 
 
 	display->setTemperature(fanControl->update());
@@ -154,10 +154,12 @@ Color* loop_internal(uint32_t tick) {
 	//display->setRemainingMinutes(runningTime->getMinutesLeft());
 
 
-
-	TIM4->CCR1 = (uint16_t(controller->getColor()->r * (float)(controller->getColor()->master) / 4095.0f));
+	TIM4->CCR3 = (uint16_t(controller->getColor()->r * (float)(controller->getColor()->master) / 4095.0f));
+	TIM4->CCR1 = (uint16_t(controller->getColor()->b * (float)(controller->getColor()->master) / 4095.0f));
 	TIM4->CCR2 = (uint16_t(controller->getColor()->g * (float)(controller->getColor()->master) / 4095.0f));
-	TIM4->CCR3 = (uint16_t(controller->getColor()->b * (float)(controller->getColor()->master) / 4095.0f));
+	TIM4->CCR4 = 4095 - fanSpeed;
+
+
 
 
 	runningTime->update();

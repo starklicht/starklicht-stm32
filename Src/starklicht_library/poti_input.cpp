@@ -14,10 +14,10 @@ PotiInput::PotiInput(uint16_t *dma_array, bool inverse) {
 }
 
 Color* PotiInput::update() {
-	value.r = dma[4];
-	value.g = dma[5];
-	value.b = dma[6];
-	value.master = dma[7];
+	value.r = dma[7];
+	value.g = dma[6];
+	value.b = dma[5];
+	value.master = dma[4];
 
 	if(inverse) {
 		value.r = 4095 - value.r;

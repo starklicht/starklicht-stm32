@@ -31,12 +31,15 @@ void Controller::changeOnlyColor(Color *c) {
  * @param c Array of keyframes as pointer
  * @param time Duration in milliseconds
  */
-void Controller::changeKeyframes(bool pingpong, int interpolation, int n, Keyframe *c[32], int time) {
+void Controller::changeKeyframes(bool pingpong, int interpolation, int n, Keyframe *c[32], int time, bool repeating, bool seamless) {
     mode = ANIMATION;
     animator->setInterpolatorType(interpolation);
-    animator->setRepeating(true);
+    animator->setRepeating(repeating);
     // TODO: Erweitern
-    animator->setStartPoint(HAL_GetTick());
+    if(!seamless) {
+    	animator->setPong(true);
+        animator->setStartPoint(HAL_GetTick());
+    }
     animator->setNumberOfFrames(n);
     animator->setPingpong(pingpong);
     animator->setDuration(time);
@@ -223,24 +226,26 @@ void Controller::animatorToEEPROM(int address) {
         }
 
         // Write seconds and milliseconds
-        int seconds = ((animator->getDuration() / 1000) % 60);
+        int minutes = ((animator->getDuration() / 60000) % 60);
+        int seconds = (((animator->getDuration() - (minutes * 60000)) / 1000) % 60);
         int millis = (((animator->getDuration() - (seconds * 1000))) / 50);
-        a[4] =  (uint16_t) seconds;
-        a[5] = (uint16_t) millis;
+        a[4] = (uint16_t) minutes;
+        a[5] =  (uint16_t) seconds;
+        a[6] = (uint16_t) millis;
         // Write if it is repeating
         if (animator->isRepeating()) {
-            a[6] = (uint16_t)1;
+            a[7] = (uint16_t)1;
         } else {
-            a[6] = (uint16_t)0;
+            a[7] = (uint16_t)0;
         }
 
         // Write colors and times
         for (int i = 0; i < n; i++) {
-            a[7 + i * 5] = (uint16_t)(animator->getKeyframes()[i]->getFraction() * 4095);
-            a[8 + i * 5] = (uint16_t)animator->getKeyframes()[i]->getValue()->r;
-            a[9 + i * 5] = (uint16_t)animator->getKeyframes()[i]->getValue()->g;
-            a[10 + i * 5] = (uint16_t)animator->getKeyframes()[i]->getValue()->b;
-            a[11 + i * 5] = (uint16_t)animator->getKeyframes()[i]->getValue()->master;
+            a[8 + i * 5] = (uint16_t)(animator->getKeyframes()[i]->getFraction() * 4095);
+            a[9 + i * 5] = (uint16_t)animator->getKeyframes()[i]->getValue()->r;
+            a[10 + i * 5] = (uint16_t)animator->getKeyframes()[i]->getValue()->g;
+            a[11 + i * 5] = (uint16_t)animator->getKeyframes()[i]->getValue()->b;
+            a[12 + i * 5] = (uint16_t)animator->getKeyframes()[i]->getValue()->master;
         }
     } else {
     	a[0] = 0x0001;
@@ -252,7 +257,7 @@ void Controller::animatorToEEPROM(int address) {
 
 	uint32_t* test = (uint32_t*)a;
 
-	Flash_Write_Data(getButtonAddress(address), test);
+	WriteButton(address, test);
 
 	delete test;
 	delete a;
@@ -288,19 +293,29 @@ Controller::MODE Controller::animatorFromEEPROM(int address) {
         // Set interpolationtype
         animator->setInterpolatorType((int) flashData[2]);
         // Set pingpong
-        animator->setPingpong(flashData[3] == 1);
+        // Set if it is pingpong
+        if(flashData[3] == 0) {
+        	animator->setPingpong(false);
+        	animator->setRepeating(true);
+        } else if(flashData[3] == 1) {
+        	animator->setPingpong(true);
+        	animator->setRepeating(true);
+        } else if(flashData[3] == 2) {
+        	animator->setPingpong(false);
+        	animator->setRepeating(false);
+        }
         // Seconds
-        int time = (flashData[4] * 1000 + flashData[5] * 50);
+        int time = (flashData[4] * 60000 + flashData[5] * 1000 + flashData[6] * 50);
         animator->setDuration(time);
         // Set if it is repeating
-        bool repeat = flashData[6] == 1;
+        bool repeat = flashData[7] == 1;
         animator->setRepeating(repeat);
 
 
         for (int i = 0; i < n; i++) {
-            animator->setKeyframe(i, (float) flashData[7 + i * 5] / 4095.0, flashData[8 + i * 5] ,
-            						flashData[9 + i * 5] , flashData[10 + i * 5] ,
-									flashData[11 + i * 5] );
+            animator->setKeyframe(i, (float) flashData[8 + i * 5] / 4095.0, flashData[9 + i * 5] ,
+            						flashData[10 + i * 5] , flashData[11 + i * 5] ,
+									flashData[12 + i * 5] );
         }
 
         animator->setStartPoint(HAL_GetTick());

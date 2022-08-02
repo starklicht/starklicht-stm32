@@ -21,8 +21,10 @@
 	//void write(byte *byte_array);
 	//byte* read();
 uint32_t Flash_Write_Data (uint32_t StartPageAddress, uint32_t * DATA_32);
+void ButtonRead (int buttonIndex, __IO uint32_t * DATA_32);
 void Flash_Read_Data (uint32_t StartPageAddress, __IO uint32_t * DATA_32);
 void Convert_To_Str (uint32_t *data, char *str);
+int WriteButton(int buttonIndex, uint32_t *Data);
 
 uint32_t getButtonAddress(int address);
 uint32_t GetPage(uint32_t Address);
