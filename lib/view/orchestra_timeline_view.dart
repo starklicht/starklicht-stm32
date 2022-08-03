@@ -11,7 +11,11 @@ import 'package:timelines/timelines.dart';
 
 import '../controller/orchestra_handler.dart';
 import '../messages/color_message.dart';
+import '../messages/imessage.dart';
+import '../model/animation.dart';
 import '../model/orchestra.dart';
+import '../persistence/persistence.dart';
+import 'colors.dart';
 
 class OrchestraTimeline extends StatefulWidget {
   Map<NodeType, OrchestraNodeHandler> handlers = {};
@@ -223,6 +227,107 @@ enum ExpansionDirection {
 
 class InnerTimelineState extends State<InnerTimeline> {
 
+  List<KeyframeAnimation> _animationStore = [];
+  var _messageType = MessageType.brightness;
+  var _currentBrightness = 100.0;
+  var _currentColor = Colors.white;
+
+  void refresh() {
+    setState(() {});
+  }
+
+  void openAddDialog(BuildContext context, StateSetter setState) {
+    showDialog(context: context, builder: (_) {
+      Persistence().getAnimationStore().then((value) => _animationStore = value);
+      return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+        return AlertDialog(
+          scrollable: true,
+          title: const Text("Zeitevent hinzufügen"),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // TODO Export this into an own fucker
+              RadioListTile<MessageType>(value: MessageType.brightness,
+                  title: const Text("Helligkeit"),
+                  groupValue: _messageType,
+                  onChanged: (value) => {setState((){ _messageType = value!; })}),
+              RadioListTile<MessageType>(value: MessageType.color,
+                  title: const Text("Farbe"),
+                  groupValue: _messageType,
+                  onChanged: (value) => {setState((){ _messageType = value!; })}),
+              /* RadioListTile<MessageType>(value: MessageType.interpolated,
+                  title: const Text("Animation"),
+                  groupValue: _messageType,
+                  onChanged: (value) => {setState((){ _messageType = value!; })}), */
+              if(_messageType == MessageType.brightness) ... [
+                Text("Helligkeit bestimmen".toUpperCase(), style: Theme.of(context).textTheme.overline),
+                Column(children: [
+                  Slider(
+                    max: 100,
+                    onChangeEnd: (d) => {
+                      setState(() {
+                        _currentBrightness = d;
+                      }),
+                    },
+                    onChanged: (d) => {
+                      setState(() {
+                        _currentBrightness = d;
+                      }),
+                    },
+                    value: _currentBrightness,
+                  ),
+                  Text("${_currentBrightness.toInt()}%", style: const TextStyle(
+                      fontSize: 32
+                  ),)
+                ],)
+              ]
+              else if(_messageType == MessageType.color) ...[
+                Text("Farbe auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
+                ColorsWidget(
+                  startColor: _currentColor,
+                  onChanged: (c) => { setState(() {
+                    _currentColor = c;
+                  }) },
+                )
+              ]
+              else if (_messageType == MessageType.interpolated) ...[
+                  Text("Animation aus Liste auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
+                  // Persistence
+                  //DropdownButton<String>(items: _animationStore.map((e) => DropdownMenuItem(child: Text(e.title))).toList(), onChanged: (i) => {})
+                ]
+            ],
+          ),
+          actions: [
+            TextButton(
+                child: const Text("Abbrechen"),
+                onPressed: () => {Navigator.pop(context)}),
+            TextButton(
+                child: const Text("Hinzufügen"),
+                onPressed: () {
+                  setState((){
+                    // TODO: Implement factory pattern
+                    IBluetoothMessage? message;
+                    if(_messageType == MessageType.color) {
+                      message = ColorMessage.fromColor(_currentColor);
+                    } else if(_messageType == MessageType.brightness) {
+                      message = BrightnessMessage(_currentBrightness.toInt());
+                    }
+                    if(message == null) {
+                      return;
+                    }
+                    widget.messages.add(
+                        MessageNode(lamps: const [], message: message)
+                    );
+                  });
+                  refresh();
+                  Navigator.pop(context);
+                })
+          ],
+        );
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isEdgeIndex(int index) {
@@ -260,9 +365,7 @@ class InnerTimelineState extends State<InnerTimeline> {
                     padding: EdgeInsets.all(8),
                   ),
                   onPressed: () => {
-                    setState(() => {
-                      widget.messages.add(MessageNode(lamps: [], message: BrightnessMessage(10)))
-                    })
+                    openAddDialog(context, setState)
                   },
               );
             } else if(isEdgeIndex(index)) {
