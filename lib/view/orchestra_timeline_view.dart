@@ -1,11 +1,14 @@
 
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
+import 'package:starklicht_flutter/model/enums.dart';
+import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/view/animations.dart';
 import 'package:timelines/timelines.dart';
 
@@ -25,31 +28,12 @@ class OrchestraTimeline extends StatefulWidget {
 
   var nodes = [
     ParentNode(
-      messages: [MessageNode(lamps: [], message: ColorMessage.fromColor(Colors.red))],
+      messages: [MessageNode(lamps: ["atmosphere", "effect"], message: ColorMessage.fromColor(Colors.red))],
       time: Duration(seconds: 1),
     ),
     ParentNode(
-      messages: [MessageNode(lamps: ["front", "back"], message: ColorMessage.fromColor(Colors.greenAccent)), MessageNode(lamps: [], message: ColorMessage.fromColor(Colors.blue))],
+        messages: [MessageNode(lamps: ["fill", "key"], message: ColorMessage.fromColor(Colors.blue)), TimedNode()],
       time: Duration(milliseconds: 100)
-    ),
-    ParentNode(
-      messages: [MessageNode(lamps: ["fill", "key", "back", "black", "variable"], message: BrightnessMessage(20))],
-      type: NodeType.WAIT
-    ),
-    ParentNode(
-      messages: [MessageNode(lamps: ["fill", "key"], message: BrightnessMessage(100))],
-    ),
-    ParentNode(
-        messages: [MessageNode(lamps: ["front", "back"], message: ColorMessage.fromColor(Colors.greenAccent)), MessageNode(lamps: [], message: ColorMessage.fromColor(Colors.orangeAccent))],
-        time: Duration(milliseconds: 100)
-    ),
-    ParentNode(
-        messages: [MessageNode(lamps: ["front", "back"], message: ColorMessage.fromColor(Colors.greenAccent)), MessageNode(lamps: [], message: ColorMessage.fromColor(Colors.purple)), MessageNode(lamps: [], message: AnimationMessage.buildDefault())],
-        time: Duration(milliseconds: 100)
-    ),
-    ParentNode(
-        messages: [],
-        time: Duration(seconds: 10)
     ),
   ];
   OrchestraTimeline({Key? key}) : super(key: key);
@@ -62,6 +46,9 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
   IconData getDraggingIcon(int length) {
     return Icons.collections_bookmark_outlined;
   }
+
+  int expandedTitle = -1;
+  DragType dragType = DragType.GROUP;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +88,8 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                     },
                   )
                 ] else ...[
-                  LongPressDraggable(
+                  LongPressDraggable<DragData>(
+                    data: DragData(parentId: index, index: -1, dragType: DragType.GROUP),
                     feedback: Card(
                         elevation: 8,
                         child: Padding(
@@ -119,21 +107,91 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                           ),
                         )
                     ),
-                    child: RichText(
-                      text: TextSpan(
-                        // Note: Styles for TextSpans must be explicitly defined.
-                        // Child text spans will inherit styles from parent
-                        children: <TextSpan>[
-                          TextSpan(text: "Schritt ${index + 1}",
-                            style: Theme.of(context).textTheme.titleSmall
-                          ),
-                          if(!widget.nodes[index].hasSubtitle()) ...[
-                            TextSpan(text: " ohne Trigger", style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey, fontWeight: FontWeight.normal)),
-                          ] else ...[
-                            TextSpan(text: " mit Trigger: ${widget.nodes[index].getSubtitle()}", style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey, fontWeight: FontWeight.normal))
-                          ]
-                        ],
-                      ),
+                    child: DragTarget<DragData>(
+                      onWillAccept: (DragData? d) {
+                        // Only accepts if there is no data
+                        if(d == null) {
+                          return false;
+                        }
+                        if(widget.nodes[index].messages.isNotEmpty && d.dragType != DragType.GROUP) {
+                          return false;
+                        }
+                        if(d.parentId == index) {
+                          return false;
+                        }
+                        setState(() {
+                          expandedTitle = index;
+                          dragType = d.dragType;
+                        });
+                        return true;
+                      },
+                      onLeave: (DragData? d) {
+                        setState(() {
+                          expandedTitle = -1;
+                        });
+                      },
+                      onAccept: (DragData d) {
+                        if(d.dragType == DragType.NODE) {
+                          setState(() {
+                            expandedTitle = -1;
+                            EventNode node = widget.nodes[d.parentId].messages.removeAt(d.index);
+                            widget.nodes[index].messages.add(node);
+                          });
+                        } else {
+                          setState(() {
+                            expandedTitle = -1;
+                            ParentNode p = widget.nodes.removeAt(d.parentId);
+                            widget.nodes.insert(index, p);
+                          });
+
+                        }
+                      },
+                      builder: (
+                          BuildContext context,
+                          List<dynamic> accepted,
+                          List<dynamic> rejected,
+                        ) {
+                        var style = Theme.of(context).textTheme.headline6;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AnimatedContainer(
+                              duration: Duration(milliseconds: 200),
+                              curve: Curves.ease,
+                              decoration: BoxDecoration(
+                                color: Colors.lightBlue.withOpacity(.2),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              height: index == expandedTitle && dragType == DragType.GROUP ? 80 : 0,
+                            ),
+                            RichText(
+                              text: TextSpan(
+                                // Note: Styles for TextSpans must be explicitly defined.
+                                // Child text spans will inherit styles from parent
+                                style: style,
+                                children: <TextSpan>[
+                                  TextSpan(text: "Sequenz ${index + 1}",
+                                  ),
+                                  if(!widget.nodes[index].hasSubtitle()) ...[
+                                    TextSpan(text: " ohne Trigger", style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey, fontWeight: FontWeight.normal)),
+                                  ] else ...[
+                                    TextSpan(text: " mit Trigger: ${widget.nodes[index].getSubtitle()}", style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey, fontWeight: FontWeight.normal))
+                                  ]
+                                ],
+                              ),
+                            ),
+                            AnimatedContainer(
+                                duration: Duration(milliseconds: 200),
+                                curve: Curves.ease,
+                                decoration: BoxDecoration(
+                                  color: Colors.lightBlue.withOpacity(.2),
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                height: index == expandedTitle && dragType == DragType.NODE ? 80 : 0,
+                            )
+                          ],
+                        );
+                      }
                     ),
                   ),
                   InnerTimeline(
@@ -141,7 +199,7 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                       parentId: index,
                       onMoveNodeToOtherParent: (MoveNodeEvent e) {
                         setState(() {
-                          MessageNode node = widget.nodes[e.from.parentId].messages.removeAt(e.from.index);
+                          EventNode node = widget.nodes[e.from.parentId].messages.removeAt(e.from.index);
                           widget.nodes[e.to.parentId].messages.insert(e.to.index, node);
                         });
                         // We can just move it here
@@ -183,7 +241,7 @@ class _DeliveryMessage {
 }
 
 class InnerTimeline extends StatefulWidget {
-  List<MessageNode> messages;
+  List<EventNode> messages;
   int parentId;
   int dragTargetIndex = -1;
   int data = -1;
@@ -208,14 +266,19 @@ class MoveNodeEvent {
   MoveNodeEvent({required this.from, required this.to});
 }
 
+enum DragType {
+  GROUP, NODE
+}
+
 class DragData {
   int parentId;
   int index;
-  DragData({required this.parentId, required this.index});
+  DragType dragType;
+  DragData({required this.parentId, required this.index, required this.dragType});
 
   bool equals(var other) {
     if(other is DragData) {
-      return parentId == other.parentId && index == other.index;
+      return parentId == other.parentId && index == other.index && dragType == other.dragType;
     }
     return false;
   }
@@ -375,13 +438,18 @@ class InnerTimelineState extends State<InnerTimeline> {
                 message: widget.messages[index - 1],
                 index: index - 1,
                 parentId: widget.parentId,
+                onDelete: () => {
+                  setState(() {
+                    widget.messages.removeAt(index -1);
+                  })
+                },
                 onAccept: (MoveNodeEvent event) {
                   print(event.toString());
                   if(event.from.parentId != event.to.parentId) {
                     widget.onMoveNodeToOtherParent.call(event);
                   } else {
                     setState(() {
-                      MessageNode node = widget.messages.removeAt(event.from.index);
+                      EventNode node = widget.messages.removeAt(event.from.index);
                       widget.messages.insert(event.to.index, node);
                     });
                   }
@@ -398,15 +466,16 @@ class InnerTimelineState extends State<InnerTimeline> {
 }
 
 class DraggableMessageNode extends StatefulWidget {
-  MessageNode message;
+  EventNode message;
   int index;
   double dragExpansion;
   int parentId;
   ValueChanged<MoveNodeEvent>? onAccept;
+  VoidCallback? onDelete;
   bool isDragGoal = false;
   ExpansionDirection expansionDirection = ExpansionDirection.TOP;
 
-  DraggableMessageNode({Key? key, required this.message, required this.index, required this.parentId, this.onAccept, this.dragExpansion = 78}) : super(key: key);
+  DraggableMessageNode({Key? key, required this.message, required this.index, required this.parentId, this.onAccept, this.onDelete, this.dragExpansion = 78}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => DraggableMessageNodeState();
@@ -422,16 +491,16 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          currentMessage.message.displayAsProgressBar() ?
+          currentMessage.displayAsProgressBar() ?
           LinearProgressIndicator(
-            value: currentMessage.message.toPercentage(),
+            value: currentMessage.toPercentage(),
             minHeight: verySmall ? 4 : 8,
           )
               :Container(
             height: verySmall ? 4: 12,
             decoration: BoxDecoration(
-              color: currentMessage.message.isGradient ? null : currentMessage.message.toColor(),
-              gradient: currentMessage.message.isGradient ? currentMessage.message.toGradient() : null,
+              color: currentMessage.isGradient ? null : currentMessage.toColor(),
+              gradient: currentMessage.isGradient ? currentMessage.toGradient() : null,
               boxShadow: [
                 BoxShadow(
                     color: Theme.of(context).colorScheme.shadow.withOpacity(.2),
@@ -449,8 +518,11 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
                 widget.message.lamps.length == 0 ? Text("Keine Beschränkungen") : Text("${widget.message.lamps.length} Beschränkungen")
                 :
             currentMessage.getSubtitle(context, Theme.of(context).textTheme.bodySmall!),
+            trailing: verySmall ? null : IconButton(icon: Icon(Icons.delete), onPressed: () => {
+              widget.onDelete?.call()
+            }),
           ),
-          if(!verySmall)...[
+          if(!verySmall && widget.message.hasLamps())...[
             const Divider(),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -481,12 +553,46 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
   RenderBox getRenderBox() {
     return key.currentContext?.findRenderObject() as RenderBox;
   }
+
+  DragData? willAccept(DragData from) {
+    var newIndex;
+    if(from.parentId == widget.parentId) {
+      if(widget.index > from.index) {
+        // When Moving down
+        if(widget.expansionDirection == ExpansionDirection.TOP) {
+          newIndex = widget.index - 1;
+        } else {
+          newIndex = widget.index;
+        }
+      } else {
+        // When moving up
+        if(widget.expansionDirection == ExpansionDirection.TOP) {
+          newIndex = widget.index;
+        } else {
+          newIndex = widget.index + 1;
+        }
+      }
+    } else {
+      // If parent is different, we can just insert it
+      if(widget.expansionDirection == ExpansionDirection.TOP) {
+        newIndex = widget.index;
+      } else {
+        newIndex = widget.index + 1;
+      }
+    }
+    var newPosition = DragData(parentId: widget.parentId, index: newIndex, dragType: DragType.NODE);
+    if(from.equals(newPosition)) {
+      print("Nothing changed");
+      return null;
+    }
+    return newPosition;
+  }
   
   @override
   Widget build(BuildContext context) {
     return LongPressDraggable<DragData>(
       childWhenDragging: Opacity(opacity: .2, child: getCard(context)),
-      data: DragData(parentId: widget.parentId, index: widget.index),
+      data: DragData(parentId: widget.parentId, index: widget.index, dragType: DragType.NODE),
       child: DragTarget(
         key: key,
         onMove: (DragTargetDetails<DragData> details)  {
@@ -494,7 +600,6 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
           Offset position = box.localToGlobal(Offset.zero); //this is global position
           double y = position.dy; //this is y - I think it's what you want
           double height = box.size.height;
-          print(height);
           if(y + height / 2 > details.offset.dy) {
             setState(() {
               widget.expansionDirection = ExpansionDirection.TOP;
@@ -506,8 +611,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
           }
         },
         onWillAccept: (DragData? data) {
-          if(data?.index == widget.index && data?.parentId == widget.parentId) {
-            print("Sorry won't accept.");
+          if(data?.index == widget.index && data?.parentId == widget.parentId || data?.dragType == DragType.GROUP) {
             return false;
           }
           setState(() {
@@ -580,14 +684,13 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
               }
             }
 
-            var newPosition = DragData(parentId: widget.parentId, index: newIndex);
+            var newPosition = DragData(parentId: widget.parentId, index: newIndex, dragType: DragType.NODE);
             if(data.equals(newPosition)) {
               print("Nothing changed");
               return;
             }
             var event = MoveNodeEvent(
                 from: data,
-
                 to: newPosition
             );
             print(event);
@@ -605,10 +708,9 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
   }
 
   Offset myOffset(Draggable<Object> draggable, BuildContext context, Offset position) {
-    return Offset(0, widget.dragExpansion / 2);
+    final RenderBox renderObject = context.findRenderObject()! as RenderBox;
+    var pos = renderObject.globalToLocal(position);
+    return Offset(pos.dx, widget.dragExpansion / 2);
   }
-
-
-  
 }
 

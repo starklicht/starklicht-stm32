@@ -1,9 +1,11 @@
 
 import 'dart:async';
+import 'package:collection/src/iterable_extensions.dart';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/messages/imessage.dart';
+import 'package:starklicht_flutter/model/lamp_groups_enum.dart';
 import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:uuid/uuid.dart';
 
@@ -22,11 +24,111 @@ abstract class INode extends StatefulWidget {
   abstract NodeType type;
 }
 
-class MessageNode extends INode {
+abstract class EventNode extends INode {
+  EventNode({Key? key, update, onDelete}) : super(key: key, update: update, onDelete: onDelete);
+
+  bool get isGradient;
+
+  bool hasLamps();
+
+  get lamps;
+  String getTitle();
+
+  bool displayAsProgressBar();
+
+  double toPercentage();
+
+  Color toColor();
+
+  Gradient? toGradient();
+
+  Widget getSubtitle(BuildContext context, TextStyle textStyle);
+}
+
+class TimedNode extends EventNode {
+  @override
+  NodeType type = NodeType.TIME;
+
+  Duration time = Duration(seconds: 10);
+
+  @override
+  State<StatefulWidget> createState() => TimedNodeState();
+
+  String formatTime() {
+    var minutes = time.inMinutes.remainder(60);
+    var seconds = time.inSeconds.remainder(60);
+    var millis = time.inMilliseconds.remainder(1000);
+    var str = "";
+    if(minutes > 0) {
+      str+= "${minutes} Minuten ";
+    }
+    if(seconds > 0) {
+      str+= "${seconds} Sekunden ";
+    }
+    if(millis > 0) {
+      str+= "${millis} Millisekunden ";
+    }
+    return str.trim();
+  }
+
+  @override
+  bool displayAsProgressBar() {
+    return true;
+  }
+
+  @override
+  Widget getSubtitle(BuildContext context, TextStyle textStyle) {
+    return Text("Für ${formatTime()} warten");
+  }
+
+  @override
+  String getTitle() {
+    return "Warten";
+  }
+
+  @override
+  // TODO: implement isGradient
+  get isGradient => false;
+
+  @override
+  // TODO: implement lamps
+  get lamps => [];
+
+  @override
+  toColor() {
+    return Colors.red;
+  }
+
+  @override
+  toGradient() {
+    return null;
+  }
+
+  @override
+  toPercentage() {
+    return 0;
+  }
+
+  @override
+  bool hasLamps() {
+    return false;
+  }
+}
+
+class TimedNodeState extends State<TimedNode> {
+  @override
+  Widget build(BuildContext context) {
+    return Text("");
+  }
+
+}
+
+class MessageNode extends EventNode {
   final List<String> lamps;
   List<String> activeLamps = [];
   final IBluetoothMessage message;
 
+  @override
   String getTitle() {
     switch(message.messageType) {
 
@@ -64,6 +166,7 @@ class MessageNode extends INode {
   @override
   NodeType type = NodeType.MESSAGE;
 
+  @override
   RichText getSubtitle(BuildContext context, TextStyle baseStyle) {
     switch(message.messageType) {
       case MessageType.color:
@@ -116,13 +219,38 @@ class MessageNode extends INode {
         text: "Unbekannt")
     );
   }
+
+  @override
+  displayAsProgressBar() {
+    return message.displayAsProgressBar();
+  }
+
+  @override
+  // TODO: implement isGradient
+  get isGradient => message.isGradient;
+
+  @override
+  toColor() {
+    return message.toColor();
+  }
+
+  @override
+  toGradient() {
+    return message.toGradient();
+  }
+
+  @override
+  toPercentage() {
+    return 0.5;
+  }
+
+  @override
+  bool hasLamps() {
+    return true;
+  }
 }
 
 class ParentNode extends INode {
-  Stream<double> getProgress() {
-    throw UnimplementedError();
-  }
-
   String getSubtitle() {
     if(hasTime()) {
       return "${formatTime()} warten";
@@ -166,7 +294,7 @@ class ParentNode extends INode {
     return time.inMicroseconds > 0;
   }
 
-  List<MessageNode> messages;
+  List<EventNode> messages;
   Duration time;
   ParentNode({Key? key, this.time = const Duration(), update, onDelete, this.type = NodeType.NOT_DEFINED, this.messages = const []}) : super(key:key, update: update, onDelete: onDelete);
 
@@ -185,7 +313,6 @@ class AddNode extends INode {
 
   @override
   State<StatefulWidget> createState() => AddNodeState();
-
 }
 
 abstract class INodeState<T extends INode> extends State<T> {
@@ -290,6 +417,14 @@ class MessageNodeState extends INodeState<MessageNode> {
     return widget.message.toColor();
   }
 
+  Widget getAvatar(String name) {
+    var group = LampGroups.values.firstWhereOrNull((e) => name.toLowerCase() == e.name.toLowerCase());
+    if(group != null) {
+      return Icon(group.icon, size: 18);
+    }
+    return Text(name[0].toUpperCase());
+  }
+
   @override
   Widget build(BuildContext context) {
     return
@@ -299,7 +434,9 @@ class MessageNodeState extends INodeState<MessageNode> {
             padding: const EdgeInsets.only(left: 4, right: 4),
             child: Chip(
                 avatar: CircleAvatar(
-                  child: Text(e[0].toUpperCase())
+                  child: getAvatar(e),
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                 ),
                 label: Text(e),
                 materialTapTargetSize:
