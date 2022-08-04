@@ -42,6 +42,10 @@ abstract class EventNode extends INode {
 
   Gradient? toGradient();
 
+  Duration? delayAfterwards();
+
+  bool manualDelayAfterwards();
+
   Widget getSubtitle(BuildContext context, TextStyle textStyle);
 }
 
@@ -111,6 +115,16 @@ class TimedNode extends EventNode {
 
   @override
   bool hasLamps() {
+    return false;
+  }
+
+  @override
+  Duration? delayAfterwards() {
+    return Duration(seconds: 1);
+  }
+
+  @override
+  bool manualDelayAfterwards() {
     return false;
   }
 }
@@ -248,6 +262,16 @@ class MessageNode extends EventNode {
   bool hasLamps() {
     return true;
   }
+
+  @override
+  Duration? delayAfterwards() {
+    return Duration(seconds: 1);
+  }
+
+  @override
+  bool manualDelayAfterwards() {
+    return false;
+  }
 }
 
 class ParentNode extends INode {
@@ -349,7 +373,6 @@ class AddNodeState extends INodeState<AddNode> {
       )
     );
   }
-
 }
 
 
@@ -446,7 +469,7 @@ class MessageNodeState extends INodeState<MessageNode> {
                     widget.lamps.remove(e);
                   })
                 },
-              ) as Widget,
+              ),
           )).toList()..add(
               Padding(
                 padding: const EdgeInsets.only(left: 4, right: 4),

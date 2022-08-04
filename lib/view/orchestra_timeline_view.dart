@@ -10,6 +10,7 @@ import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/view/animations.dart';
+import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:timelines/timelines.dart';
 
 import '../controller/orchestra_handler.dart';
@@ -75,17 +76,20 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                     Text("Keine Knotenpunkte")
                 ]
                 else if(widget.nodes.length <= index) ...[
-                  Text("Ende", style: Theme.of(context).textTheme.headline6),
-                  ChoiceChip(
-                    avatar:
-                      Icon(Icons.repeat, color: widget.restart?Theme.of(context).colorScheme.secondary:null),
-                    label: Text(widget.restart?"Wiederholung aktiviert":"Wiederholung deaktiviert"),
-                    selected: widget.restart,
-                    onSelected: (s) => {
-                      setState(() {
-                        widget.restart = s;
-                      })
-                    },
+                  Text("Ende", style: Theme.of(context).textTheme.headline5),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: ChoiceChip(
+                      avatar:
+                        Icon(Icons.repeat, color: widget.restart?Theme.of(context).colorScheme.secondary:null),
+                      label: Text(widget.restart?"Wiederholung aktiviert":"Wiederholung deaktiviert"),
+                      selected: widget.restart,
+                      onSelected: (s) => {
+                        setState(() {
+                          widget.restart = s;
+                        })
+                      },
+                    ),
                   )
                 ] else ...[
                   LongPressDraggable<DragData>(
@@ -481,7 +485,26 @@ class DraggableMessageNode extends StatefulWidget {
   State<StatefulWidget> createState() => DraggableMessageNodeState();
 }
 
-class DraggableMessageNodeState extends State<DraggableMessageNode> {
+class DraggableMessageNodeState extends State<DraggableMessageNode> with TickerProviderStateMixin {
+  bool timeIsExtended = false;
+
+  late Animation<double> _myAnimation;
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 200),
+    );
+
+    _myAnimation = CurvedAnimation(
+        curve: Curves.linear,
+        parent: _controller
+    );
+  }
+
   Card getCard(BuildContext context, {bool dragging = false, bool verySmall = false}) {
     var currentMessage = widget.message;
     return Card(
@@ -529,7 +552,43 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
               child: Text("Gruppenbeschränkungen", style: Theme.of(context).textTheme.subtitle1),
             ),
             currentMessage,
+            const Divider(),
+            if(widget.message.delayAfterwards() != null) ...[
+              ListTile(
+                title: RichText(
+                  text: TextSpan(children: [
+                  TextSpan(text: "Dauer: ", style: TextStyle(fontWeight: FontWeight.bold
+                  )),
+                  WidgetSpan(child: Icon(Icons.access_time, size: 16)),
+                  TextSpan(text: " 5 Minuten, 10 Sekunden und 5 Millisekunden")
+                ])),
+                trailing: IconButton(
+                  icon: RotationTransition(
+                    turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
+                    child: Icon(Icons.expand_more),
+                    ),
+                  onPressed: () {
+                    setState(() {
+                      timeIsExtended = !timeIsExtended;
+                    });
+                    if(timeIsExtended) {
+                      _controller.forward();
+                    } else {
+                      _controller.reverse();
+                    }
+                  },
+                ),
+              ),
+              AnimatedContainer(
+                duration: Duration(milliseconds: 200),
+                height: timeIsExtended ? 100 : 0.000001,
+                child: TimePicker(
+                  onChanged: (t) => {},
+                ),
+              )
+            ],
             SizedBox(height: 12),
+
           ]
         ],
       ),
