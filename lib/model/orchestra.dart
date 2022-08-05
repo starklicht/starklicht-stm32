@@ -80,7 +80,7 @@ abstract class EventNode extends INode {
 }
 
 class MessageNode extends EventNode {
-  final List<String> lamps;
+  final Set<String> lamps;
   List<String> activeLamps = [];
   final IBluetoothMessage message;
 
@@ -395,6 +395,7 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    TextEditingController textController = TextEditingController();
     return
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,7 +426,56 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
                       materialTapTargetSize:
                       MaterialTapTargetSize.shrinkWrap,
                       padding: EdgeInsets.zero,
-                      onPressed: () {},
+                      onPressed: () {
+                        showDialog(context: context, builder: (_) {
+                          return AlertDialog(
+                            title: Text("Gruppenbeschränkung hinzufügen"),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Vorlagen"),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Wrap(
+                                    children:
+                                    LampGroups.values.map((e) =>
+                                        ActionChip(
+                                          avatar: CircleAvatar(
+                                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                            backgroundColor: Theme.of(context).colorScheme.primary,
+                                            child: Icon(e.icon, size: 18),
+                                          ),
+                                            label: Text(e.name.toLowerCase()), onPressed: () => {
+                                              textController.text = e.name.toLowerCase()
+                                            }
+                                        )
+                                    ).toList()
+                                    ,
+                                  ),
+                                ),
+                                TextFormField(
+                                  controller: textController,
+                                  decoration: const InputDecoration(
+                                    labelText: "Lampengruppe definieren"
+                                  ),
+                                )
+                              ],
+                            ),
+                            actions: [
+                              TextButton(child: Text("Abbrechen"), onPressed: () => { Navigator.pop(context) },),
+                              TextButton(child: Text("Speichern"), onPressed: () {
+                                if(textController.text.trim().isNotEmpty) {
+                                  setState(() {
+                                    widget.lamps.add(textController.text.trim());
+                                  });
+                                }
+                                Navigator.pop(context);
+                              })
+                            ],
+                          );
+                        });
+                      },
                       label: Icon(Icons.add),
                     ),
                   )

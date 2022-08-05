@@ -30,15 +30,15 @@ class OrchestraTimeline extends StatefulWidget {
   var nodes = [
     ParentNode(
       title: "Polizei Action",
-      messages: [MessageNode(lamps: ["atmosphere", "effect"], message: ColorMessage.fromColor(Colors.red))],
+      messages: [MessageNode(lamps: {"atmosphere", "effect"}, message: ColorMessage.fromColor(Colors.red))],
       time: Duration(seconds: 1),
     ),
     ParentNode(
-        messages: [MessageNode(lamps: ["fill", "key"], message: ColorMessage.fromColor(Colors.blue))],
+        messages: [MessageNode(lamps: {"fill", "key"}, message: ColorMessage.fromColor(Colors.blue))],
       time: Duration(milliseconds: 100)
     ),
     ParentNode(
-        messages: [MessageNode(lamps: ["fill", "key"], message: AnimationMessage.buildDefault())],
+        messages: [MessageNode(lamps: {"fill", "key"}, message: AnimationMessage.buildDefault())],
         time: Duration(milliseconds: 100)
     ),
   ];
@@ -386,7 +386,7 @@ class InnerTimelineState extends State<InnerTimeline> {
                       return;
                     }
                     widget.messages.add(
-                        MessageNode(lamps: const [], message: message)
+                        MessageNode(lamps: const {}, message: message)
                     );
                   });
                   refresh();
