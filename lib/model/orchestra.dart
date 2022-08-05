@@ -15,6 +15,10 @@ enum NodeType {
   NOT_DEFINED, TIME, REPEAT, MESSAGE, WAIT
 }
 
+enum WaitType {
+  NONE, TIME, USER_INPUT
+}
+
 abstract class INode extends StatefulWidget {
   Function? notifyParent;
   Function(Key id)? onDelete;
@@ -24,10 +28,16 @@ abstract class INode extends StatefulWidget {
   abstract NodeType type;
 }
 
+enum CardIndicator {
+  COLOR, GRADIENT, PROGRESS
+}
+
 abstract class EventNode extends INode {
-  EventNode({Key? key, update, onDelete}) : super(key: key, update: update, onDelete: onDelete);
+  EventNode({Key? key, update, onDelete, this.waitType = WaitType.NONE}) : super(key: key, update: update, onDelete: onDelete);
 
   bool get isGradient;
+
+  WaitType waitType;
 
   bool hasLamps();
 
@@ -127,6 +137,14 @@ class TimedNode extends EventNode {
   bool manualDelayAfterwards() {
     return false;
   }
+
+  @override
+  // TODO: implement waitType
+  WaitType get waitType => WaitType.TIME;
+
+  @override
+  void setWaitType(WaitType n) {
+  }
 }
 
 class TimedNodeState extends State<TimedNode> {
@@ -139,13 +157,38 @@ class TimedNodeState extends State<TimedNode> {
 
 class MessageNode extends EventNode {
   final List<String> lamps;
+  WaitType waitAfter;
   List<String> activeLamps = [];
   final IBluetoothMessage message;
+  Duration delay = Duration();
+  bool waitForUserInput;
+
+  String formatTime() {
+    var minutes = delay.inMinutes.remainder(60);
+    var seconds = delay.inSeconds.remainder(60);
+    var millis = delay.inMilliseconds.remainder(1000);
+    var str = "";
+    if(waitForUserInput) {
+      return "Auf Benutzereingabe warten";
+    }
+    if(minutes > 0) {
+      str+= "${minutes} Minuten ";
+    }
+    if(seconds > 0) {
+      str+= "${seconds} Sekunden ";
+    }
+    if(millis > 0) {
+      str+= "${millis} Millisekunden ";
+    }
+    if(str.trim().isEmpty) {
+      return "Ohne Zeitverzögerung";
+    }
+    return str.trim();
+  }
 
   @override
   String getTitle() {
     switch(message.messageType) {
-
       case MessageType.color:
         return "Farbe";
       case MessageType.interpolated:
@@ -172,7 +215,7 @@ class MessageNode extends EventNode {
     return "Unbekannt";
   }
 
-  MessageNode({Key? key, required this.lamps, required this.message, update, onDelete}) : super(key: key, update: update, onDelete: onDelete);
+  MessageNode({Key? key, required this.lamps, required this.message, update, onDelete, this.waitAfter = WaitType.NONE, this.waitForUserInput = false}) : super(key: key, update: update, onDelete: onDelete);
 
   @override
   State<StatefulWidget> createState() => MessageNodeState();
@@ -271,6 +314,15 @@ class MessageNode extends EventNode {
   @override
   bool manualDelayAfterwards() {
     return false;
+  }
+
+  @override
+  // TODO: implement waitType
+  WaitType get waitType => waitAfter;
+
+  @override
+  void setWaitType(WaitType n) {
+    waitAfter = n;
   }
 }
 
@@ -376,7 +428,7 @@ class AddNodeState extends INodeState<AddNode> {
 }
 
 
-class MessageNodeState extends INodeState<MessageNode> {
+class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateMixin  {
   List<SBluetoothDevice> connectedDevices = [];
   Map<String, bool> active = {};
   StreamSubscription<dynamic>? myStream;
@@ -391,6 +443,15 @@ class MessageNodeState extends INodeState<MessageNode> {
       });
     });
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 200),
+    );
+
+    _myAnimation = CurvedAnimation(
+        curve: Curves.linear,
+        parent: _controller
+    );
   }
 
   void updateActive() {
@@ -448,40 +509,102 @@ class MessageNodeState extends INodeState<MessageNode> {
     return Text(name[0].toUpperCase());
   }
 
+  late Animation<double> _myAnimation;
+  late AnimationController _controller;
+  bool timeIsExtended = false;
+
   @override
   Widget build(BuildContext context) {
     return
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(children: widget.lamps.map((e) => Padding(
-            padding: const EdgeInsets.only(left: 4, right: 4),
-            child: Chip(
-                avatar: CircleAvatar(
-                  child: getAvatar(e),
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(children: widget.lamps.map((e) => Padding(
+                padding: const EdgeInsets.only(left: 4, right: 4),
+                child: Chip(
+                    avatar: CircleAvatar(
+                      child: getAvatar(e),
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                    label: Text(e),
+                    materialTapTargetSize:
+                    MaterialTapTargetSize.shrinkWrap,
+                    onDeleted: () => {
+                      setState((){
+                        widget.lamps.remove(e);
+                      })
+                    },
+                  ),
+              )).toList()..add(
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, right: 4),
+                    child: ActionChip(
+                      materialTapTargetSize:
+                      MaterialTapTargetSize.shrinkWrap,
+                      padding: EdgeInsets.zero,
+                      onPressed: () {},
+                      label: Icon(Icons.add),
+                    ),
+                  )
+                ))
+            ),
+            Divider(),
+            ListTile(
+              title: RichText(
+                  text: TextSpan(children: [
+                    TextSpan(text: "Dauer: ", style: TextStyle(fontWeight: FontWeight.bold
+                    )),
+                    WidgetSpan(child: Icon(Icons.access_time, size: 16)),
+                    TextSpan(text: " ${widget.formatTime()}")
+                  ])),
+              trailing: IconButton(
+                icon: RotationTransition(
+                  turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
+                  child: Icon(Icons.expand_more),
                 ),
-                label: Text(e),
-                materialTapTargetSize:
-                MaterialTapTargetSize.shrinkWrap,
-                onDeleted: () => {
-                  setState((){
-                    widget.lamps.remove(e);
+                onPressed: () {
+                  setState(() {
+                    timeIsExtended = !timeIsExtended;
+                  });
+                  if(timeIsExtended) {
+                    _controller.forward();
+                  } else {
+                    _controller.reverse();
+                  }
+                },
+              ),
+            ),
+            AnimatedContainer(
+              duration: Duration(milliseconds: 200),
+              height: timeIsExtended ? null : 0,
+              child:
+                  SizeTransition(
+                    sizeFactor: Tween<double>(begin: 0, end: 1).animate(_controller),
+                    child:
+                    CheckboxListTile(value: widget.waitForUserInput, onChanged: (t) => {
+                      setState(() {
+                        widget.waitForUserInput = t!;
+                      })
+                    }, title: Text("Auf Benutzereingabe warten") )
+                    ,
+                  )
+            ),
+            AnimatedContainer(
+              duration: Duration(milliseconds: 200),
+              height: timeIsExtended && !widget.waitForUserInput ? 100 : 0.000001,
+              child: TimePicker(
+                small: true,
+                onChanged: (t) => {
+                  setState(() {
+                    widget.delay = t;
                   })
                 },
               ),
-          )).toList()..add(
-              Padding(
-                padding: const EdgeInsets.only(left: 4, right: 4),
-                child: ActionChip(
-                  materialTapTargetSize:
-                  MaterialTapTargetSize.shrinkWrap,
-                  padding: EdgeInsets.zero,
-                  onPressed: () {},
-                  label: Icon(Icons.add),
-                ),
-              )
-            ))
+            )
+          ],
         );
   }
 }

@@ -33,7 +33,7 @@ class OrchestraTimeline extends StatefulWidget {
       time: Duration(seconds: 1),
     ),
     ParentNode(
-        messages: [MessageNode(lamps: ["fill", "key"], message: ColorMessage.fromColor(Colors.blue)), TimedNode()],
+        messages: [MessageNode(lamps: ["fill", "key"], message: ColorMessage.fromColor(Colors.blue))],
       time: Duration(milliseconds: 100)
     ),
   ];
@@ -485,25 +485,8 @@ class DraggableMessageNode extends StatefulWidget {
   State<StatefulWidget> createState() => DraggableMessageNodeState();
 }
 
-class DraggableMessageNodeState extends State<DraggableMessageNode> with TickerProviderStateMixin {
+class DraggableMessageNodeState extends State<DraggableMessageNode>{
   bool timeIsExtended = false;
-
-  late Animation<double> _myAnimation;
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 200),
-    );
-
-    _myAnimation = CurvedAnimation(
-        curve: Curves.linear,
-        parent: _controller
-    );
-  }
 
   Card getCard(BuildContext context, {bool dragging = false, bool verySmall = false}) {
     var currentMessage = widget.message;
@@ -552,43 +535,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> with TickerP
               child: Text("Gruppenbeschränkungen", style: Theme.of(context).textTheme.subtitle1),
             ),
             currentMessage,
-            const Divider(),
-            if(widget.message.delayAfterwards() != null) ...[
-              ListTile(
-                title: RichText(
-                  text: TextSpan(children: [
-                  TextSpan(text: "Dauer: ", style: TextStyle(fontWeight: FontWeight.bold
-                  )),
-                  WidgetSpan(child: Icon(Icons.access_time, size: 16)),
-                  TextSpan(text: " 5 Minuten, 10 Sekunden und 5 Millisekunden")
-                ])),
-                trailing: IconButton(
-                  icon: RotationTransition(
-                    turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
-                    child: Icon(Icons.expand_more),
-                    ),
-                  onPressed: () {
-                    setState(() {
-                      timeIsExtended = !timeIsExtended;
-                    });
-                    if(timeIsExtended) {
-                      _controller.forward();
-                    } else {
-                      _controller.reverse();
-                    }
-                  },
-                ),
-              ),
-              AnimatedContainer(
-                duration: Duration(milliseconds: 200),
-                height: timeIsExtended ? 100 : 0.000001,
-                child: TimePicker(
-                  onChanged: (t) => {},
-                ),
-              )
-            ],
             SizedBox(height: 12),
-
           ]
         ],
       ),

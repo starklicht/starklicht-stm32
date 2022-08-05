@@ -1,9 +1,11 @@
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 class TimePicker extends StatefulWidget {
-  const TimePicker({Key? key, required this.onChanged, this.startDuration, this.small = false}) : super(key: key);
+  const TimePicker({Key? key, required this.onChanged, this.startDuration, this.small = false, this.disabled = false}) : super(key: key);
   final bool small;
+  final bool disabled;
   final ValueChanged<Duration>? onChanged;
   final Duration? startDuration;
 
@@ -49,6 +51,9 @@ class TimePickerState extends State<TimePicker> {
 
   @override
   Widget build(BuildContext context) {
+    var theme = CupertinoThemeData(
+        primaryColor: Theme.of(context).colorScheme.onBackground
+    );
     return
       Container(
         child: Row(
@@ -57,17 +62,20 @@ class TimePickerState extends State<TimePicker> {
           children: [
             SizedBox(
               width: 50,
-              child: CupertinoPicker(
-                onSelectedItemChanged: (index) => updateDuration(),
-                // controller: minutesController,
-                itemExtent: 28,
-                // physics:  FixedExtentScrollPhysics(),
-                scrollController: minutesController,
-                children:
-                seconds().map((e) => Padding(
-                  padding: const EdgeInsets.only(top: 0.0),
-                  child: Text(e.toString()),
-                )).toList()
+              child: CupertinoTheme(
+                data: theme,
+                child: CupertinoPicker(
+                  onSelectedItemChanged: (index) => updateDuration(),
+                  // controller: minutesController,
+                  itemExtent: 28,
+                  // physics:  FixedExtentScrollPhysics(),
+                  scrollController: minutesController,
+                  children:
+                  seconds().map((e) => Padding(
+                    padding: const EdgeInsets.only(top: 0.0),
+                    child: Text(e.toString()),
+                  )).toList()
+                ),
               ),
             ),
             Padding(
@@ -76,17 +84,20 @@ class TimePickerState extends State<TimePicker> {
             ),
             SizedBox(
               width: 50,
-              child: CupertinoPicker(
-                  onSelectedItemChanged: (index) => updateDuration(),
-                  // controller: minutesController,
-                  itemExtent: 28,
-                  // physics:  FixedExtentScrollPhysics(),
-                  scrollController: secondsController,
-                  children:
-                  seconds().map((e) => Padding(
-                    padding: const EdgeInsets.only(top: 0.0),
-                    child: Text(e.toString()),
-                  )).toList()
+              child: CupertinoTheme(
+                data: theme,
+                child: CupertinoPicker(
+                    onSelectedItemChanged: (index) => updateDuration(),
+                    // controller: minutesController,
+                    itemExtent: 28,
+                    // physics:  FixedExtentScrollPhysics(),
+                    scrollController: secondsController,
+                    children:
+                    seconds().map((e) => Padding(
+                      padding: const EdgeInsets.only(top: 0.0),
+                      child: Text(e.toString()),
+                    )).toList()
+                ),
               ),
             ),
             Padding(
@@ -95,17 +106,20 @@ class TimePickerState extends State<TimePicker> {
             ),
             SizedBox(
               width: 50,
-              child: CupertinoPicker(
-                  onSelectedItemChanged: (index) => updateDuration(),
-                  // controller: minutesController,
-                  itemExtent: 28,
-                  // physics:  FixedExtentScrollPhysics(),
-                  scrollController: millisController,
-                  children:
-                  millis().map((e) => Padding(
-                    padding: const EdgeInsets.only(top: 0.0),
-                    child: Text(e.toString()),
-                  )).toList()
+              child: CupertinoTheme(
+                data: theme,
+                child: CupertinoPicker(
+                    onSelectedItemChanged: (index) => updateDuration(),
+                    // controller: minutesController,
+                    itemExtent: 28,
+                    // physics:  FixedExtentScrollPhysics(),
+                    scrollController: millisController,
+                    children:
+                    millis().map((e) => Padding(
+                      padding: const EdgeInsets.only(top: 0.0),
+                      child: Text(e.toString()),
+                    )).toList()
+                ),
               ),
             ),
             Padding(
