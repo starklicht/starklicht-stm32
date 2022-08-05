@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:starklicht_flutter/model/orchestra.dart';
 
 import 'imessage.dart';
 
 class BrightnessMessage extends IBluetoothMessage<int> {
   int brightness;
+
+  @override
+  CardIndicator get indicator => CardIndicator.PROGRESS;
 
   BrightnessMessage(this.brightness);
 

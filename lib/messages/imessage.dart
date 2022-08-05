@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
+import 'package:starklicht_flutter/model/orchestra.dart';
 
 enum MessageType {
   color, interpolated, request, onoff, poti, brightness, save, clear
@@ -36,6 +37,8 @@ abstract class IBluetoothMessage<T> {
   static const int endChar = 10;
   static const int escapeChar = 0;
   bool isGradient = false;
+
+  CardIndicator get indicator => CardIndicator.COLOR;
 
   Gradient? toGradient() {
     return null;

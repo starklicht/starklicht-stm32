@@ -29,12 +29,17 @@ class OrchestraTimeline extends StatefulWidget {
 
   var nodes = [
     ParentNode(
+      title: "Polizei Action",
       messages: [MessageNode(lamps: ["atmosphere", "effect"], message: ColorMessage.fromColor(Colors.red))],
       time: Duration(seconds: 1),
     ),
     ParentNode(
         messages: [MessageNode(lamps: ["fill", "key"], message: ColorMessage.fromColor(Colors.blue))],
       time: Duration(milliseconds: 100)
+    ),
+    ParentNode(
+        messages: [MessageNode(lamps: ["fill", "key"], message: AnimationMessage.buildDefault())],
+        time: Duration(milliseconds: 100)
     ),
   ];
   OrchestraTimeline({Key? key}) : super(key: key);
@@ -174,13 +179,11 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                                 // Child text spans will inherit styles from parent
                                 style: style,
                                 children: <TextSpan>[
-                                  TextSpan(text: "Sequenz ${index + 1}",
+                                  TextSpan(text: widget.nodes[index].title ?? "Sequenz ${index + 1}",
+                                    style: TextStyle(
+                                      fontStyle: widget.nodes[index].title == null ? FontStyle.italic : null
+                                    )
                                   ),
-                                  if(!widget.nodes[index].hasSubtitle()) ...[
-                                    TextSpan(text: " ohne Trigger", style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey, fontWeight: FontWeight.normal)),
-                                  ] else ...[
-                                    TextSpan(text: " mit Trigger: ${widget.nodes[index].getSubtitle()}", style: Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.grey, fontWeight: FontWeight.normal))
-                                  ]
                                 ],
                               ),
                             ),
@@ -225,7 +228,7 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
           );
         },
         connectorBuilder: (_, index, ___) => DashedLineConnector(
-          gap: 4,
+          gap: 6,
         ),
       ),
     );
@@ -505,8 +508,8 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
               :Container(
             height: verySmall ? 4: 12,
             decoration: BoxDecoration(
-              color: currentMessage.isGradient ? null : currentMessage.toColor(),
-              gradient: currentMessage.isGradient ? currentMessage.toGradient() : null,
+              color: currentMessage.cardIndicator == CardIndicator.COLOR ? currentMessage.toColor() : null,
+              gradient: currentMessage.cardIndicator == CardIndicator.GRADIENT ? currentMessage.toGradient() : null,
               boxShadow: [
                 BoxShadow(
                     color: Theme.of(context).colorScheme.shadow.withOpacity(.2),

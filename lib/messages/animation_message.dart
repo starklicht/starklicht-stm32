@@ -5,6 +5,7 @@ import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/view/animations.dart';
 
+import '../model/orchestra.dart';
 import 'imessage.dart';
 
 extension on Color {
@@ -24,6 +25,9 @@ class AnimationMessage extends IBluetoothMessage {
   final AnimationSettingsConfig _config;
   String? title;
   int maxValue = 255;
+
+  @override
+  CardIndicator get indicator => CardIndicator.GRADIENT;
 
   AnimationMessage(this._colors, this._config, { this.title });
 

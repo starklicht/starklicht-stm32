@@ -1,7 +1,6 @@
 
 import 'package:timelines/timelines.dart';
 import 'package:flutter/material.dart';
-import 'package:starklicht_flutter/view/orchestra.dart';
 
 import 'orchestra_timeline_view.dart';
 
@@ -55,8 +54,12 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
                   ),
                   actions: [
                     IconButton(onPressed: () => {}, icon: Icon(Icons.play_circle)),
-                    TextButton(onPressed: () => {}, child: Text("Abbrechen")),
-                    TextButton(onPressed: () => {}, child: Text("Speichern"))
+                    TextButton(onPressed: () => {
+                      Navigator.pop(context)
+                    }, child: Text("Abbrechen")),
+                    TextButton(onPressed: () => {
+                      Navigator.pop(context)
+                    }, child: Text("Speichern"))
                   ],
                 );
               })

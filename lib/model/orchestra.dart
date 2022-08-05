@@ -20,11 +20,7 @@ enum WaitType {
 }
 
 abstract class INode extends StatefulWidget {
-  Function? notifyParent;
-  Function(Key id)? onDelete;
-  double progress = 0;
-  INode({Key? key, this.notifyParent, this.update, this.onDelete}) : super(key: key ?? Key(const Uuid().v4()));
-  Stream<double>? update;
+  INode({Key? key}) : super(key: key);
   abstract NodeType type;
 }
 
@@ -33,11 +29,9 @@ enum CardIndicator {
 }
 
 abstract class EventNode extends INode {
-  EventNode({Key? key, update, onDelete, this.waitType = WaitType.NONE}) : super(key: key, update: update, onDelete: onDelete);
+  EventNode({Key? key, update, onDelete, required this.waitForUserInput, required this.delay}) : super(key: key);
 
-  bool get isGradient;
-
-  WaitType waitType;
+  CardIndicator get cardIndicator;
 
   bool hasLamps();
 
@@ -57,111 +51,6 @@ abstract class EventNode extends INode {
   bool manualDelayAfterwards();
 
   Widget getSubtitle(BuildContext context, TextStyle textStyle);
-}
-
-class TimedNode extends EventNode {
-  @override
-  NodeType type = NodeType.TIME;
-
-  Duration time = Duration(seconds: 10);
-
-  @override
-  State<StatefulWidget> createState() => TimedNodeState();
-
-  String formatTime() {
-    var minutes = time.inMinutes.remainder(60);
-    var seconds = time.inSeconds.remainder(60);
-    var millis = time.inMilliseconds.remainder(1000);
-    var str = "";
-    if(minutes > 0) {
-      str+= "${minutes} Minuten ";
-    }
-    if(seconds > 0) {
-      str+= "${seconds} Sekunden ";
-    }
-    if(millis > 0) {
-      str+= "${millis} Millisekunden ";
-    }
-    return str.trim();
-  }
-
-  @override
-  bool displayAsProgressBar() {
-    return true;
-  }
-
-  @override
-  Widget getSubtitle(BuildContext context, TextStyle textStyle) {
-    return Text("Für ${formatTime()} warten");
-  }
-
-  @override
-  String getTitle() {
-    return "Warten";
-  }
-
-  @override
-  // TODO: implement isGradient
-  get isGradient => false;
-
-  @override
-  // TODO: implement lamps
-  get lamps => [];
-
-  @override
-  toColor() {
-    return Colors.red;
-  }
-
-  @override
-  toGradient() {
-    return null;
-  }
-
-  @override
-  toPercentage() {
-    return 0;
-  }
-
-  @override
-  bool hasLamps() {
-    return false;
-  }
-
-  @override
-  Duration? delayAfterwards() {
-    return Duration(seconds: 1);
-  }
-
-  @override
-  bool manualDelayAfterwards() {
-    return false;
-  }
-
-  @override
-  // TODO: implement waitType
-  WaitType get waitType => WaitType.TIME;
-
-  @override
-  void setWaitType(WaitType n) {
-  }
-}
-
-class TimedNodeState extends State<TimedNode> {
-  @override
-  Widget build(BuildContext context) {
-    return Text("");
-  }
-
-}
-
-class MessageNode extends EventNode {
-  final List<String> lamps;
-  WaitType waitAfter;
-  List<String> activeLamps = [];
-  final IBluetoothMessage message;
-  Duration delay = Duration();
-  bool waitForUserInput;
 
   String formatTime() {
     var minutes = delay.inMinutes.remainder(60);
@@ -185,6 +74,17 @@ class MessageNode extends EventNode {
     }
     return str.trim();
   }
+
+  Duration delay;
+  bool waitForUserInput;
+}
+
+class MessageNode extends EventNode {
+  final List<String> lamps;
+  List<String> activeLamps = [];
+  final IBluetoothMessage message;
+
+
 
   @override
   String getTitle() {
@@ -215,7 +115,7 @@ class MessageNode extends EventNode {
     return "Unbekannt";
   }
 
-  MessageNode({Key? key, required this.lamps, required this.message, update, onDelete, this.waitAfter = WaitType.NONE, this.waitForUserInput = false}) : super(key: key, update: update, onDelete: onDelete);
+  MessageNode({Key? key, required this.lamps, required this.message, update, onDelete, bool waitForUserInput = false, Duration delay = Duration.zero}) : super(key: key, update: update, onDelete: onDelete, waitForUserInput: waitForUserInput, delay: delay);
 
   @override
   State<StatefulWidget> createState() => MessageNodeState();
@@ -248,13 +148,10 @@ class MessageNode extends EventNode {
             )
         );
       case MessageType.request:
-      // TODO: Handle this case.
         break;
       case MessageType.onoff:
-      // TODO: Handle this case.
         break;
       case MessageType.poti:
-      // TODO: Handle this case.
         break;
       case MessageType.brightness:
         return RichText(text: TextSpan(
@@ -265,10 +162,8 @@ class MessageNode extends EventNode {
             ]
         ));
       case MessageType.save:
-      // TODO: Handle this case.
         break;
       case MessageType.clear:
-      // TODO: Handle this case.
         break;
     }
     return RichText(text: TextSpan(
@@ -283,22 +178,21 @@ class MessageNode extends EventNode {
   }
 
   @override
-  // TODO: implement isGradient
-  get isGradient => message.isGradient;
-
-  @override
   toColor() {
+    assert(cardIndicator == CardIndicator.COLOR);
     return message.toColor();
   }
 
   @override
   toGradient() {
+    assert(cardIndicator == CardIndicator.GRADIENT);
     return message.toGradient();
   }
 
   @override
   toPercentage() {
-    return 0.5;
+    assert(cardIndicator == CardIndicator.PROGRESS);
+    return message.toPercentage();
   }
 
   @override
@@ -317,12 +211,8 @@ class MessageNode extends EventNode {
   }
 
   @override
-  // TODO: implement waitType
-  WaitType get waitType => waitAfter;
-
-  @override
-  void setWaitType(WaitType n) {
-    waitAfter = n;
+  CardIndicator get cardIndicator {
+    return message.indicator;
   }
 }
 
@@ -372,7 +262,8 @@ class ParentNode extends INode {
 
   List<EventNode> messages;
   Duration time;
-  ParentNode({Key? key, this.time = const Duration(), update, onDelete, this.type = NodeType.NOT_DEFINED, this.messages = const []}) : super(key:key, update: update, onDelete: onDelete);
+  String? title;
+  ParentNode({Key? key, this.time = const Duration(), update, onDelete, this.type = NodeType.NOT_DEFINED, this.messages = const [], this.title}) : super(key:key);
 
   @override
   State<StatefulWidget> createState() => ParentNodeState();
@@ -392,17 +283,6 @@ class AddNode extends INode {
 }
 
 abstract class INodeState<T extends INode> extends State<T> {
-  StreamSubscription<double>? subscription;
-
-  @override
-  void initState() {
-    super.initState();
-    subscription = widget.update?.listen((event) {
-      setState(() {
-        widget.progress = event;
-      });
-    });
-  }
 }
 
 class AddNodeState extends INodeState<AddNode> {
@@ -553,13 +433,23 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
             ),
             Divider(),
             ListTile(
-              title: RichText(
-                  text: TextSpan(children: [
-                    TextSpan(text: "Dauer: ", style: TextStyle(fontWeight: FontWeight.bold
-                    )),
-                    WidgetSpan(child: Icon(Icons.access_time, size: 16)),
-                    TextSpan(text: " ${widget.formatTime()}")
-                  ])),
+              title: TextButton(
+                onPressed: () {
+                  setState(() { timeIsExtended = !timeIsExtended;});
+                  if(timeIsExtended) {
+                    _controller.forward();
+                  } else {
+                    _controller.reverse();
+                  }
+                },
+                child: RichText(
+                    text: TextSpan(children: [
+                      TextSpan(text: "Dauer: ", style: TextStyle(fontWeight: FontWeight.bold
+                      )),
+                      WidgetSpan(child: Icon(Icons.access_time, size: 16, color: Theme.of(context).colorScheme.onBackground)),
+                      TextSpan(text: " ${widget.formatTime()}")
+                    ])),
+              ),
               trailing: IconButton(
                 icon: RotationTransition(
                   turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
