@@ -10,6 +10,12 @@ import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../controller/starklicht_bluetooth_controller.dart';
+import '../messages/brightness_message.dart';
+import '../messages/color_message.dart';
+import '../persistence/persistence.dart';
+import '../view/colors.dart';
+import '../view/orchestra_timeline_view.dart';
+import 'animation.dart';
 
 enum NodeType {
   NOT_DEFINED, TIME, REPEAT, MESSAGE, WAIT
@@ -32,6 +38,8 @@ abstract class EventNode extends INode {
   EventNode({Key? key, update, onDelete, required this.waitForUserInput, required this.delay}) : super(key: key);
 
   CardIndicator get cardIndicator;
+
+  Future<void> execute();
 
   bool hasLamps();
 
@@ -82,8 +90,8 @@ abstract class EventNode extends INode {
 class MessageNode extends EventNode {
   final Set<String> lamps;
   List<String> activeLamps = [];
-  final IBluetoothMessage message;
-
+  IBluetoothMessage message;
+  ValueChanged<IBluetoothMessage>? onUpdateMessage;
 
 
   @override
@@ -214,6 +222,12 @@ class MessageNode extends EventNode {
   CardIndicator get cardIndicator {
     return message.indicator;
   }
+
+  @override
+  Future<void> execute() async {
+    print("Sending a message of ${message.messageType}");
+    BluetoothControllerWidget().broadcast(message);
+  }
 }
 
 class ParentNode extends INode {
@@ -261,9 +275,10 @@ class ParentNode extends INode {
   }
 
   List<EventNode> messages;
+  EventStatus status;
   Duration time;
   String? title;
-  ParentNode({Key? key, this.time = const Duration(), update, onDelete, this.type = NodeType.NOT_DEFINED, this.messages = const [], this.title}) : super(key:key);
+  ParentNode({Key? key, this.time = const Duration(), update, onDelete, this.type = NodeType.NOT_DEFINED, this.messages = const [], this.title, this.status = EventStatus.NONE}) : super(key:key);
 
   @override
   State<StatefulWidget> createState() => ParentNodeState();
@@ -332,6 +347,13 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
         curve: Curves.linear,
         parent: _controller
     );
+    widget.onUpdateMessage = (m) {
+      print("UPDATES MESSAGE");
+      setState(() {
+        widget.message = m;
+        print(widget.message);
+      });
+    };
   }
 
   void updateActive() {
@@ -570,12 +592,6 @@ class ParentNodeState extends INodeState<ParentNode> {
       return [const Color(0xff42275A), const Color(0xff734B6D)];
     }
     return [const Color(0xff136A8A), const Color(0xff267871)];
-  }
-
-  void update() {
-    setState(() {
-
-    });
   }
 
   @override

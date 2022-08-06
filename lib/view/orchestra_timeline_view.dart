@@ -13,7 +13,6 @@ import 'package:starklicht_flutter/view/animations.dart';
 import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:timelines/timelines.dart';
 
-import '../controller/orchestra_handler.dart';
 import '../messages/color_message.dart';
 import '../messages/imessage.dart';
 import '../model/animation.dart';
@@ -21,28 +20,111 @@ import '../model/orchestra.dart';
 import '../persistence/persistence.dart';
 import 'colors.dart';
 
-class OrchestraTimeline extends StatefulWidget {
-  Map<NodeType, OrchestraNodeHandler> handlers = {};
-  var queue = Queue<INode>();
-  var running = false;
-  var restart = true;
+enum EventStatus {
+  NONE, PENDING, RUNNING, FINISHED
+}
 
-  var nodes = [
+class EventChanged {
+  int index;
+  EventStatus status;
+  EventChanged(this.index, this.status);
+}
+
+class MessageNodeExecutor {
+  List<ParentNode> nodes;
+  bool running;
+  ValueChanged<double>? onProgressChanged;
+
+  ValueChanged<EventChanged>? onEventUpdate;
+
+  MessageNodeExecutor(this.nodes, { this.running = false, this.onProgressChanged, this.onEventUpdate });
+
+  Future<bool> waitForUserInput(BuildContext context) async {
+    var continueProgram = false;
+    await showDialog(context: context, builder: (_) {
+      return AlertDialog(
+        title: const Text("Programm ist pausiert"),
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            CircularProgressIndicator(strokeWidth: 2,),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () =>
+          {
+            continueProgram = false,
+            Navigator.pop(context)
+          }, child: const Text("Abbrechen")),
+          TextButton(onPressed: () => {
+            continueProgram = true,
+            Navigator.pop(context)
+          }, child: const Text("Fortsetzen"))
+        ],
+      );
+    }).then((value) => {
+    });
+    return continueProgram;
+  }
+
+  Future<void> execute(BuildContext context) async {
+    var queue = Queue<ParentNode>();
+    queue.addAll(nodes);
+    print("Queue with ${queue.length} elements");
+    running = true;
+    int currentIndex = -1;
+    while(queue.isNotEmpty && running) {
+      var parent = queue.removeFirst();
+      currentIndex++;
+      onEventUpdate?.call(
+        EventChanged(
+          currentIndex,
+          EventStatus.RUNNING
+        )
+      );
+      var eventQueue = Queue<EventNode>();
+      eventQueue.addAll(parent.messages);
+      while(eventQueue.isNotEmpty && running) {
+        var event = eventQueue.removeFirst();
+        await event.execute();
+        if(event.waitForUserInput) {
+          print("Waiting for user Input");
+          await waitForUserInput(context);
+        } else if(event.delay.inMilliseconds > 0) {
+          print("Waiting for ${event.delay}");
+          await Future.delayed(event.delay);
+        }
+      }
+      onEventUpdate?.call(
+          EventChanged(
+              currentIndex,
+              EventStatus.FINISHED
+          )
+      );
+    }
+    print("Finished");
+  }
+}
+
+class OrchestraTimeline extends StatefulWidget {
+  var running = false;
+  var restart = false;
+  VoidCallback? play;
+
+  List<ParentNode> nodes = [
     ParentNode(
-      title: "Polizei Action",
-      messages: [MessageNode(lamps: {"atmosphere", "effect"}, message: ColorMessage.fromColor(Colors.red))],
-      time: Duration(seconds: 1),
+      title: "Test",
+      messages: [
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 2),)
+      ],
     ),
     ParentNode(
-        messages: [MessageNode(lamps: {"fill", "key"}, message: ColorMessage.fromColor(Colors.blue))],
-      time: Duration(milliseconds: 100)
-    ),
-    ParentNode(
-        messages: [MessageNode(lamps: {"fill", "key"}, message: AnimationMessage.buildDefault())],
-        time: Duration(milliseconds: 100)
+      messages: [
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 1),)
+      ]
     ),
   ];
-  OrchestraTimeline({Key? key}) : super(key: key);
+  OrchestraTimeline({Key? key, this.play}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => OrchestraTimelineState();
@@ -51,6 +133,43 @@ class OrchestraTimeline extends StatefulWidget {
 class OrchestraTimelineState extends State<OrchestraTimeline> {
   IconData getDraggingIcon(int length) {
     return Icons.collections_bookmark_outlined;
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    widget.play = () {
+      print("OK LET'S GO!");
+      var messages = widget.nodes.expand((element) => element.messages).toList();
+      setState(() {
+        for(var node in widget.nodes) {
+          node.status = EventStatus.NONE;
+        }
+      });
+      print(messages.length);
+      MessageNodeExecutor(
+        widget.nodes,
+        onEventUpdate: (ev) => {
+          setState(() {
+            widget.nodes[ev.index].status = ev.status;
+          })
+        }
+      ).execute(context).then((value) {
+        if(widget.restart) {
+          widget.play?.call();
+          return;
+        }
+        Future.delayed(Duration(seconds: 1),() => {
+          setState(() {
+            for(var node in widget.nodes) {
+              node.status = EventStatus.NONE;
+            }
+          })
+        });
+
+      });
+    };
   }
 
   int expandedTitle = -1;
@@ -105,7 +224,7 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                           padding: const EdgeInsets.all(16),
                           child: Column(
                             children: [
-                              Text("Schritt ${index + 1}", style: Theme.of(context).textTheme.titleSmall),
+                              Text(widget.nodes[index].title ?? "Sequenz ${index + 1}", style: Theme.of(context).textTheme.titleSmall),
                               Row(
                                 children: [
                                   Text("${widget.nodes[index].messages.length} x "),
@@ -218,20 +337,85 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
           );
         },
         indicatorBuilder: (_, index) {
-          return DotIndicator(
-            color: index == 0 ? Colors.lightBlue :Theme.of(context).colorScheme.background,
-            size: 32,
-            child: Icon(
-              widget.nodes.length <= index ? Icons.flag : widget.nodes[index].getIcon(),
-              size: 16,
+          return ContainerIndicator(
+            size: 40,
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 400),
+              curve: Curves.ease,
+              decoration: BoxDecoration(
+                color: getDotIndicatorColor(index),
+                borderRadius: BorderRadius.circular(100.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.shadow.withOpacity(isRunning(index) ? .3: 0),
+                    spreadRadius: 5,
+                    blurRadius: 7,
+                    offset: Offset(0, 3), // changes position of shadow
+                  ),
+                ],
+              ),
+              child: isRunning(index) ? Padding(
+              padding: EdgeInsets.all(8),
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.onPrimary,
+                strokeWidth: 2,
+              ),
+            ) :Icon(
+              getIcon(index),
+              size: 20,
             )
-          );
+            ));
         },
         connectorBuilder: (_, index, ___) => DashedLineConnector(
           gap: 6,
         ),
       ),
     );
+  }
+
+  bool isRunning(index) {
+    if(index > widget.nodes.length - 1) {
+      return false;
+    }
+    return widget.nodes[index].status == EventStatus.RUNNING;
+  }
+
+  IconData getIcon(index) {
+    if(index > widget.nodes.length - 1) {
+      if(widget.nodes[widget.nodes.length - 1].status == EventStatus.FINISHED) {
+        return Icons.checklist;
+      }
+      return Icons.flag;
+    }
+    switch(widget.nodes[index].status) {
+      case EventStatus.NONE:
+        return Icons.arrow_downward;
+      case EventStatus.PENDING:
+        return Icons.timelapse;
+      case EventStatus.RUNNING:
+        return Icons.add;
+      case EventStatus.FINISHED:
+        return Icons.check;
+    }
+  }
+
+  Color getDotIndicatorColor(index) {
+    if(index > widget.nodes.length - 1) {
+      if(widget.nodes[widget.nodes.length - 1].status == EventStatus.FINISHED) {
+        return Colors.green;
+      }
+      return Theme.of(context).colorScheme.background;
+    }
+    switch(widget.nodes[index].status) {
+      case EventStatus.PENDING:
+        return Colors.blueGrey;
+      case EventStatus.RUNNING:
+        return Colors.blue;
+      case EventStatus.FINISHED:
+        return Colors.green;
+      case EventStatus.NONE:
+        return Theme.of(context).colorScheme.background;
+    }
   }
 }
 
@@ -386,7 +570,7 @@ class InnerTimelineState extends State<InnerTimeline> {
                       return;
                     }
                     widget.messages.add(
-                        MessageNode(lamps: const {}, message: message)
+                        MessageNode(lamps: {}, message: message)
                     );
                   });
                   refresh();
@@ -479,6 +663,7 @@ class DraggableMessageNode extends StatefulWidget {
   int parentId;
   ValueChanged<MoveNodeEvent>? onAccept;
   VoidCallback? onDelete;
+  VoidCallback? onEdit;
   bool isDragGoal = false;
   ExpansionDirection expansionDirection = ExpansionDirection.TOP;
 
@@ -491,7 +676,7 @@ class DraggableMessageNode extends StatefulWidget {
 class DraggableMessageNodeState extends State<DraggableMessageNode>{
   bool timeIsExtended = false;
 
-  Card getCard(BuildContext context, {bool dragging = false, bool verySmall = false}) {
+  getCard(BuildContext context, {bool dragging = false, bool verySmall = false}) {
     var currentMessage = widget.message;
     return Card(
       elevation: dragging ? 8.0 : 1.0,
@@ -527,9 +712,16 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
                 widget.message.lamps.length == 0 ? Text("Keine Beschränkungen") : Text("${widget.message.lamps.length} Beschränkungen")
                 :
             currentMessage.getSubtitle(context, Theme.of(context).textTheme.bodySmall!),
-            trailing: verySmall ? null : IconButton(icon: Icon(Icons.delete), onPressed: () => {
-              widget.onDelete?.call()
-            }),
+            trailing: verySmall ? null : Wrap(
+              children: [
+                IconButton(icon: Icon(Icons.edit), onPressed: () => {
+                  openEditMessage(context, setState)
+                }),
+                IconButton(icon: Icon(Icons.delete), onPressed: () => {
+                  widget.onDelete?.call()
+                }),
+              ],
+            ),
           ),
           if(!verySmall && widget.message.hasLamps())...[
             const Divider(),
@@ -721,5 +913,109 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
     var pos = renderObject.globalToLocal(position);
     return Offset(pos.dx, widget.dragExpansion / 2);
   }
+
+  void openEditMessage(BuildContext context, StateSetter setState) {
+    assert(widget.message is MessageNode);
+    var m = widget.message as MessageNode;
+    var _messageType = m.message.messageType;
+    var _currentBrightness = m.message.toPercentage();
+    var _currentColor = m.message.toColor();
+    var _animationStore = [];
+    showDialog(context: context, builder: (_) {
+      Persistence().getAnimationStore().then((value) => _animationStore = value);
+      return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+        return AlertDialog(
+          scrollable: true,
+          title: const Text("Zeitevent ändern"),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // TODO Export this into an own fucker
+              RadioListTile<MessageType>(value: MessageType.brightness,
+                  title: const Text("Helligkeit"),
+                  groupValue: _messageType,
+                  onChanged: (value) => {setState((){ _messageType = value!; })}),
+              RadioListTile<MessageType>(value: MessageType.color,
+                  title: const Text("Farbe"),
+                  groupValue: _messageType,
+                  onChanged: (value) => {setState((){ _messageType = value!; })}),
+              /* RadioListTile<MessageType>(value: MessageType.interpolated,
+                  title: const Text("Animation"),
+                  groupValue: _messageType,
+                  onChanged: (value) => {setState((){ _messageType = value!; })}), */
+              if(_messageType == MessageType.brightness) ... [
+                Text("Helligkeit bestimmen".toUpperCase(), style: Theme.of(context).textTheme.overline),
+                Column(children: [
+                  Slider(
+                    max: 100,
+                    onChangeEnd: (d) => {
+                      setState(() {
+                        _currentBrightness = d;
+                      }),
+                    },
+                    onChanged: (d) => {
+                      setState(() {
+                        _currentBrightness = d;
+                      }),
+                    },
+                    value: _currentBrightness,
+                  ),
+                  Text("${_currentBrightness.toInt()}%", style: const TextStyle(
+                      fontSize: 32
+                  ),)
+                ],)
+              ]
+              else if(_messageType == MessageType.color) ...[
+                Text("Farbe auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
+                ColorsWidget(
+                  startColor: _currentColor,
+                  onChanged: (c) => { setState(() {
+                    _currentColor = c;
+                  }) },
+                )
+              ]
+              else if (_messageType == MessageType.interpolated) ...[
+                  Text("Animation aus Liste auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
+                  // Persistence
+                  //DropdownButton<String>(items: _animationStore.map((e) => DropdownMenuItem(child: Text(e.title))).toList(), onChanged: (i) => {})
+                ]
+            ],
+          ),
+          actions: [
+            TextButton(
+                child: const Text("Abbrechen"),
+                onPressed: () => {Navigator.pop(context)}),
+            TextButton(
+                child: const Text("Ändern"),
+                onPressed: () {
+                  setState((){
+                    // TODO: Implement factory pattern
+                    IBluetoothMessage? message;
+                    if(_messageType == MessageType.color) {
+                      message = ColorMessage.fromColor(_currentColor);
+                    } else if(_messageType == MessageType.brightness) {
+                      message = BrightnessMessage(_currentBrightness.toInt());
+                    }
+                    if(message == null) {
+                      return;
+                    }
+                    m.onUpdateMessage?.call(message);
+                  });
+                  Future.delayed(Duration.zero, () => {
+                    refresh()
+                  });
+                  refresh();
+                  Navigator.pop(context);
+                })
+          ],
+        );
+      });
+    });
+  }
+
+  void refresh() {
+    setState(() {});
+  }
+
 }
 

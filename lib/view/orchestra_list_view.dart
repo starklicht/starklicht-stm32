@@ -2,6 +2,9 @@
 import 'package:timelines/timelines.dart';
 import 'package:flutter/material.dart';
 
+import '../messages/animation_message.dart';
+import '../messages/color_message.dart';
+import '../model/orchestra.dart';
 import 'orchestra_timeline_view.dart';
 
 class OrchestraListView extends StatefulWidget {
@@ -29,6 +32,10 @@ class OrchestraListView extends StatefulWidget {
     false,
     false
   ];
+  VoidCallback? play;
+
+
+  OrchestraTimeline orchestra = OrchestraTimeline();
 }
 
 class OrchestraLiveViewState extends State<OrchestraListView> {
@@ -50,10 +57,13 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
                   content: Container(
                     height: 20000,
                     width: 2000,
-                    child: OrchestraTimeline()
+                    child: widget.orchestra
                   ),
                   actions: [
-                    IconButton(onPressed: () => {}, icon: Icon(Icons.play_circle)),
+                    IconButton(onPressed: () {
+                      print(widget.orchestra.nodes[0].messages.length);
+                      widget.orchestra.play?.call();
+                    }, icon: Icon(Icons.play_circle)),
                     TextButton(onPressed: () => {
                       Navigator.pop(context)
                     }, child: Text("Abbrechen")),
