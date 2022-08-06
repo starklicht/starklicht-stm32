@@ -85,6 +85,8 @@ abstract class EventNode extends INode {
 
   Duration delay;
   bool waitForUserInput;
+  EventStatus status = EventStatus.NONE;
+  double? progress;
 }
 
 class MessageNode extends EventNode {

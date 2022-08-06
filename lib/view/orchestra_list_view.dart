@@ -33,12 +33,16 @@ class OrchestraListView extends StatefulWidget {
     false
   ];
   VoidCallback? play;
+  bool isPlaying = false;
 
-
-  OrchestraTimeline orchestra = OrchestraTimeline();
+  OrchestraTimeline orchestra = OrchestraTimeline(
+  );
 }
 
 class OrchestraLiveViewState extends State<OrchestraListView> {
+
+
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -62,8 +66,11 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
                   actions: [
                     IconButton(onPressed: () {
                       print(widget.orchestra.nodes[0].messages.length);
+                      setState(() {
+                        widget.isPlaying = true;
+                      });
                       widget.orchestra.play?.call();
-                    }, icon: Icon(Icons.play_circle)),
+                    }, icon: widget.isPlaying ? Icon(Icons.stop) : Icon(Icons.play_arrow)),
                     TextButton(onPressed: () => {
                       Navigator.pop(context)
                     }, child: Text("Abbrechen")),
@@ -101,4 +108,14 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    widget.orchestra.onFinishPlay = () => {
+      setState(() {
+        print("Setting ");
+        widget.isPlaying = false;
+      })
+    };
+  }
 }

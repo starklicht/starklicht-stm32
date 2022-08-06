@@ -30,14 +30,23 @@ class EventChanged {
   EventChanged(this.index, this.status);
 }
 
+class ChildEventChanged {
+  int parentIndex;
+  int childIndex;
+  EventStatus status;
+  double? progress;
+  ChildEventChanged(this.parentIndex, this.childIndex, this.status, {this.progress});
+}
+
 class MessageNodeExecutor {
   List<ParentNode> nodes;
   bool running;
   ValueChanged<double>? onProgressChanged;
 
   ValueChanged<EventChanged>? onEventUpdate;
+  ValueChanged<ChildEventChanged>? onChildEventUpdate;
 
-  MessageNodeExecutor(this.nodes, { this.running = false, this.onProgressChanged, this.onEventUpdate });
+  MessageNodeExecutor(this.nodes, { this.running = false, this.onProgressChanged, this.onEventUpdate, this.onChildEventUpdate });
 
   Future<bool> waitForUserInput(BuildContext context) async {
     var continueProgram = false;
@@ -84,16 +93,34 @@ class MessageNodeExecutor {
       );
       var eventQueue = Queue<EventNode>();
       eventQueue.addAll(parent.messages);
+      int currentChildIndex = -1;
       while(eventQueue.isNotEmpty && running) {
         var event = eventQueue.removeFirst();
+        currentChildIndex++;
+        onChildEventUpdate?.call(
+          ChildEventChanged(currentIndex, currentChildIndex, EventStatus.RUNNING)
+        );
         await event.execute();
         if(event.waitForUserInput) {
           print("Waiting for user Input");
           await waitForUserInput(context);
         } else if(event.delay.inMilliseconds > 0) {
-          print("Waiting for ${event.delay}");
-          await Future.delayed(event.delay);
+          var startTime = DateTime.now().millisecondsSinceEpoch;
+          running = true;
+          var elapsedMillis = 0;
+          do {
+            await Future.delayed(const Duration(milliseconds: 10), () {
+              elapsedMillis = DateTime.now().millisecondsSinceEpoch - startTime;
+              print(elapsedMillis);
+              var progress = elapsedMillis / event.delay.inMilliseconds;
+              onChildEventUpdate?.call(
+                ChildEventChanged(currentIndex, currentChildIndex, EventStatus.RUNNING, progress: progress));
+            });
+          } while(elapsedMillis <= event.delay.inMilliseconds);
         }
+        onChildEventUpdate?.call(
+            ChildEventChanged(currentIndex, currentChildIndex, EventStatus.FINISHED)
+        );
       }
       onEventUpdate?.call(
           EventChanged(
@@ -110,6 +137,7 @@ class OrchestraTimeline extends StatefulWidget {
   var running = false;
   var restart = false;
   VoidCallback? play;
+  VoidCallback? onFinishPlay;
 
   List<ParentNode> nodes = [
     ParentNode(
@@ -119,12 +147,31 @@ class OrchestraTimeline extends StatefulWidget {
       ],
     ),
     ParentNode(
+      title: "Test",
+      messages: [
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 2),)
+      ],
+    ),
+    ParentNode(
+      title: "Test",
+      messages: [
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 2),)
+      ],
+    ),
+    ParentNode(
+      title: "Test",
+      messages: [
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 2),)
+      ],
+    ),
+
+    ParentNode(
       messages: [
         MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 1),)
       ]
     ),
   ];
-  OrchestraTimeline({Key? key, this.play}) : super(key: key);
+  OrchestraTimeline({Key? key, this.play, this.onFinishPlay}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => OrchestraTimelineState();
@@ -154,18 +201,31 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
           setState(() {
             widget.nodes[ev.index].status = ev.status;
           })
+        },
+        onChildEventUpdate: (ev) {
+          setState(() {
+            widget.nodes[ev.parentIndex].messages[ev.childIndex].status = ev.status;
+            widget.nodes[ev.parentIndex].messages[ev.childIndex].progress = ev.progress;
+          });
+          Future.delayed(Duration.zero, () => setState(() {
+          }));
         }
       ).execute(context).then((value) {
         if(widget.restart) {
           widget.play?.call();
           return;
         }
-        Future.delayed(Duration(seconds: 1),() => {
+        Future.delayed(Duration(seconds: 1),() {
           setState(() {
             for(var node in widget.nodes) {
               node.status = EventStatus.NONE;
+              for(var message in node.messages) {
+                message.status = EventStatus.NONE;
+                message.progress = null;
+              }
             }
-          })
+          });
+          widget.onFinishPlay?.call();
         });
 
       });
@@ -366,11 +426,23 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
             )
             ));
         },
-        connectorBuilder: (_, index, ___) => DashedLineConnector(
+        connectorBuilder: (_, index, ___) => hasReached(index) ? SolidLineConnector(
+          color: getDotIndicatorColor(index),
+        ) :  DashedLineConnector(
           gap: 6,
         ),
       ),
     );
+  }
+
+  bool hasReached(index) {
+    if(index > widget.nodes.length - 1) {
+      if(widget.nodes[widget.nodes.length - 1].status == EventStatus.FINISHED) {
+        return true;
+      }
+      return false;
+    }
+    return widget.nodes[index].status == EventStatus.RUNNING || widget.nodes[index].status == EventStatus.FINISHED;
   }
 
   bool isRunning(index) {
@@ -665,9 +737,11 @@ class DraggableMessageNode extends StatefulWidget {
   VoidCallback? onDelete;
   VoidCallback? onEdit;
   bool isDragGoal = false;
+  bool finished;
   ExpansionDirection expansionDirection = ExpansionDirection.TOP;
+  VoidCallback? doRefresh;
 
-  DraggableMessageNode({Key? key, required this.message, required this.index, required this.parentId, this.onAccept, this.onDelete, this.dragExpansion = 78}) : super(key: key);
+  DraggableMessageNode({Key? key, required this.message, required this.index, required this.parentId, this.onAccept, this.onDelete, this.dragExpansion = 78, this.finished = false}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => DraggableMessageNodeState();
@@ -675,6 +749,18 @@ class DraggableMessageNode extends StatefulWidget {
 
 class DraggableMessageNodeState extends State<DraggableMessageNode>{
   bool timeIsExtended = false;
+
+  Widget? getLeading (bool verySmall) {
+    if(verySmall) {
+      return null;
+    }
+    if(widget.message.status == EventStatus.RUNNING) {
+      return Transform.scale(scale: 0.5, child: CircularProgressIndicator(value: widget.message.progress));
+    } else if(widget.message.status == EventStatus.FINISHED) {
+      return Icon(Icons.check, color: Colors.green,);
+    }
+    return null;
+  }
 
   getCard(BuildContext context, {bool dragging = false, bool verySmall = false}) {
     var currentMessage = widget.message;
@@ -705,6 +791,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
           ),
           ListTile(
             dense: true,
+            leading: getLeading(verySmall),
             title:
             Text(currentMessage.getTitle(), style: Theme.of(context).textTheme.titleLarge),
             subtitle:
