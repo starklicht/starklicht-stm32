@@ -329,8 +329,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             label: 'Bibliothek'.i18n,
           ),
           if(widget.showOrchestra) ... [const BottomNavigationBarItem(
-            icon: Icon(Icons.podcasts),
-            label: 'Orchester'
+            icon: Icon(Icons.view_timeline),
+            label: 'Timelines'
           )]
         ],
         currentIndex: _selectedIndex,
