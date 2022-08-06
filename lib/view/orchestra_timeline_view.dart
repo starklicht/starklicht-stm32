@@ -109,7 +109,7 @@ class MessageNodeExecutor {
           running = true;
           var elapsedMillis = 0;
           do {
-            await Future.delayed(const Duration(milliseconds: 10), () {
+            await Future.delayed(const Duration(milliseconds: 50), () {
               elapsedMillis = DateTime.now().millisecondsSinceEpoch - startTime;
               print(elapsedMillis);
               var progress = elapsedMillis / event.delay.inMilliseconds;
@@ -1005,7 +1005,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
     assert(widget.message is MessageNode);
     var m = widget.message as MessageNode;
     var _messageType = m.message.messageType;
-    var _currentBrightness = m.message.toPercentage();
+    var _currentBrightness = m.message.toPercentage() * 100;
     var _currentColor = m.message.toColor();
     var _animationStore = [];
     showDialog(context: context, builder: (_) {

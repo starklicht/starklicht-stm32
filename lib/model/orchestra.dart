@@ -87,6 +87,8 @@ abstract class EventNode extends INode {
   bool waitForUserInput;
   EventStatus status = EventStatus.NONE;
   double? progress;
+
+  Map<String, dynamic> toJson();
 }
 
 class MessageNode extends EventNode {
@@ -230,60 +232,30 @@ class MessageNode extends EventNode {
     print("Sending a message of ${message.messageType}");
     BluetoothControllerWidget().broadcast(message);
   }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      "message": message.toJson()
+    };
+  }
 }
 
 class ParentNode extends INode {
-  String getSubtitle() {
-    if(hasTime()) {
-      return "${formatTime()} warten";
-    } else if (type == NodeType.WAIT) {
-      return "Auf Benutzereingabe warten";
-    }
-    return "Sofort";
-  }
-
-  IconData? getIcon() {
-    if(hasTime()) {
-      return Icons.timer;
-    } else if(type == NodeType.WAIT) {
-      return Icons.hourglass_empty;
-    }
-    return Icons.arrow_downward;
-  }
-
-  String formatTime() {
-    var minutes = time.inMinutes.remainder(60);
-    var seconds = time.inSeconds.remainder(60);
-    var millis = time.inMilliseconds.remainder(1000);
-    var str = "";
-    if(minutes > 0) {
-      str+= "${minutes}m ";
-    }
-    if(seconds > 0) {
-      str+= "${seconds}s ";
-    }
-    if(millis > 0) {
-      str+= "${millis}ms ";
-    }
-    return str.trim();
-  }
-
-  bool hasSubtitle() {
-    return hasTime() || type == NodeType.WAIT;
-  }
-
-  bool hasTime() {
-    return time.inMicroseconds > 0;
-  }
-
   List<EventNode> messages;
   EventStatus status;
-  Duration time;
   String? title;
-  ParentNode({Key? key, this.time = const Duration(), update, onDelete, this.type = NodeType.NOT_DEFINED, this.messages = const [], this.title, this.status = EventStatus.NONE}) : super(key:key);
+  ParentNode({Key? key, update, onDelete, this.type = NodeType.NOT_DEFINED, this.messages = const [], this.title, this.status = EventStatus.NONE}) : super(key:key);
 
   @override
   State<StatefulWidget> createState() => ParentNodeState();
+
+  Map<String, dynamic> toJson() {
+    return {
+      "title": title,
+      "messages": messages.map((e) => e.toJson()),
+    };
+  }
 
   @override
   NodeType type;
@@ -575,67 +547,12 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
 
 class ParentNodeState extends INodeState<ParentNode> {
   String getTitle() {
-    if(widget.type == NodeType.REPEAT) {
-      return "Neustart";
-    } else if(widget.type == NodeType.WAIT) {
-      return "Warten";
-    }
-    return "Verzögerung";
-  }
-
-  bool hasSubtitle() {
-    return widget.time.inMicroseconds > 0;
-  }
-
-  List<Color> getColors() {
-    if(widget.type == NodeType.REPEAT) {
-      return [const Color(0xffF7971E), const Color(0xffFFD200)];
-    } else if(widget.type == NodeType.WAIT) {
-      return [const Color(0xff42275A), const Color(0xff734B6D)];
-    }
-    return [const Color(0xff136A8A), const Color(0xff267871)];
+    return widget.title ?? "Unbenannt";
   }
 
   @override
   Widget build(BuildContext context) {
     return
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(getTitle(),
-              style: Theme.of(context).textTheme.headline5!),
-              if(hasSubtitle()) ...[
-                Text(getSubtitle(),
-                    style: Theme.of(context).textTheme.subtitle1!)
-              ]
-            ],
-          ),
-        ],
-      );
-  }
-
-  IconData getIcon() {
-    if(widget.type == NodeType.REPEAT) {
-      return Icons.history;
-    } else if(widget.type == NodeType.WAIT) {
-      return Icons.hourglass_empty;
-    }
-    return Icons.timer;
-  }
-
-  String formatTime() {
-    return "${widget.time.inMinutes.remainder(60)}m ${widget.time.inSeconds.remainder(60)}s ${widget.time.inMilliseconds.remainder(1000)}ms";
-  }
-
-  String getSubtitle() {
-    if(widget.type == NodeType.REPEAT) {
-      return formatTime();
-    } else if (widget.type == NodeType.WAIT) {
-      return "Auf Benutzereingabe";
-    }
-    return formatTime();
+      Text(getTitle());
   }
 }

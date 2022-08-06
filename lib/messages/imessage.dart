@@ -117,6 +117,17 @@ abstract class IBluetoothMessage<T> {
     return 1.0;
   }
 
+  Map<String, dynamic> dataToJson() {
+    return {};
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "type": messageType.name,
+      "data": dataToJson()
+    };
+  }
+
   /* void broadcast(List<BluetoothCharacteristic> broadcastList) async {
     for (var b in broadcastList) {
       send(b);

@@ -33,6 +33,7 @@ class KeyframeAnimationFactory extends Factory<KeyframeAnimation> {
 
 }
 
+// TODO: Get rid of this, it has the same data as Animation Message.
 class KeyframeAnimation {
   final List<ColorPoint> _colors;
   final AnimationSettingsConfig _config;

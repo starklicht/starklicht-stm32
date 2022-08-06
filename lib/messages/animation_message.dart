@@ -126,4 +126,13 @@ class AnimationMessage extends IBluetoothMessage {
 
   @override
   MessageType messageType = MessageType.interpolated;
+
+  @override
+  Map<String, dynamic> dataToJson() {
+    return {
+      'title': title,
+      'config': _config.toJson(),
+      'colors': _colors.map((e) => e.toJson()).toList()
+    };
+  }
 }

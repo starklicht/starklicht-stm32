@@ -51,4 +51,14 @@ class BrightnessMessage extends IBluetoothMessage<int> {
 
   @override
   MessageType messageType = MessageType.brightness;
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      "type": messageType.name,
+      "data": {
+        "brightness": brightness
+      }
+    };
+  }
 }

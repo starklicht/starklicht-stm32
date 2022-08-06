@@ -48,6 +48,13 @@ class ColorMessage extends IBluetoothMessage {
   }
 
   @override
+  Map<String, dynamic> dataToJson() {
+    return {
+      "color": toColor().value
+    };
+  }
+
+  @override
   String retrieveText() {
     return ColorTools.nameThatColor(toColor());
   }
