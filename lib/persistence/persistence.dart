@@ -5,19 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:collection/collection.dart'; // You have to add this manually, for some reason it cannot be added automatically
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
-import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/view/animations.dart';
 
+import '../messages/animation_message.dart';
+import '../messages/message_factory.dart';
+
 abstract class IPersistence {
-  Future<List<KeyframeAnimation>> getAnimationStore();
-  Future<List<KeyframeAnimation>> saveAnimation(KeyframeAnimation a);
-  Future<List<KeyframeAnimation>> deleteAnimation(String title);
-  Future<KeyframeAnimation?> findByName(String name);
+  Future<List<AnimationMessage>> getAnimationStore();
+  Future<List<AnimationMessage>> saveAnimation(AnimationMessage a);
+  Future<List<AnimationMessage>> deleteAnimation(String title);
+  Future<AnimationMessage?> findByName(String name);
   Future<bool> existsByName(String name);
   Future<bool> rename(String name, String newName);
-  Future<List<KeyframeAnimation>> save(List<KeyframeAnimation> newValues);
+  Future<List<AnimationMessage>> save(List<AnimationMessage> newValues);
   Future<StarklichtBluetoothOptions> getBluetoothOption(String id);
   Future<bool> hasBluetoothOption(String id);
   Future<StarklichtBluetoothOptions> setBluetoothOption(String id, StarklichtBluetoothOptions option);
@@ -29,7 +31,7 @@ class Persistence implements IPersistence {
   Persistence._internal();
   static const String optionsPrefix = "OPTIONS_";
 
-  static KeyframeAnimation defaultEditorAnimation = KeyframeAnimation(
+  static AnimationMessage defaultEditorAnimation = AnimationMessage(
     [
       ColorPoint(Colors.black, 0),
       ColorPoint(Colors.white, 1),
@@ -41,16 +43,16 @@ class Persistence implements IPersistence {
       1,
       0
     ),
-    "Default"
   );
   static const String animationStore = "animations";
   static const String colors = "colors";
   static const String editorAnimation = "editor-animation";
+
   @override
-  Future<List<KeyframeAnimation>> getAnimationStore() async {
+  Future<List<AnimationMessage>> getAnimationStore() async {
     final prefs = await SharedPreferences.getInstance();
     var animations = prefs.getStringList(animationStore);
-    var fac = KeyframeAnimationFactory();
+    var fac = AnimationMessageFactory();
     if(animations == null) {
       return [];
     }
@@ -72,7 +74,8 @@ class Persistence implements IPersistence {
   }
 
   @override
-  Future<List<KeyframeAnimation>> saveAnimation(KeyframeAnimation a) async {
+  Future<List<AnimationMessage>> saveAnimation(AnimationMessage a) async {
+    assert(a.title != null);
     var currentAnimations = await getAnimationStore();
     var i = currentAnimations.indexWhere((element) => element.title == a.title);
     if(i > -1) {
@@ -88,16 +91,16 @@ class Persistence implements IPersistence {
     return currentAnimations;
   }
   
-  Future<KeyframeAnimation> getEditorAnimation() async {
+  Future<AnimationMessage> getEditorAnimation() async {
     final prefs = await SharedPreferences.getInstance();
     var animation = prefs.getString(editorAnimation);
     if(animation == null) {
       return defaultEditorAnimation;
     }
-    return KeyframeAnimationFactory().build(animation);
+    return AnimationMessageFactory().build(animation);
   }
 
-  Future<void> saveEditorAnimation(KeyframeAnimation a) async {
+  Future<void> saveEditorAnimation(AnimationMessage a) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString(editorAnimation, jsonEncode(a.toJson()));
   }
@@ -128,7 +131,7 @@ class Persistence implements IPersistence {
   }
 
   @override
-  Future<List<KeyframeAnimation>> deleteAnimation(String title) async {
+  Future<List<AnimationMessage>> deleteAnimation(String title) async {
     var currentAnimations = await getAnimationStore();
     currentAnimations.removeWhere((element) => element.title == title);
     print(currentAnimations.length);
@@ -141,7 +144,7 @@ class Persistence implements IPersistence {
   }
 
   @override
-  Future<KeyframeAnimation?> findByName(String name) async {
+  Future<AnimationMessage?> findByName(String name) async {
     var currentAnimations = await getAnimationStore();
     return currentAnimations.firstWhereOrNull((element) => element.title == name);
   }
@@ -171,7 +174,7 @@ class Persistence implements IPersistence {
   }
 
   @override
-  Future<List<KeyframeAnimation>> save(List<KeyframeAnimation> newValues) async {
+  Future<List<AnimationMessage>> save(List<AnimationMessage> newValues) async {
     var sPrefs = await SharedPreferences.getInstance();
     sPrefs.setStringList(
         animationStore,

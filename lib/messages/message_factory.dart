@@ -34,7 +34,8 @@ class BrightnessMessageFactory extends IMessageFactory<BrightnessMessage> {
 class AnimationMessageFactory extends IMessageFactory<AnimationMessage> {
   @override
   AnimationMessage build(String params) {
-    var json = jsonDecode(params);
+    var json = jsonDecode(params)['data'];
+    print("_---------------------");
     print(json);
     var colors = (json['colors'] as List<dynamic>).map((e) => ColorPoint(
         Color(e['color'] as int),

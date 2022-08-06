@@ -3,7 +3,6 @@ import 'package:lottie/lottie.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
 
-import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/animations.dart';
@@ -18,7 +17,7 @@ class AnimationsWidget extends StatefulWidget {
 
 class _AnimationsWidgetState extends State<AnimationsWidget> {
   Offset _tapDownPosition = const Offset(0, 0);
-  List<KeyframeAnimation> animations = [];
+  List<AnimationMessage> animations = [];
   String query = "";
   final BluetoothController controller = BluetoothControllerWidget();
   String currentNameRename = "";
@@ -30,14 +29,14 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
     print("Test");
   }
 
-  List<KeyframeAnimation> filteredAnimations() {
+  List<AnimationMessage> filteredAnimations() {
     var a = animations;
     if(query.isNotEmpty) {
-      a = animations.where((element) => element.title.toLowerCase().contains(query.toLowerCase()))
+      a = animations.where((element) => element.title!.toLowerCase().contains(query.toLowerCase()))
           .toList();
     }
     a.sort((a, b) {
-      return a.title.compareTo(b.title);
+      return a.title!.compareTo(b.title!);
     });
     print(a.length);
     return a;
@@ -72,16 +71,16 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
     load();
   }
 
-  void send(KeyframeAnimation animation) {
+  void send(AnimationMessage animation) {
     controller.broadcast(
-        AnimationMessage(animation.colors, animation.config)
+        animation
     );
   }
 
   var isValidAnimation = true;
 
 
-  void setAnimations(List<KeyframeAnimation> an) {
+  void setAnimations(List<AnimationMessage> an) {
     print("SETTING ANIMATIONS NEW...");
     an.forEach((element) {
       print("ELEMENT");
@@ -227,7 +226,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                         ),
                             onTap: () {
                               setState(() {
-                                currentNameRename =  filteredAnimations()[realIndex].title;
+                                currentNameRename =  filteredAnimations()[realIndex].title!;
                               });
                               t.text = currentNameRename;
                               Future.delayed(
@@ -251,12 +250,12 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                                           }, child: Text("Abbrechen".i18n)),
                                           TextButton(onPressed: filteredAnimations()[realIndex].title == currentNameRename? null : () {
                                             var old = filteredAnimations()[realIndex].title;
-                                            Persistence().rename(filteredAnimations()[realIndex].title, t.text).then((value) =>
+                                            Persistence().rename(filteredAnimations()[realIndex].title!, t.text).then((value) =>
                                             {
                                               load(),
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(content:
-                                                    Text('Animation "%s" wurde zu "%s" umbenannt'.i18n.fill([old, t.text]))
+                                                    Text('Animation "%s" wurde zu "%s" umbenannt'.i18n.fill([old!, t.text]))
                                                 )
                                               ),
                                               Navigator.pop(context)
@@ -276,7 +275,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                             title: Text("Löschen".i18n),
                           ),
                           value: 2,
-                          onTap: () => deleteItem(filteredAnimations()[realIndex].title),
+                          onTap: () => deleteItem(filteredAnimations()[realIndex].title!),
                         ),
                       ]
                   );
@@ -303,7 +302,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                     isEditorPreview: false,
                     onAnimationsValidChanged: (val) => {},
                   ),
-                  title: Text(filteredAnimations()[realIndex].title),
+                  title: Text(filteredAnimations()[realIndex].title!),
                   subtitle: Text(filteredAnimations()[realIndex].toString()),
                 ),
                 /* Row(

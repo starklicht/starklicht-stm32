@@ -15,7 +15,6 @@ import 'package:timelines/timelines.dart';
 
 import '../messages/color_message.dart';
 import '../messages/imessage.dart';
-import '../model/animation.dart';
 import '../model/orchestra.dart';
 import '../persistence/persistence.dart';
 import 'colors.dart';
@@ -553,7 +552,7 @@ enum ExpansionDirection {
 
 class InnerTimelineState extends State<InnerTimeline> {
 
-  List<KeyframeAnimation> _animationStore = [];
+  List<AnimationMessage> _animationStore = [];
   var _messageType = MessageType.brightness;
   var _currentBrightness = 100.0;
   var _currentColor = Colors.white;
@@ -565,6 +564,7 @@ class InnerTimelineState extends State<InnerTimeline> {
   void openAddDialog(BuildContext context, StateSetter setState) {
     showDialog(context: context, builder: (_) {
       Persistence().getAnimationStore().then((value) => _animationStore = value);
+      int? selectedAnimation = 0;
       return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
         return AlertDialog(
           scrollable: true,
@@ -581,10 +581,10 @@ class InnerTimelineState extends State<InnerTimeline> {
                   title: const Text("Farbe"),
                   groupValue: _messageType,
                   onChanged: (value) => {setState((){ _messageType = value!; })}),
-              /* RadioListTile<MessageType>(value: MessageType.interpolated,
+              RadioListTile<MessageType>(value: MessageType.interpolated,
                   title: const Text("Animation"),
                   groupValue: _messageType,
-                  onChanged: (value) => {setState((){ _messageType = value!; })}), */
+                  onChanged: (value) => {setState((){ _messageType = value!; })}),
               if(_messageType == MessageType.brightness) ... [
                 Text("Helligkeit bestimmen".toUpperCase(), style: Theme.of(context).textTheme.overline),
                 Column(children: [
@@ -619,7 +619,15 @@ class InnerTimelineState extends State<InnerTimeline> {
               else if (_messageType == MessageType.interpolated) ...[
                   Text("Animation aus Liste auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
                   // Persistence
-                  //DropdownButton<String>(items: _animationStore.map((e) => DropdownMenuItem(child: Text(e.title))).toList(), onChanged: (i) => {})
+                  DropdownButton<int>(
+                      items: _animationStore.mapIndexed((animation, index) => DropdownMenuItem<int>(value: index, child: Text(animation.title!))).toList(),
+                      onChanged: (i) => {
+                        setState(() {
+                          selectedAnimation = i;
+                        })
+                    },
+                    value: selectedAnimation,
+                  )
                 ]
             ],
           ),
@@ -637,6 +645,11 @@ class InnerTimelineState extends State<InnerTimeline> {
                       message = ColorMessage.fromColor(_currentColor);
                     } else if(_messageType == MessageType.brightness) {
                       message = BrightnessMessage(_currentBrightness.toInt());
+                    }
+                    if(_messageType == MessageType.interpolated) {
+                      if(selectedAnimation != null ) {
+                        message = _animationStore[selectedAnimation!];
+                      }
                     }
                     if(message == null) {
                       return;

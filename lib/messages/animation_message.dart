@@ -26,6 +26,9 @@ class AnimationMessage extends IBluetoothMessage {
   String? title;
   int maxValue = 255;
 
+  List<ColorPoint> get colors => _colors;
+  AnimationSettingsConfig get config => _config;
+
   @override
   CardIndicator get indicator => CardIndicator.GRADIENT;
 
@@ -84,6 +87,12 @@ class AnimationMessage extends IBluetoothMessage {
   }
 
   @override
+  String toString() {
+    return ''
+        '${config.seconds}s ${config.millis}ms (${config.interpolationType.toString().split('.')[1]}) - ${colors.length} Farben';
+  }
+
+  @override
   String retrieveText() {
     if(title == null) {
       return "Unbenannt";
@@ -134,5 +143,19 @@ class AnimationMessage extends IBluetoothMessage {
       'config': _config.toJson(),
       'colors': _colors.map((e) => e.toJson()).toList()
     };
+  }
+
+  AnimationMessage copy() {
+    return AnimationMessage(
+        _colors.map((e) => ColorPoint(e.color, e.point)).toList(),
+        AnimationSettingsConfig(
+            _config.interpolationType,
+            _config.timefactor,
+            _config.minutes,
+            _config.seconds,
+            _config.millis
+        ),
+        title: title
+    );
   }
 }

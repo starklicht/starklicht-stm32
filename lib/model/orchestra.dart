@@ -15,7 +15,7 @@ import '../messages/color_message.dart';
 import '../persistence/persistence.dart';
 import '../view/colors.dart';
 import '../view/orchestra_timeline_view.dart';
-import 'animation.dart';
+
 
 enum NodeType {
   NOT_DEFINED, TIME, REPEAT, MESSAGE, WAIT

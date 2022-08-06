@@ -6,7 +6,6 @@ import 'package:rxdart/rxdart.dart';
 import 'package:starklicht_flutter/controller/animators.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
-import 'package:starklicht_flutter/model/animation.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
@@ -799,7 +798,7 @@ class AnimationPreviewWidget extends StatefulWidget {
   Set<Function> notify;
   bool isEditorPreview = false;
   ValueChanged<bool> onAnimationsValidChanged;
-  ValueChanged<KeyframeAnimation>? onAnimationChanged;
+  ValueChanged<AnimationMessage>? onAnimationChanged;
   String? title;
   RestartController? restartController;
 
@@ -855,10 +854,10 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
   void updateAnimationCallbackAndSend() {
     updateAnimationCallback();
     widget.onAnimationChanged?.call(
-      KeyframeAnimation(
+      AnimationMessage(
         widget.colors.colors,
         widget.settings,
-        widget.title == null? "":widget.title!
+        title: widget.title
       )
     );
     for (var element in widget.notify) {
@@ -870,7 +869,7 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
     // Save
     if (widget.isEditorPreview) {
       Persistence().saveEditorAnimation(
-          KeyframeAnimation(widget.colors.colors, widget.settings, ''));
+          AnimationMessage(widget.colors.colors, widget.settings));
     }
     if (widget.settings.seconds + widget.settings.millis + widget.settings.minutes == 0) {
       setState(() {
@@ -1007,7 +1006,7 @@ class _SaveWidgetState extends State<SaveWidget> {
   void initState() {
     super.initState();
     setState(() {
-      name = widget.animation.title;
+      name = widget.animation.title ?? "";
     });
   }
 
@@ -1039,7 +1038,7 @@ class _SaveWidgetState extends State<SaveWidget> {
                   : () {
                       widget.animation.title = name.trim();
                       Persistence()
-                          .existsByName(widget.animation.title)
+                          .existsByName(widget.animation.title!)
                           .then((value) {
                         if (value) {
                           // Notify
@@ -1049,7 +1048,7 @@ class _SaveWidgetState extends State<SaveWidget> {
                                 return AlertDialog(
                                   title: Text(
                                       'Animation "%s" existiert bereits. Überschreiben?'.i18n.fill([
-                                        widget.animation.title
+                                        widget.animation.title!
                                       ])),
                                   actions: [
                                     TextButton(
@@ -1064,7 +1063,7 @@ class _SaveWidgetState extends State<SaveWidget> {
                                               .saveAnimation(widget.animation);
                                           var snackBar = SnackBar(
                                             content: Text(
-                                                'Animation "%s" wurde überschrieben'.i18n.fill([widget.animation.title])),
+                                                'Animation "%s" wurde überschrieben'.i18n.fill([widget.animation.title!])),
                                           );
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(snackBar);
@@ -1077,7 +1076,7 @@ class _SaveWidgetState extends State<SaveWidget> {
                           Persistence().saveAnimation(widget.animation);
                           var snackBar = SnackBar(
                             content: Text(
-                                'Animation "%s" wurde gespeichert'.i18n.fill([widget.animation.title])),
+                                'Animation "%s" wurde gespeichert'.i18n.fill([widget.animation.title!])),
                           );
                           ScaffoldMessenger.of(context).showSnackBar(snackBar);
                           Navigator.pop(context);
@@ -1092,7 +1091,7 @@ class _SaveWidgetState extends State<SaveWidget> {
 }
 
 class SaveWidget extends StatefulWidget {
-  KeyframeAnimation animation;
+  AnimationMessage animation;
 
   SaveWidget({Key? key, required this.animation}) : super(key: key);
 
@@ -1104,9 +1103,9 @@ class SaveWidget extends StatefulWidget {
 class AnimationsEditorWidget extends StatefulWidget {
   AnimationEventsController? animationsController;
   ValueChanged<bool> onAnimationsValidChanged;
-  ValueChanged<KeyframeAnimation>? onAnimationChanged;
+  ValueChanged<AnimationMessage>? onAnimationChanged;
   bool persistChanges;
-  KeyframeAnimation? animation;
+  AnimationMessage? animation;
   bool isScaffold;
   bool showSendingOptions;
   AnimationsEditorWidget({Key? key, this.animationsController, required this.onAnimationsValidChanged, this.isScaffold = false, this.animation, this.onAnimationChanged, this.persistChanges = false, this.showSendingOptions = true}) : super(key: key);
@@ -1155,7 +1154,7 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
         context: context,
         builder: (_) {
           return SaveWidget(
-              animation: KeyframeAnimation(gradient!.colors, settings!, ""));
+              animation: AnimationMessage(gradient!.colors, settings!));
       });
   }
 
