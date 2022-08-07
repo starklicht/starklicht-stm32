@@ -86,9 +86,11 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
           title: Text("Farbe ändern".i18n),
           content: SizedBox(
             width: 500,
-            child: ColorsWidget(
-                onChanged: (color) => {widget.color = color},
-                startColor: widget.color),
+            child: SingleChildScrollView(
+              child: ColorsWidget(
+                  onChanged: (color) => {widget.color = color},
+                  startColor: widget.color),
+            ),
           ),
           actions: [
             TextButton(

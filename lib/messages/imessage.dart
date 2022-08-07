@@ -6,7 +6,7 @@ import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.da
 import 'package:starklicht_flutter/model/orchestra.dart';
 
 enum MessageType {
-  color, interpolated, request, onoff, poti, brightness, save, clear
+  color, interpolated, request, onoff, poti, brightness, save, clear, fade
 }
 
 extension MessageTypeExtension on MessageType {
@@ -26,6 +26,8 @@ extension MessageTypeExtension on MessageType {
         return 5;
       case MessageType.save:
         return 6;
+      case MessageType.fade:
+        return 8;
       case MessageType.clear:
         return 255;
     }

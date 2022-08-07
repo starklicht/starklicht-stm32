@@ -148,19 +148,19 @@ class OrchestraTimeline extends StatefulWidget {
     ParentNode(
       title: "Test",
       messages: [
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 2),)
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.green), delay: Duration(seconds: 2),)
       ],
     ),
     ParentNode(
       title: "Test",
       messages: [
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 2),)
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.blueGrey), delay: Duration(seconds: 2),)
       ],
     ),
     ParentNode(
       title: "Test",
       messages: [
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 2),)
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.orange), delay: Duration(seconds: 2),)
       ],
     ),
 

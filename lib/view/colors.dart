@@ -5,9 +5,11 @@ import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/color_message.dart';
+import 'package:starklicht_flutter/messages/fade_message.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
+import 'package:starklicht_flutter/view/time_picker.dart';
 import '../i18n/colors.dart';
-
+import 'dart:math' as math;
 class ColorSaveController {
   Function? save;
   Function? delete;
@@ -16,9 +18,10 @@ class ColorSaveController {
 class ColorsWidget extends StatefulWidget {
   Color? startColor;
   ValueChanged<Color>? onChanged;
+  bool emitEventsSlowly;
   ValueChanged<bool>? onColorExistsChange;
   ColorSaveController? controller;
-  ColorsWidget({Key? key, this.startColor, this.onChanged, this.onColorExistsChange, this.controller}) : super(key: key);
+  ColorsWidget({Key? key, this.startColor, this.onChanged, this.onColorExistsChange, this.controller, this.emitEventsSlowly = false}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ColorsWidgetState();
@@ -42,11 +45,13 @@ class _ColorsWidgetState extends State<ColorsWidget> {
 
 
 // ValueChanged<Color> callback
-  void changeColor(Color color) {
+  void changeColor(Color color, {bool emit = true}) {
     setState(() {
       pickerColor = color;
     });
-    widget.onChanged?.call(pickerColor);
+    if(emit) {
+      widget.onChanged?.call(pickerColor);
+    }
   }
 
   String getColorText() {
@@ -146,60 +151,62 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     if(isLoading) {
       return Text("Lädt...".i18n);
     }
-    return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(0),
-          child: Column(
-            children: [
-              ColorPicker(
-                heading: Text(
-                  'Farbauswahl',
-                  style: Theme.of(context).textTheme.headline5,
-                ),
-                color: pickerColor,
-                onColorChanged: (color) => {
-                  changeColor(color)
-                },
-                onColorChangeEnd: (color) {
-                  print("Hi");
-                  updateIsColorSaved();
-                },
-
-                pickerTypeLabels: const <ColorPickerType, String>{
-                  ColorPickerType.both: "Palette",
-                  ColorPickerType.custom: "Gespeichert",
-                  ColorPickerType.wheel: "Farbrad"
-                },
-                maxRecentColors: 6,
-                recentColorsSubheading: Text("Zuletzt verwendete Farben", style: Theme.of(context).textTheme.subtitle1),
-                recentColors: recentColors,
-                onRecentColorsChanged: (List<Color> colors) {
-                  setState(() {
-                    recentColors = colors;
-                    updateIsColorSaved();
-                  });
-                },
-                copyPasteBehavior: const ColorPickerCopyPasteBehavior(
-                  copyFormat: ColorPickerCopyFormat.numHexRRGGBB,
-                ),
-                showRecentColors: true,
-                wheelDiameter: wheelDiameter(),
-                enableShadesSelection: true,
-                tonalSubheading: const Text("Helligkeit"),
-                showColorCode: true,
-                showColorName: true,
-                pickersEnabled: const <ColorPickerType, bool> {
-                  ColorPickerType.wheel: true,
-                  ColorPickerType.primary: false,
-                  ColorPickerType.accent: false,
-                  ColorPickerType.both: true,
-                  ColorPickerType.custom: true,
-                },
-                customColorSwatchesAndNames: colorsNameMap,
-              ),
-            ]
+    return Column(
+      children: [
+        ColorPicker(
+          heading: Text(
+            'Farbauswahl',
+            style: Theme.of(context).textTheme.headline5,
           ),
-        )
+          color: pickerColor,
+          onColorChanged: (color) => {
+            changeColor(color, emit: widget.emitEventsSlowly == false)
+          },
+          onColorChangeEnd: (color) {
+            print("Hi");
+            updateIsColorSaved();
+            if(widget.emitEventsSlowly) {
+              widget.onChanged?.call(pickerColor);
+            }
+          },
+
+          pickerTypeLabels: const <ColorPickerType, String>{
+            ColorPickerType.both: "Palette",
+            ColorPickerType.custom: "Gespeichert",
+            ColorPickerType.wheel: "Farbrad"
+          },
+          maxRecentColors: 6,
+          recentColorsSubheading: Text("Zuletzt verwendete Farben", style: Theme.of(context).textTheme.subtitle1),
+          recentColors: recentColors,
+          onRecentColorsChanged: (List<Color> colors) {
+            setState(() {
+              recentColors = colors;
+              updateIsColorSaved();
+            });
+          },
+          copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+            copyFormat: ColorPickerCopyFormat.numHexRRGGBB,
+          ),
+          showRecentColors: true,
+          wheelDiameter: wheelDiameter(),
+          enableShadesSelection: true,
+          tonalSubheading: const Text("Helligkeit"),
+          showColorCode: true,
+          showColorName: true,
+          pickersEnabled: const <ColorPickerType, bool> {
+            ColorPickerType.wheel: true,
+            ColorPickerType.primary: false,
+            ColorPickerType.accent: false,
+            ColorPickerType.both: true,
+            ColorPickerType.custom: true,
+          },
+          customColorSwatchesAndNames: colorsNameMap,
+        ),
+        TextButton.icon(label: Text("Zufallsfarbe"), icon: Icon(Icons.shuffle), onPressed: () {
+          changeColor(Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
+          updateIsColorSaved();
+        },)
+      ]
     );
   }
 }
@@ -207,26 +214,137 @@ class _ColorsWidgetState extends State<ColorsWidget> {
 class ColorScaffoldWidget extends StatefulWidget {
   Function? save;
   Function? delete;
+  bool emitSlowly = true;
+  Duration emitDuration = Duration(milliseconds: 400);
+
+  String formatTime() {
+    var minutes = emitDuration.inMinutes.remainder(60);
+    var seconds = emitDuration.inSeconds.remainder(60);
+    var millis = emitDuration.inMilliseconds.remainder(1000);
+    var str = "";
+    if(minutes > 0) {
+      str+= "${minutes} Minuten ";
+    }
+    if(seconds > 0) {
+      str+= "${seconds} Sekunden ";
+    }
+    if(millis > 0) {
+      str+= "${millis} Millisekunden ";
+    }
+    if(str.trim().isEmpty) {
+      return "Ohne Zeitverzögerung";
+    }
+    return str.trim();
+  }
+
   @override
   State<StatefulWidget> createState() => _ColorScaffoldWidgetState();
 }
 
-class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget> {
+class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget> with TickerProviderStateMixin {
   BluetoothController controller = BluetoothControllerWidget();
   bool _colorExists = false;
   final ColorSaveController saveController = ColorSaveController();
+
+  late Animation<double> _myAnimation;
+  late AnimationController _controller;
+  bool timeIsExtended = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 200),
+    );
+
+    _myAnimation = CurvedAnimation(
+        curve: Curves.linear,
+        parent: _controller
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     ValueChanged<bool>? onColorSave;
     return Scaffold(
-      body: ColorsWidget(
-        controller: saveController,
-        onChanged: (color) {
-          Persistence().setColor(color);
-          controller.broadcast(ColorMessage(color.red.toInt(), color.green.toInt(), color.blue.toInt(), color.alpha.toInt()));
-        },
-        onColorExistsChange: (exists) => setState(() { _colorExists = exists; }),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 72),
+          child: Column(
+            children: [
+              ColorsWidget(
+                emitEventsSlowly: widget.emitSlowly,
+                controller: saveController,
+                onChanged: (color) {
+                  Persistence().setColor(color);
+                  if(!widget.emitSlowly) {
+                    controller.broadcast(ColorMessage(color.red.toInt(), color.green.toInt(), color.blue.toInt(), color.alpha.toInt()));
+                  } else {
+                    controller.broadcast(FadeMessage(duration: widget.emitDuration, color: color));
+                  }
+                },
+                onColorExistsChange: (exists) => setState(() { _colorExists = exists; }),
+              ),
+              Text(
+                "Sendeoptionen",
+                style: Theme.of(context).textTheme.headline5,
+              ),
+              CheckboxListTile(value: widget.emitSlowly, onChanged: (v) => {
+                setState(() {
+                  widget.emitSlowly = v ?? false;
+                })
+              }, title: Text("Glatte Übergänge")),
+              ListTile(
+                title: TextButton(
+                  onPressed: () {
+                    setState(() { timeIsExtended = !timeIsExtended;});
+                    if(timeIsExtended) {
+                      _controller.forward();
+                    } else {
+                      _controller.reverse();
+                    }
+                  },
+                  child: RichText(
+                      text: TextSpan(children: [
+                        TextSpan(text: "Dauer: ", style: TextStyle(fontWeight: FontWeight.bold
+                        )),
+                        WidgetSpan(child: Icon(Icons.access_time, size: 16, color: Theme.of(context).colorScheme.onBackground)),
+                        TextSpan(text: " ${widget.formatTime()}")
+                      ])),
+                ),
+                trailing: IconButton(
+                  icon: RotationTransition(
+                    turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
+                    child: Icon(Icons.expand_more),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      timeIsExtended = !timeIsExtended;
+                    });
+                    if(timeIsExtended) {
+                      _controller.forward();
+                    } else {
+                      _controller.reverse();
+                    }
+                  },
+                ),
+              ),
+              AnimatedContainer(
+                duration: Duration(milliseconds: 200),
+                height: timeIsExtended ? 200 : 0.00000001,
+                child: TimePicker(
+                  startDuration: widget.emitDuration,
+                  onChanged: (t) => {
+                    setState(() {
+                      widget.emitDuration = t;
+                    })
+                  },
+                ),
+              )
+            ],
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
