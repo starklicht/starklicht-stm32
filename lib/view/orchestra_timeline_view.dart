@@ -807,6 +807,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
             leading: getLeading(verySmall),
             title:
             Text(currentMessage.getTitle(), style: Theme.of(context).textTheme.titleLarge),
+            isThreeLine: true,
             subtitle:
             verySmall ?
                 widget.message.lamps.length == 0 ? Text("Keine Beschränkungen") : Text("${widget.message.lamps.length} Beschränkungen")

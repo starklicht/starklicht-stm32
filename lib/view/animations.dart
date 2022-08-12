@@ -1160,14 +1160,34 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
       });
   }
 
+  bool loading() {
+    return settings == null || gradient == null;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Persistence
     // settings = AnimationSettingsConfig(InterpolationType.linear, TimeFactor.repeat, 1, 0);
     // gradient = GradientSettingsConfig([ColorPoint(Colors.black, 0), ColorPoint(Colors.white, 1)]);
     Function? callback;
-    if (settings == null || gradient == null) {
-      return Container(child: Text("Lädt...".i18n));
+    if (loading()) {
+      return Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+            ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Text("Wird geladen..."),
+            )
+          ]
+      );
     } else {
       return SingleChildScrollView(
         padding: EdgeInsets.only(bottom: widget.isScaffold ? 140 : 0, top: 8),

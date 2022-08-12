@@ -5,6 +5,8 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:lottie/lottie.dart';
 import "../i18n/connections.dart";
+import '../model/lamp_groups_enum.dart';
+import 'package:collection/src/iterable_extensions.dart';
 
 class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   BluetoothController<SBluetoothDevice> controller = BluetoothControllerWidget();
@@ -59,8 +61,18 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   }
 
 
+  Widget getAvatar(String name) {
+    var group = LampGroups.values.firstWhereOrNull((e) => name.toLowerCase() == e.name.toLowerCase());
+    if(group != null) {
+      return Icon(group.icon, size: 18);
+    }
+    return Text(name[0].toUpperCase());
+  }
+
+
   @override
   Widget build(BuildContext context) {
+    TextEditingController textController = TextEditingController();
     return Scaffold(
       body: Container(
         alignment: Alignment.center,
@@ -238,6 +250,92 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                         },
                                         label: Text("Aktivieren".i18n)
                                     ),
+                                    Divider(),
+                                    Text("Lampengruppen"),
+                                    Container(
+                                      width: double.infinity,
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: [
+                                            ...option.tags.map((e) => Chip(
+                                              avatar: CircleAvatar(
+                                                child: getAvatar(e),
+                                                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                                backgroundColor: Theme.of(context).colorScheme.primary,
+                                              ),
+                                              label: Text(e),
+                                              materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                              onDeleted: () => {
+                                                setState((){
+                                                  controller.setOptions(d.device.id.id, option.withoutTag("test"));
+                                                })
+                                              },
+                                            )),
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 4.0),
+                                              child: ActionChip(
+                                                materialTapTargetSize:
+                                                MaterialTapTargetSize.shrinkWrap,
+                                                padding: EdgeInsets.zero,
+                                                onPressed: () {
+                                                  showDialog(context: context, builder: (_) {
+                                                    return AlertDialog(
+                                                      title: Text("Gruppenbeschränkung hinzufügen"),
+                                                      content: Column(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text("Vorlagen"),
+                                                          Padding(
+                                                            padding: const EdgeInsets.only(top: 8.0),
+                                                            child: Wrap(
+                                                              children:
+                                                              LampGroups.values.map((e) =>
+                                                                  ActionChip(
+                                                                      avatar: CircleAvatar(
+                                                                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                                                        backgroundColor: Theme.of(context).colorScheme.primary,
+                                                                        child: Icon(e.icon, size: 18),
+                                                                      ),
+                                                                      label: Text(e.name.toLowerCase()), onPressed: () => {
+                                                                    textController.text = e.name.toLowerCase()
+                                                                  }
+                                                                  )
+                                                              ).toList()
+                                                              ,
+                                                            ),
+                                                          ),
+                                                          TextFormField(
+                                                            controller: textController,
+                                                            decoration: const InputDecoration(
+                                                                labelText: "Lampengruppe definieren"
+                                                            ),
+                                                          )
+                                                        ],
+                                                      ),
+                                                      actions: [
+                                                        TextButton(child: Text("Abbrechen"), onPressed: () => { Navigator.pop(context) },),
+                                                        TextButton(child: Text("Speichern"), onPressed: () {
+                                                          if(textController.text.trim().isNotEmpty) {
+                                                            setState(() {
+                                                              controller.setOptions(d.device.id.id, option.withTag(textController.text.trim()));
+                                                            });
+                                                          }
+                                                          Navigator.pop(context);
+                                                        })
+                                                      ],
+                                                    );
+                                                  });
+                                                },
+                                                label: Icon(Icons.add),
+                                              ),
+                                            ),
+                                          ]
+                                        )
+                                      ),
+                                    )
                                   ]
                               ),
                                 Padding(

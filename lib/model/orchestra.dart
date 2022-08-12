@@ -143,7 +143,7 @@ class MessageNode extends EventNode {
             text: TextSpan(
                 style: baseStyle,
                 children: [
-                  TextSpan(text: "Setze die Lampen auf die Farbe "),
+                  TextSpan(text: "Setze die Farbe "),
                   TextSpan(text: message.retrieveText(), style: TextStyle(fontWeight: FontWeight.bold))
                 ]
             )
@@ -169,7 +169,7 @@ class MessageNode extends EventNode {
         return RichText(text: TextSpan(
             style: baseStyle,
             children: [
-              TextSpan(text: "Setze die Helligkeit der Lampen auf "),
+              TextSpan(text: "Setze die Helligkeit auf "),
               TextSpan(text: message.retrieveText(), style: TextStyle(fontWeight: FontWeight.bold)),
             ]
         ));
@@ -230,7 +230,11 @@ class MessageNode extends EventNode {
   @override
   Future<void> execute() async {
     print("Sending a message of ${message.messageType}");
-    BluetoothControllerWidget().broadcast(message);
+    if(lamps.isEmpty) {
+      BluetoothControllerWidget().broadcast(message);
+    } else {
+      BluetoothControllerWidget().broadcastToGroups(message, lamps);
+    }
   }
 
   @override
@@ -520,11 +524,21 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
                   SizeTransition(
                     sizeFactor: Tween<double>(begin: 0, end: 1).animate(_controller),
                     child:
-                    CheckboxListTile(value: widget.waitForUserInput, onChanged: (t) => {
-                      setState(() {
-                        widget.waitForUserInput = t!;
-                      })
-                    }, title: Text("Auf Benutzereingabe warten") )
+                    Column(
+                      children: [
+                        CheckboxListTile(value: widget.waitForUserInput, onChanged: (t) => {
+                          setState(() {
+                            widget.waitForUserInput = t!;
+                          })
+                        }, title: Text("Auf Benutzereingabe warten") ),
+                        if(widget.message is ColorMessage && !widget.waitForUserInput) ...[
+                          CheckboxListTile(value: widget.waitForUserInput, onChanged: (t) => {
+                            setState(() {
+                            })
+                          }, title: Text("Sanfter Übergang") ),
+                        ]
+                      ],
+                    )
                     ,
                   )
             ),

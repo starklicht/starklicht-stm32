@@ -18,8 +18,9 @@ class StarklichtBluetoothOptions {
   bool delay;
   int delayTimeMillis;
   String id;
+  Set<String> tags;
   String? name;
-  StarklichtBluetoothOptions(this.id, { this.inverse = false, this.active = true, this.delay = false, this.delayTimeMillis = 0, this.name });
+  StarklichtBluetoothOptions(this.id, { this.inverse = false, this.active = true, this.delay = false, this.delayTimeMillis = 0, this.tags = const {}, this.name });
 
   StarklichtBluetoothOptions withInverse(bool inverse) {
     this.inverse = inverse;
@@ -28,6 +29,11 @@ class StarklichtBluetoothOptions {
 
   StarklichtBluetoothOptions withActive(bool active) {
     this.active = active;
+    return this;
+  }
+
+  StarklichtBluetoothOptions withTag(String tag) {
+    tags.add(tag);
     return this;
   }
 
@@ -52,21 +58,29 @@ class StarklichtBluetoothOptions {
     'delay': delay,
     'delayTime': delayTimeMillis,
     'id': id,
-    'name': name
+    'name': name,
+    'tags': tags.toList()
   };
+
+  StarklichtBluetoothOptions withoutTag(String s) {
+    tags.remove(s);
+    return this;
+  }
 }
 
 class StarklichtBluetoothOptionsFactory implements Factory<StarklichtBluetoothOptions> {
   @override
   StarklichtBluetoothOptions build(String params) {
     var json = jsonDecode(params);
+    print(json["tags"]);
     return StarklichtBluetoothOptions(
       json["id"],
       inverse: json["inverse"] as bool,
       active: json["active"] as bool,
       delay: json["delay"] as bool,
       delayTimeMillis: json["delayTime"],
-      name: json["name"]
+      name: json["name"],
+      tags: (json["tags"] != null ? json["tags"] as List<dynamic> : <dynamic>[]).map((e) => e.toString()).toSet()
     );
   }
 }
@@ -103,8 +117,10 @@ abstract class BluetoothController<T> {
   void registerOptionsCallback(Function(String) callback);
   void setOptions(String id, StarklichtBluetoothOptions o);
   disconnect(T d);
+  void broadcastToGroups(IBluetoothMessage m, Set<String> groups);
 
   Stream<ConnectionDiff> connectionChangeStream();
+
 }
 
 class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice> {
@@ -320,5 +336,19 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
   @override
   Stream<ConnectionDiff> connectionChangeStream() {
     return connectionChanges.stream;
+  }
+
+  @override
+  void broadcastToGroups(IBluetoothMessage<dynamic> m, Set<String> groups) {
+    if (canSend()) {
+      for (var value in connectedDevices) {
+        if(value.options.tags.firstWhereOrNull((e) => groups.contains(e)) != null) {
+          print("Sending");
+          m.send(value.characteristic!, value.options);
+        } else {
+          print("Not sending");
+        }
+      }
+    }
   }
 }
