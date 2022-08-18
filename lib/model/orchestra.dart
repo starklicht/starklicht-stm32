@@ -494,10 +494,9 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
                 },
                 child: RichText(
                     text: TextSpan(children: [
-                      TextSpan(text: "Dauer: ", style: TextStyle(fontWeight: FontWeight.bold
-                      )),
-                      WidgetSpan(child: Icon(Icons.access_time, size: 16, color: Theme.of(context).colorScheme.onBackground)),
-                      TextSpan(text: " ${widget.formatTime()}")
+                      TextSpan(text: "Dauer: ", style: Theme.of(context).textTheme.bodyMedium),
+                      WidgetSpan(child: Icon(Icons.access_time, size: 16, color: Theme.of(context).colorScheme.inverseSurface)),
+                      TextSpan(text: " ${widget.formatTime()}", style: Theme.of(context).textTheme.bodyMedium)
                     ])),
               ),
               trailing: IconButton(

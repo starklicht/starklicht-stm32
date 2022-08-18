@@ -12,25 +12,20 @@ class OrchestraListView extends StatefulWidget {
   State<StatefulWidget> createState() => OrchestraLiveViewState();
 
   List<String> animations = [
-    "Mori Show",
+    "Cowboy",
+    "Fight Scene 1",
+  ];
+  List<String> subtitles = [
+    "Timeline Editor with 45 Nodes, 3 Categories. Duration: 10 Minutes. Lorem Ipsum Dolor Set Alem MASCHALLA",
     "Crazy Show",
-    "Inception - Part 1, Scene 2",
-    "Test",
-    "Test 2"
   ];
   List<String> images = [
     "https://saarlouis.my-movie-world.de/images/Breite_400px_RGB/p_99343.jpg",
     "https://de.web.img3.acsta.net/pictures/21/03/03/20/40/1002269.jpg",
-    "https://upload.wikimedia.org/wikipedia/de/0/04/Scary_movie3_logo.jpg",
-    "http://cineprog.de/images/Breite_235px_RGB/p_79860.jpg",
-    "https://i.ytimg.com/vi/Hi-kQn3ze4o/maxresdefault.jpg"
   ];
   List<bool> playing = [
     false,
     false,
-    false,
-    false,
-    false
   ];
   VoidCallback? play;
   bool isPlaying = false;
@@ -82,25 +77,34 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
               })
             },
             child: ListTile(
-              leading: CircleAvatar(
-                radius: 24,
-                backgroundImage: NetworkImage(widget.images[index]),
+              contentPadding: EdgeInsets.all(18),
+              title: Text(widget.animations[index], style: Theme.of(context).textTheme.headline5),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      children: [
+                        Icon(Icons.access_time, size: 16),
+                        Text(" 5 Minuten "),
+                        Icon(Icons.list_alt, size: 16),
+                        Text(" 3 Effekte "),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    Wrap(
+                        runSpacing: 4,
+                        spacing: 4,
+                        children:
+                    [
+                      Chip(label: Text("Kurzfilm")),
+                      Chip(label: Text("Szene $index"))
+                    ]
+                      )
+                  ],
+                ),
               ),
-              trailing: IconButton(
-                onPressed: ()  {
-                  setState(() {
-                    widget.playing[index] = !widget.playing[index];
-                  });
-                  Future.delayed(Duration(seconds: 1), () => {
-                    setState(() {
-                      widget.playing[index] = false;
-                    })
-                  });
-                },
-                icon: Icon(widget.playing[index] ? Icons.stop : Icons.play_arrow),
-              ),
-              title: Text(widget.animations[index]),
-              subtitle: Text("Animation")
             ),
           ),
         );
