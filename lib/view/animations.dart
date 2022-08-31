@@ -565,7 +565,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   @override
   void initState() {
     // TODO: implement initState
-    WidgetsBinding.instance.addPostFrameCallback(_getWidgetInfo);
+    WidgetsBinding.instance?.addPostFrameCallback(_getWidgetInfo);
     super.initState();
   }
 
