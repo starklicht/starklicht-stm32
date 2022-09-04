@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:collection/src/iterable_extensions.dart';
 import 'package:rxdart/rxdart.dart';
 
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:starklicht_flutter/model/factory.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import '../messages/imessage.dart';
@@ -134,7 +134,7 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
     registerHandlers();
   }
 
-  FlutterBlue flutterBlue = FlutterBlue.instance;
+  FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   StreamController<List<SBluetoothDevice>> foundDevicesStream = BehaviorSubject();
   StreamController<List<SBluetoothDevice>> connectionStream = BehaviorSubject();
   StreamController<ConnectionDiff> connectionChanges = BehaviorSubject();
