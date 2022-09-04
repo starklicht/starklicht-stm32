@@ -51,5 +51,7 @@
 	<string>Bluetooth Low Energy requires location to work</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 </dict>
 </plist>
