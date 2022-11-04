@@ -18,7 +18,8 @@ T 9
 W 0
  */
 
-FanControl::FanControl(uint16_t *array, int thermistorpin, int r_pin, int g_pin, int b_pin) {
+FanControl::FanControl(uint16_t *array, int thermistorpin, int r_pin, int g_pin, int b_pin)
+{
 	this->array = array;
 	this->thermistor_pin = thermistorpin;
 	this->r_pin = r_pin;
@@ -26,9 +27,10 @@ FanControl::FanControl(uint16_t *array, int thermistorpin, int r_pin, int g_pin,
 	this->b_pin = b_pin;
 }
 
-float FanControl::update() {
-	//time++;
-	//if(time % interval == 0) {
+float FanControl::update()
+{
+	// time++;
+	// if(time % interval == 0) {
 	temp = max(getTemperatureCelsius(r_pin) / 2, getTemperatureCelsius(g_pin) / 2);
 	temp = max(temp, getTemperatureCelsius(b_pin) / 2);
 	temp = max(temp, getTemperatureCelsius(thermistor_pin));
@@ -36,16 +38,17 @@ float FanControl::update() {
 	return temp;
 }
 
-float FanControl::max(float a, float b) {
+float FanControl::max(float a, float b)
+{
 	return (a > b) ? a : b;
 }
 
-
-float FanControl::getTemperatureCelsius(int pin) {
+float FanControl::getTemperatureCelsius(int pin)
+{
 
 	uint16_t value = 4095 - array[pin];
 
-	float r2 =r1 * (4095 / (float)value - 1);
+	float r2 = r1 * (4095 / (float)value - 1);
 
 	float logR2 = log(r2);
 
@@ -53,4 +56,3 @@ float FanControl::getTemperatureCelsius(int pin) {
 
 	return (T - 273.15);
 }
-

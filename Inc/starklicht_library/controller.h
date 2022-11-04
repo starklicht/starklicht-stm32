@@ -12,14 +12,18 @@
 #include "animator.h"
 #include "stdint.h"
 #include "CurrentSensor.h"
+#include "config.h"
+#ifdef STMF4
 #include "stm32f4xx_hal.h"
+#endif
 #include "FlashEEPROM.h"
 
-
-class Controller {
+class Controller
+{
 public:
-	Color* getColor();
-	float constrain(float a, float b, float c);
+    void fadeInto(int duration, Color *endColor, int interpolation);
+    Color *getColor();
+    float constrain(float a, float b, float c);
     void changeColor(Color *c);
     void changeOnlyColor(Color *c);
     int batteryPower();
@@ -41,14 +45,19 @@ public:
 
     void setDebug(bool debugging);
 
-    enum MODE {
-        ANIMATION = 0, POTIS = 1, COLOR = 2, BUTTON_ANIMATION = 3, BUTTON_COLOR = 4, NOT_DEFINED = 5
+    enum MODE
+    {
+        ANIMATION = 0,
+        POTIS = 1,
+        COLOR = 2,
+        BUTTON_ANIMATION = 3,
+        BUTTON_COLOR = 4,
+        NOT_DEFINED = 5
     };
 
     Controller::MODE animatorFromEEPROM(int address);
 
     int getButton();
-
 
     void animatorToEEPROM(int address);
 
@@ -61,6 +70,7 @@ public:
 private:
     bool critical = false;
     int batteryEnergy;
+
 public:
     bool isCritical() const;
     void setIsCritical(bool crit);
@@ -78,16 +88,16 @@ private:
     Color currentColor = Color();
     bool on;
     float brightness;
+
 public:
     float getBrightness() const;
     float getBatteryPercentage();
 
-	int getBatteryEnergy();
+    int getBatteryEnergy();
 
-	void setBatteryEnergy(int batteryEnergy);
+    void setBatteryEnergy(int batteryEnergy);
 
 private:
-
     int testBrightness = 10;
     int testDuration;
     PotiInput *potis;
@@ -109,8 +119,6 @@ private:
     int blueVoltagePin = 1;
     int batterySensorPin = 11;
 
-
-
     CurrentSensor *redCurrent;
     VoltageSensor *batterySensor;
 
@@ -118,4 +126,4 @@ private:
 
     uint32_t abc[32] = {0x00000000};
 };
-#endif //EXECUTABLE_CONTROLLER_H
+#endif // EXECUTABLE_CONTROLLER_H

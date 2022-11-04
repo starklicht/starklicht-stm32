@@ -11,7 +11,8 @@
 #include "interpolator.h"
 #include "color.h"
 #include "keyframe.h"
-class Animator {
+class Animator
+{
 public:
     Animator(int interpolationType, bool pingpong);
 
@@ -38,12 +39,12 @@ public:
     void setStartPoint(unsigned long displacement);
     void setPong(bool pong);
 
-
 private:
     bool pingpong;
     bool pong;
 
     float lastT;
+
 public:
     bool isPingpong() const;
 
@@ -51,12 +52,14 @@ private:
     float fraction;
     int number;
     int duration;
+
 public:
     int getDuration() const;
 
 private:
     long currentTime;
     bool repeating;
+
 public:
     bool isRepeating() const;
 
@@ -65,11 +68,11 @@ private:
     unsigned long displacement;
 
     Keyframe *keyframes[32] = {};
+
 public:
     Keyframe *const *getKeyframes() const;
 
 private:
-
     int getLowest();
 
     int getHighest();
@@ -95,6 +98,7 @@ private:
     Color *interpolate(float fraction);
 
     Interpolator *interpolator;
+
 public:
     Interpolator *getInterpolator() const;
 
@@ -105,6 +109,5 @@ private:
     Interpolator *constRand;
     Interpolator *ease;
 };
-
 
 #endif /* INC_STARKLICHT_LIBRARY_ANIMATOR_H_ */

@@ -8,11 +8,11 @@
 #ifndef INC_STARKLICHT_LIBRARY_MESSAGE_H_
 #define INC_STARKLICHT_LIBRARY_MESSAGE_H_
 
-
 #include "controller.h"
 #include "animator.h"
 
-class MyMessage {
+class MyMessage
+{
 public:
     virtual int getType();
 
@@ -21,12 +21,14 @@ public:
     virtual void build(uint8_t *receivedChars);
 };
 
-class OnOffMessage : public MyMessage {
+class OnOffMessage : public MyMessage
+{
 public:
     OnOffMessage();
 
 private:
     bool on;
+
 public:
     bool isOn() const;
 
@@ -37,12 +39,14 @@ public:
     void execute(Controller *c) override;
 };
 
-class PotiMessage : public MyMessage {
+class PotiMessage : public MyMessage
+{
 public:
     PotiMessage();
 
 private:
     bool on;
+
 public:
     bool isOn() const;
 
@@ -51,10 +55,10 @@ public:
     void execute(Controller *c) override;
 
     void build(uint8_t *receivedChars) override;
-
 };
 
-class ColorMessage : public MyMessage {
+class ColorMessage : public MyMessage
+{
 public:
     void build(uint8_t *receivedChars) override;
 
@@ -79,7 +83,8 @@ private:
 };
 
 // TODO
-class KeyframeMessage : public MyMessage {
+class KeyframeMessage : public MyMessage
+{
 public:
     KeyframeMessage();
 
@@ -103,12 +108,14 @@ public:
 private:
     int duration;
     bool seamless;
+
 public:
     void setDuration(int duration);
 
 private:
     int numKeyframes;
     uint8_t interpolationType;
+
 public:
     uint8_t getInterpolationType() const;
     bool getSeamless();
@@ -126,14 +133,16 @@ private:
     Keyframe *keyframes[32];
 };
 
-class DataRequestMessage : public MyMessage {
+class DataRequestMessage : public MyMessage
+{
 public:
     DataRequestMessage();
 
     void execute(Controller *controller) override;
 };
 
-class BrightnessMessage : public MyMessage {
+class BrightnessMessage : public MyMessage
+{
 public:
     BrightnessMessage();
 
@@ -141,13 +150,15 @@ public:
 
 private:
     uint8_t brightness;
+
 public:
     void setBrightness(uint8_t brightness);
 
     void build(uint8_t *receivedChars) override;
 };
 
-class SaveMessage : public MyMessage {
+class SaveMessage : public MyMessage
+{
 public:
     SaveMessage();
 
@@ -155,6 +166,7 @@ public:
 
 private:
     int index;
+
 public:
     void setIndex(int index);
 
@@ -167,13 +179,28 @@ private:
     bool save;
 };
 
-class SetConfigurationMessage : public MyMessage {
+class FadeMessage : public MyMessage
+{
 public:
-	SetConfigurationMessage();
-	void execute(Controller *controller) override;
+    FadeMessage();
+    void execute(Controller *controller) override;
+    void build(uint8_t *receivedChars) override;
 
-	void build(uint8_t *receivedChars) override;
 private:
-	int energy;
+    int duration;
+    int interpolation;
+    Color color;
+};
+
+class SetConfigurationMessage : public MyMessage
+{
+public:
+    SetConfigurationMessage();
+    void execute(Controller *controller) override;
+
+    void build(uint8_t *receivedChars) override;
+
+private:
+    int energy;
 };
 #endif /* INC_STARKLICHT_LIBRARY_MESSAGE_H_ */

@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under Ultimate Liberty license
+ * SLA0044, the "License"; You may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at:
+ *                             www.st.com/SLA0044
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -81,8 +81,8 @@ uint8_t endMarker = '\n';
 uint16_t analogInputs[10];
 
 uint8_t u8x8_stm32_gpio_and_delay(U8X8_UNUSED u8x8_t *u8x8,
-    U8X8_UNUSED uint8_t msg, U8X8_UNUSED uint8_t arg_int,
-    U8X8_UNUSED void *arg_ptr)
+                                  U8X8_UNUSED uint8_t msg, U8X8_UNUSED uint8_t arg_int,
+                                  U8X8_UNUSED void *arg_ptr)
 {
   switch (msg)
   {
@@ -99,21 +99,20 @@ uint8_t u8x8_stm32_gpio_and_delay(U8X8_UNUSED u8x8_t *u8x8,
     HAL_GPIO_WritePin(RST_GPIO_Port, RST_Pin, arg_int);
     break;
   case U8X8_MSG_GPIO_CS:
-	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, arg_int);
+    HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, arg_int);
 
-	  break;
-
+    break;
   }
   return 1;
 }
 
 uint8_t u8x8_byte_4wire_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int,
-    void *arg_ptr)
+                               void *arg_ptr)
 {
   switch (msg)
   {
   case U8X8_MSG_BYTE_SEND:
-    HAL_SPI_Transmit(&hspi1, (uint8_t *) arg_ptr, arg_int, 10000);
+    HAL_SPI_Transmit(&hspi1, (uint8_t *)arg_ptr, arg_int, 10000);
     break;
   case U8X8_MSG_BYTE_INIT:
     break;
@@ -132,9 +131,9 @@ uint8_t u8x8_byte_4wire_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int,
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -172,17 +171,17 @@ int main(void)
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
 
   TIM2->CCR1 = 0;
-  if(HAL_ADC_Start_DMA(&hadc1, (uint32_t*)analogInputs, 10) != HAL_OK)
-    {
-      /* Start Conversation Error */
-      Error_Handler();
-    }
-
-  for(int i = 0; i < 3; i++) {
-	  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-	  HAL_Delay(10);
+  if (HAL_ADC_Start_DMA(&hadc1, (uint32_t *)analogInputs, 10) != HAL_OK)
+  {
+    /* Start Conversation Error */
+    Error_Handler();
   }
 
+  for (int i = 0; i < 3; i++)
+  {
+    HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+    HAL_Delay(10);
+  }
 
   u8g2_Setup_sh1106_128x64_noname_f(&u8g2, U8G2_R0, u8x8_byte_4wire_hw_spi, u8x8_stm32_gpio_and_delay);
   u8g2_InitDisplay(&u8g2);
@@ -193,14 +192,15 @@ int main(void)
   char num[10];
   sprintf(num, "%dWh", batteryEnergy);
 
-  for(uint8_t i = 78; i > 38; i--) {
-	  u8g2_FirstPage(&u8g2);
-	  u8g2_SetFont(&u8g2, u8g2_font_luBS12_te);
-	  u8g2_DrawStr(&u8g2, 8, i, "STARKLICHT");
-	  u8g2_SetFont(&u8g2, u8g2_font_helvR08_te);
-      u8g2_DrawStr(&u8g2, 48, 8, num);
-	  u8g2_NextPage(&u8g2);
-	  HAL_Delay(2);
+  for (uint8_t i = 78; i > 38; i--)
+  {
+    u8g2_FirstPage(&u8g2);
+    u8g2_SetFont(&u8g2, u8g2_font_luBS12_te);
+    u8g2_DrawStr(&u8g2, 8, i, "STARKLICHT");
+    u8g2_SetFont(&u8g2, u8g2_font_helvR08_te);
+    u8g2_DrawStr(&u8g2, 48, 8, num);
+    u8g2_NextPage(&u8g2);
+    HAL_Delay(2);
   }
   HAL_Delay(500);
 
@@ -211,10 +211,11 @@ int main(void)
 
   while (1)
   {
-	 u8g2_FirstPage(&u8g2);
-	 do {
-		 loop(HAL_GetTick());
-	 } while(u8g2_NextPage(&u8g2));
+    u8g2_FirstPage(&u8g2);
+    do
+    {
+      loop(HAL_GetTick());
+    } while (u8g2_NextPage(&u8g2));
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -223,21 +224,21 @@ int main(void)
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
-  */
+   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -251,9 +252,8 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -266,10 +266,10 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief ADC1 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief ADC1 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_ADC1_Init(void)
 {
 
@@ -283,7 +283,7 @@ static void MX_ADC1_Init(void)
 
   /* USER CODE END ADC1_Init 1 */
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-  */
+   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
@@ -301,7 +301,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
@@ -310,7 +310,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -318,7 +318,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_2;
   sConfig.Rank = 3;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -326,7 +326,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_3;
   sConfig.Rank = 4;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -334,7 +334,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -342,7 +342,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_5;
   sConfig.Rank = 6;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -350,7 +350,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_6;
   sConfig.Rank = 7;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -358,7 +358,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_7;
   sConfig.Rank = 8;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -366,7 +366,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_8;
   sConfig.Rank = 9;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -374,7 +374,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_9;
   sConfig.Rank = 10;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -384,14 +384,13 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
-  * @brief SPI1 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief SPI1 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_SPI1_Init(void)
 {
 
@@ -422,14 +421,13 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
-
 }
 
 /**
-  * @brief TIM4 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief TIM4 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_TIM4_Init(void)
 {
 
@@ -446,7 +444,7 @@ static void MX_TIM4_Init(void)
   htim4.Instance = TIM4;
   htim4.Init.Prescaler = 0;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 4096-1;
+  htim4.Init.Period = 4096 - 1;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -483,14 +481,13 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 2 */
   HAL_TIM_MspPostInit(&htim4);
-
 }
 
 /**
-  * @brief USART1 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief USART1 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_USART1_UART_Init(void)
 {
 
@@ -516,12 +513,11 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
-
 }
 
 /**
-  * Enable DMA controller clock
-  */
+ * Enable DMA controller clock
+ */
 static void MX_DMA_Init(void)
 {
 
@@ -532,14 +528,13 @@ static void MX_DMA_Init(void)
   /* DMA2_Stream4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
-
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -554,7 +549,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, CS_Pin|DC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, CS_Pin | DC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(RST_GPIO_Port, RST_Pin, GPIO_PIN_RESET);
@@ -567,7 +562,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BT4_Pin BT3_Pin BT2_Pin BT1_Pin */
-  GPIO_InitStruct.Pin = BT4_Pin|BT3_Pin|BT2_Pin|BT1_Pin;
+  GPIO_InitStruct.Pin = BT4_Pin | BT3_Pin | BT2_Pin | BT1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -579,7 +574,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(BT_STATE_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : CS_Pin DC_Pin */
-  GPIO_InitStruct.Pin = CS_Pin|DC_Pin;
+  GPIO_InitStruct.Pin = CS_Pin | DC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -591,42 +586,48 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(RST_GPIO_Port, &GPIO_InitStruct);
-
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == USART1) {
-		if(payload == 1 && current_char == endMarker) {
-			buffer[ndx] = '\0';
-			ndx = 0;
-			payload = 0;
-			// TODO: Controller updaten
-			num_messages++;
-			HAL_UART_Receive_IT(&huart1, &current_char, 1);
-			parseMessage(&buffer);
-			// build message
-			return;
-		}
-		if((current_char != escapeSign) | (payload == 1)) {
-			buffer[ndx] = current_char;
-			ndx++;
-			if(ndx >= numChars) {
-				ndx = numChars - 1;
-			}
-			payload = 0;
-		} else {
-			payload = 1;
-		}
-		HAL_UART_Receive_IT(&huart1, &current_char, 1);
-	}
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1)
+  {
+    if (payload == 1 && current_char == endMarker)
+    {
+      buffer[ndx] = '\0';
+      ndx = 0;
+      payload = 0;
+      // TODO: Controller updaten
+      num_messages++;
+      HAL_UART_Receive_IT(&huart1, &current_char, 1);
+      parseMessage(&buffer);
+      // build message
+      return;
+    }
+    if ((current_char != escapeSign) | (payload == 1))
+    {
+      buffer[ndx] = current_char;
+      ndx++;
+      if (ndx >= numChars)
+      {
+        ndx = numChars - 1;
+      }
+      payload = 0;
+    }
+    else
+    {
+      payload = 1;
+    }
+    HAL_UART_Receive_IT(&huart1, &current_char, 1);
+  }
 }
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -634,20 +635,20 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
-	  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-	  HAL_Delay(100);
+    HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+    HAL_Delay(100);
   }
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */

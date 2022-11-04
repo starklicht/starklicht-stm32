@@ -6,16 +6,20 @@
  */
 
 #include "starklicht_library/ButtonController.h"
+#include "config.h"
+#ifdef STMF4
 #include "stm32f4xx_hal.h"
+#endif
 
-ButtonController::ButtonController() {
-
+ButtonController::ButtonController()
+{
 }
 
-int ButtonController::currentButton() {
+int ButtonController::currentButton()
+{
 	return -1;
 }
 
-int ButtonController::update() {
+int ButtonController::update()
+{
 }
-

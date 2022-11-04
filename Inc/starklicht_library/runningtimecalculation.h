@@ -8,17 +8,23 @@
 #ifndef INC_STARKLICHT_LIBRARY_RUNNINGTIMECALCULATION_H_
 #define INC_STARKLICHT_LIBRARY_RUNNINGTIMECALCULATION_H_
 #include "CurrentSensor.h"
+#include "config.h"
+#ifdef STMF4
 #include "stm32f4xx_hal.h"
-class RunningTimeCalculation {
+#endif
+class RunningTimeCalculation
+{
 public:
 	RunningTimeCalculation(uint16_t *adb, uint16_t r, uint16_t g, uint16_t b, uint16_t bv, int energy);
 	int getMinutesLeft();
 
-	int getEnergy() const {
+	int getEnergy() const
+	{
 		return energy;
 	}
 
-	void setEnergy(int energy = 200) {
+	void setEnergy(int energy = 200)
+	{
 		this->energy = energy;
 	}
 	void update();

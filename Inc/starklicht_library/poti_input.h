@@ -8,13 +8,18 @@
 #ifndef INC_STARKLICHT_LIBRARY_POTI_INPUT_H_
 #define INC_STARKLICHT_LIBRARY_POTI_INPUT_H_
 #include "color.h"
+#include "config.h"
+#ifdef STMF4
 #include "stm32f4xx_hal.h"
-class PotiInput {
+#endif
+class PotiInput
+{
 public:
     PotiInput(uint16_t *dma_array, bool inverse = false);
 
     Color *update();
-    uint16_t* dma;
+    uint16_t *dma;
+
 private:
     int r;
     int g;
@@ -25,8 +30,5 @@ private:
     uint16_t *histories[4];
     bool inverse;
 };
-
-
-
 
 #endif /* INC_STARKLICHT_LIBRARY_POTI_INPUT_H_ */

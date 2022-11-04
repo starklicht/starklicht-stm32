@@ -9,24 +9,28 @@
 #define CURRENTSENSOR_H_
 #include <stdint.h>
 
-class CurrentSensor {
+class CurrentSensor
+{
 public:
-	CurrentSensor(uint16_t* array, int pin);
+	CurrentSensor(uint16_t *array, int pin);
 	float update();
 	float updateConvert();
+
 private:
-	uint16_t* dma_array;
+	uint16_t *dma_array;
 	int color_pin;
 	float divisor = 248.24;
 };
 
-class VoltageSensor {
+class VoltageSensor
+{
 public:
-	VoltageSensor(uint16_t* array, int pin);
+	VoltageSensor(uint16_t *array, int pin);
 	float update();
 	float updateConvert();
+
 private:
-	uint16_t* dma_array;
+	uint16_t *dma_array;
 	int color_pin;
 	float divisor = 82;
 };

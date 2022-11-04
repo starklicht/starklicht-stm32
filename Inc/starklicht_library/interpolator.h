@@ -10,8 +10,9 @@
 #include "color.h"
 #include "keyframe.h"
 
-class Interpolator {
-	public:
+class Interpolator
+{
+public:
     Interpolator();
 
     virtual float getInterpolation(float input);
@@ -19,7 +20,8 @@ class Interpolator {
     virtual int getInterpolationID();
 };
 
-class LinearInterpolator : public Interpolator {
+class LinearInterpolator : public Interpolator
+{
 public:
     LinearInterpolator();
 
@@ -28,7 +30,8 @@ public:
     int getInterpolationID() override;
 };
 
-class ConstantInterpolator : public Interpolator {
+class ConstantInterpolator : public Interpolator
+{
 public:
     explicit ConstantInterpolator(Keyframe **keyframes);
 
@@ -48,7 +51,8 @@ public:
     void setNumFrames(int numFrames);
 };
 
-class RandomLinearInterpolator : public Interpolator {
+class RandomLinearInterpolator : public Interpolator
+{
 public:
     RandomLinearInterpolator();
 
@@ -63,12 +67,12 @@ private:
 
     float lastTime;
 
-
     float last;
     float next;
 };
 
-class ConstantRandomInterpolator : public Interpolator {
+class ConstantRandomInterpolator : public Interpolator
+{
 public:
     ConstantRandomInterpolator();
 
@@ -83,7 +87,8 @@ private:
     float next;
 };
 
-class EaseInterpolator : public Interpolator {
+class EaseInterpolator : public Interpolator
+{
 public:
     EaseInterpolator();
 
@@ -91,7 +96,5 @@ public:
 
     float getInterpolation(float input) override;
 };
-
-
 
 #endif /* INC_STARKLICHT_LIBRARY_INTERPOLATOR_H_ */

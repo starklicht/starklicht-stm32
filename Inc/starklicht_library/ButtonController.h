@@ -9,7 +9,8 @@
 #define SRC_STARKLICHT_LIBRARY_BUTTONCONTROLLER_H_
 #include "main.h"
 
-class ButtonController {
+class ButtonController
+{
 public:
 	ButtonController();
 	int update();
@@ -19,7 +20,6 @@ public:
 	uint32_t lastUserButtonI = 700;
 	uint32_t lastUserButtonRisingI = 700;
 	uint32_t lastUserButtonFallingI = 700;
-
 };
 
 #endif /* SRC_STARKLICHT_LIBRARY_BUTTONCONTROLLER_H_ */

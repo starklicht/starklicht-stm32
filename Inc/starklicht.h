@@ -6,10 +6,12 @@
  */
 #ifndef INC_STARKLICHT_H_
 #define INC_STARKLICHT_H_
+#include "config.h"
+#ifdef STMF4
 #include "stm32f4xx_hal.h"
+#endif
 #include "u8g2/u8g2.h"
 //#include "starklicht_library/color.h"
-
 
 /*void setup(ADC_HandleTypeDef *hadc2);
 struct Color* loop(uint32_t tick);
@@ -25,9 +27,5 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
-
-
-
 
 #endif /* INC_STARKLICHT_H_ */

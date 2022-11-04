@@ -12,7 +12,8 @@
 #include "serialization.h"
 #include "message.h"
 
-class MessageManager {
+class MessageManager
+{
 public:
     MessageManager(HardwareSerial *ser);
 
@@ -23,6 +24,7 @@ public:
     Message *buildMessage();
 
     void readBluetooth();
+
 private:
     int ndx;
     HardwareSerial softwareSerial = Serial2;
@@ -37,6 +39,5 @@ private:
     unsigned long nextUpdate;
     const long updateRate = 2000;
 };
-
 
 #endif /* INC_STARKLICHT_LIBRARY_MESSAGE_MANAGER_H_ */

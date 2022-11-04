@@ -5,12 +5,12 @@
 #define ANIMATOR_COLOR_H
 #include "stdint.h"
 
-struct Color {
+struct Color
+{
     uint16_t r;
     uint16_t g;
     uint16_t b;
     uint16_t master;
 };
 
-
-#endif //ANIMATOR_COLOR_H
+#endif // ANIMATOR_COLOR_H

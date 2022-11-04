@@ -23,16 +23,18 @@
 
 #ifndef OneButton_h
 #define OneButton_h
-
+#include "config.h"
+#ifdef STMF4
 #include "stm32f4xx_hal.h"
+#endif
 
 // ----- Callback function types -----
 
-extern "C" {
-typedef void (*callbackFunction)(void);
-typedef void (*parameterizedCallbackFunction)(void *);
+extern "C"
+{
+  typedef void (*callbackFunction)(void);
+  typedef void (*parameterizedCallbackFunction)(void *);
 }
-
 
 class OneButton
 {
@@ -122,7 +124,6 @@ public:
    */
   void tick(void);
 
-
   /**
    * @brief Call this function every time the input level has changed.
    * Using this function no digital input pin is checked because the current
@@ -130,18 +131,15 @@ public:
    */
   void tick(bool level);
 
-
   /**
    * Reset the button state machine.
    */
   void reset(void);
 
-
   /*
    * return number of clicks in any case: single or multiple clicks
    */
   int getNumberClicks(void);
-
 
   /**
    * @return true if we are currently handling button press flow
@@ -154,9 +152,8 @@ public:
    */
   bool isLongPressed() const { return _state == OCS_PRESS; };
 
-
 private:
-  uint16_t _pin;                         // hardware pin number.
+  uint16_t _pin; // hardware pin number.
   GPIO_TypeDef *_gpio;
   unsigned int _debounceTicks = 50; // number of ticks for debounce times.
   unsigned int _clickTicks = 400;   // number of msecs before a click is detected.
@@ -199,7 +196,8 @@ private:
   // tick function is called.
 
   // define FiniteStateMachine
-  enum stateMachine_t : int {
+  enum stateMachine_t : int
+  {
     OCS_INIT = 0,
     OCS_DOWN = 1,
     OCS_UP = 2,

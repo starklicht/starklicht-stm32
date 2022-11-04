@@ -10,7 +10,8 @@
 
 #include "message.h"
 
-class Serialization {
+class Serialization
+{
 public:
     Serialization();
 
@@ -26,7 +27,7 @@ private:
     BrightnessMessage *brightnessMessage;
     SaveMessage *saveMessage;
     SetConfigurationMessage *setConfigMessage;
+    FadeMessage *fadeMessage;
 };
-
 
 #endif /* INC_STARKLICHT_LIBRARY_SERIALIZATION_H_ */

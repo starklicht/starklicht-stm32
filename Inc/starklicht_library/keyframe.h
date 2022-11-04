@@ -5,9 +5,10 @@
 #ifndef EXECUTABLE_KEYFRAME_H
 #define EXECUTABLE_KEYFRAME_H
 
-#include "Color.h"
+#include "color.h"
 
-class Keyframe {
+class Keyframe
+{
 public:
     Keyframe();
 
@@ -21,6 +22,7 @@ public:
 
 private:
     float fraction;
+
 public:
     void setFraction(float fraction);
 
@@ -28,5 +30,4 @@ private:
     Color color{};
 };
 
-
-#endif //EXECUTABLE_KEYFRAME_H
+#endif // EXECUTABLE_KEYFRAME_H
