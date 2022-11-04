@@ -67,10 +67,10 @@ public:
     void setMode(MODE m);
 
     MODE getMode() const;
+    bool masterFloating = true;
 
 private:
     bool critical = false;
-    bool masterFloating = false;
     int batteryEnergy;
 
 public:

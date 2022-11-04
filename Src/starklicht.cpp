@@ -132,6 +132,8 @@ Color *loop_internal(uint32_t tick)
 	display->setActiveButton(controller->getButton());
 	// display->setDebug(dma_array);
 	display->setBatteryPercentage(controller->getBatteryPercentage());
+	display->masterLocked = !controller->masterFloating;
+	display->colorsLocked = controller->getMode() != Controller::MODE::POTIS;
 	if (HAL_GPIO_ReadPin(BT_STATE_GPIO_Port, BT_STATE_Pin))
 	{
 		display->setBluetoothState(true);

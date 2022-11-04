@@ -249,13 +249,13 @@ void Display::drawColor()
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			u8g2_DrawFrame(U8G2, 12, 15 + 12 * i, 116, 6);
+			u8g2_DrawFrame(U8G2, 20, 15 + 12 * i, 108, 6);
 		}
 
-		drawPercentage(12, 15, 116, 6, (float)getColor()->r / 4095.0);
-		drawPercentage(12, 27, 116, 6, (float)getColor()->g / 4095.0);
-		drawPercentage(12, 39, 116, 6, (float)getColor()->b / 4095.0);
-		drawPercentage(12, 51, 116, 6, (float)getColor()->master / 4095.0);
+		drawPercentage(20, 15, 108, 6, (float)getColor()->r / 4095.0);
+		drawPercentage(20, 27, 108, 6, (float)getColor()->g / 4095.0);
+		drawPercentage(20, 39, 108, 6, (float)getColor()->b / 4095.0);
+		drawPercentage(20, 51, 108, 6, (float)getColor()->master / 4095.0);
 	}
 }
 
@@ -268,6 +268,31 @@ void Display::drawRGBWLabels()
 	u8g2_DrawStr(U8G2, 0, 46, "B");
 	u8g2_SetFont(U8G2, u8g2_font_9x15B_tf);
 	u8g2_DrawStr(U8G2, 0, 58, "M");
+	// DRAW LOCK
+	if (colorsLocked)
+	{
+		u8g2_SetFont(U8G2, u8g2_font_open_iconic_thing_1x_t);
+		u8g2_DrawStr(U8G2, 10, 22, "O");
+		u8g2_DrawStr(U8G2, 10, 34, "O");
+		u8g2_DrawStr(U8G2, 10, 46, "O");
+	}
+	else
+	{
+		u8g2_SetFont(U8G2, u8g2_font_open_iconic_embedded_1x_t);
+		u8g2_DrawStr(U8G2, 10, 22, "O");
+		u8g2_DrawStr(U8G2, 10, 34, "O");
+		u8g2_DrawStr(U8G2, 10, 46, "O");
+	}
+	if (masterLocked)
+	{
+		u8g2_SetFont(U8G2, u8g2_font_open_iconic_thing_1x_t);
+		u8g2_DrawStr(U8G2, 10, 58, "O");
+	}
+	else
+	{
+		u8g2_SetFont(U8G2, u8g2_font_open_iconic_embedded_1x_t);
+		u8g2_DrawStr(U8G2, 10, 58, "O");
+	}
 }
 
 void Display::drawBluetoothSymbol(int x, int y)

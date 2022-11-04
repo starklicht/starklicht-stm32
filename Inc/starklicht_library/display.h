@@ -80,6 +80,8 @@ public:
 
     void update();
     void critical();
+    bool colorsLocked = false;
+    bool masterLocked = false;
 
 private:
     u8g2_t *U8G2;
