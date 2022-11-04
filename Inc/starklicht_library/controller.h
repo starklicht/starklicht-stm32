@@ -21,6 +21,7 @@
 class Controller
 {
 public:
+    bool willChangeToPotis();
     void fadeInto(int duration, Color *endColor, int interpolation);
     Color *getColor();
     float constrain(float a, float b, float c);
@@ -69,6 +70,7 @@ public:
 
 private:
     bool critical = false;
+    bool masterFloating = false;
     int batteryEnergy;
 
 public:
@@ -86,6 +88,8 @@ private:
     uint8_t gpin;
     uint8_t bpin;
     Color currentColor = Color();
+    Color lastPotiValues = Color();
+    int potiActivationThreshold = 512;
     bool on;
     float brightness;
 

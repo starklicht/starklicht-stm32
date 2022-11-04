@@ -19,14 +19,15 @@ public:
 
     Color *update();
     uint16_t *dma;
+    Color *getColor();
 
 private:
     int r;
     int g;
     int b;
     int master;
-
     Color value = Color();
+
     uint16_t *histories[4];
     bool inverse;
 };

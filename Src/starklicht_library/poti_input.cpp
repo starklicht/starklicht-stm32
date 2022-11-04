@@ -47,3 +47,8 @@ Color *PotiInput::update()
 
 	return &value;
 }
+
+Color *PotiInput::getColor()
+{
+	return &value;
+}

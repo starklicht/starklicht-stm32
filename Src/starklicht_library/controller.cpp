@@ -3,6 +3,7 @@
 //
 
 #include "starklicht_library/controller.h"
+#include "math.h"
 
 /**
  * Change the color to a static color and animate
@@ -81,6 +82,7 @@ Controller::Controller(uint8_t rpin, uint8_t gpin, uint8_t bpin, FanControl *_fa
     this->bpin = bpin;
 
     currentColor = Color();
+    lastPotiValues = Color();
     // Full brightness to begin with
     brightness = 1;
     animator = new Animator(0, true);
@@ -101,6 +103,14 @@ Controller::Controller(uint8_t rpin, uint8_t gpin, uint8_t bpin, FanControl *_fa
     // this->flasher =  new FlashEEPROM();
 }
 
+bool Controller::willChangeToPotis()
+{
+    Color *currentPotiValues = potis->getColor();
+    return fabs(lastPotiValues.r - currentPotiValues->r) > potiActivationThreshold ||
+           fabs(lastPotiValues.g - currentPotiValues->g) > potiActivationThreshold ||
+           fabs(lastPotiValues.b - currentPotiValues->b) > potiActivationThreshold;
+}
+
 /**
  * Update the controller and get the color of the animator
  * @param value Desired milliseconds
@@ -116,10 +126,19 @@ void Controller::update(unsigned long value)
     }
 
     Color *cur;
+    Color *potiValues = potis->update();
+    if (willChangeToPotis())
+    {
+        setMode(MODE::POTIS);
+    }
+    if (fabs(lastPotiValues.master - potis->getColor()->master) > potiActivationThreshold)
+    {
+        masterFloating = true;
+    }
     switch (mode)
     {
     case POTIS:
-        cur = potis->update();
+        cur = potiValues;
         // setColorBrightness(cur, brightness);
         currentColor.r = cur->r;
         currentColor.g = cur->g;
@@ -138,10 +157,7 @@ void Controller::update(unsigned long value)
         // setColorBrightness(&currentColor, brightness);
         break;
     case BUTTON_ANIMATION:
-        // TODO
-        currentColor.master = potis->update()->master;
         cur = animator->getValue(value);
-
         currentColor.r = cur->r;
         currentColor.g = cur->g;
         currentColor.b = cur->b;
@@ -151,6 +167,10 @@ void Controller::update(unsigned long value)
         currentColor.master = potis->update()->master;
         // setColorBrightness(&currentColor, brightness);
         break;
+    }
+    if (masterFloating)
+    {
+        currentColor.master = potiValues->master;
     }
 }
 
@@ -170,8 +190,14 @@ void Controller::setBrightness(uint16_t br)
 {
     if (mode == POTIS)
     {
-        mode = COLOR;
+        setMode(MODE::COLOR);
     }
+    potis->update();
+    masterFloating = false;
+    lastPotiValues.r = potis->getColor()->r;
+    lastPotiValues.g = potis->getColor()->g;
+    lastPotiValues.b = potis->getColor()->b;
+    lastPotiValues.master = potis->getColor()->master;
     currentColor.master = br;
 }
 
@@ -198,6 +224,12 @@ Color *Controller::getColor()
  */
 void Controller::setMode(MODE m)
 {
+    // CACHE POTI VALUES if
+    potis->update();
+    lastPotiValues.r = potis->getColor()->r;
+    lastPotiValues.g = potis->getColor()->g;
+    lastPotiValues.b = potis->getColor()->b;
+    lastPotiValues.master = potis->getColor()->master;
     Controller::mode = m;
 }
 
