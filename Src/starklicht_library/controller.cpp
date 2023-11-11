@@ -518,5 +518,5 @@ bool Controller::isCritical() const
 
 void Controller::setIsCritical(bool crit)
 {
-    critical = false;
+    this->critical = crit;
 }

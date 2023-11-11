@@ -118,7 +118,7 @@ Color *loop_internal(uint32_t tick)
 	// Temperature
 	float temp = fanControl->update();
 
-	controller->setIsCritical(temp >= 70);
+	controller->setIsCritical(temp >= 65);
 
 	a->tick();
 	b->tick();
