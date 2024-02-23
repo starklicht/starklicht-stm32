@@ -4,6 +4,7 @@
 
 Starklicht is an open source lighting solution designed to revolutionize the way creative professionals illuminate their projects. From filmmakers and theater enthusiasts to live event professionals, Starklicht offers intuitive control, customizable lighting effects, and unparalleled versatility in a compact, lightweight form.
 
+We started with a Kickstarter, which wasn't a success. That's why we decided to make this project open source, so you can build your own lamps! We will be selling the components on our website soon.
 ## Features
 
 - **Customizable Lighting Effects:** Dynamic animations, color transitions, and patterns to unleash creativity.
