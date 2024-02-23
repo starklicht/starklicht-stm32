@@ -1,7 +1,7 @@
 # Starklicht
 
 ## About Starklicht
-
+This is the App for Starklicht with Bluetooth connectivity, written in Flutter Framework!
 Starklicht is an open source lighting solution designed to revolutionize the way creative professionals illuminate their projects. From filmmakers and theater enthusiasts to live event professionals, Starklicht offers intuitive control, customizable lighting effects, and unparalleled versatility in a compact, lightweight form.
 
 We started with a Kickstarter, which wasn't a success. That's why we decided to make this project open source, so you can build your own lamps! We will be selling the components on our website soon.
@@ -16,7 +16,18 @@ We started with a Kickstarter, which wasn't a success. That's why we decided to 
 
 ## Get Started
 
-To get started with Starklicht, visit our website at [starklicht.net](https://starklicht.net) for more information on the project, technical specifications, and how to integrate Starklicht into your creative workflow.
+### Setup
+
+To set up a Flutter app:
+
+1. Install Flutter SDK from the official Flutter website.
+2. Open terminal or command prompt, and run `flutter doctor` to check for any dependencies you might need to install.
+3. Create a new Flutter project with `flutter create project_name`.
+4. Navigate into your project directory using `cd project_name`.
+5. Run your app with `flutter run`.
+
+For a complete guide and troubleshooting, visit the official Flutter documentation.
+
 
 ## Contribute
 
