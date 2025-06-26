@@ -1,46 +1,98 @@
-# Starklicht
+# ✨ Starklicht STM32F410RB Firmware
 
-## About Starklicht
-This is the App for Starklicht with Bluetooth connectivity, written in Flutter Framework!
-Starklicht is an open source lighting solution designed to revolutionize the way creative professionals illuminate their projects. From filmmakers and theater enthusiasts to live event professionals, Starklicht offers intuitive control, customizable lighting effects, and unparalleled versatility in a compact, lightweight form.
+Welcome to the **Starklicht** firmware repository!  
+This project powers creative lighting for **movie makers, theater productions, and professional lighting installations**—where dynamic, reliable, and customizable effects matter most.
 
-We started with a Kickstarter, which wasn't a success. That's why we decided to make this project open source, so you can build your own lamps! We will be selling the components on our website soon.
-## Features
 
-- **Customizable Lighting Effects:** Dynamic animations, color transitions, and patterns to unleash creativity.
-- **Intuitive Control Interface:** Easily adjust settings to create the perfect ambiance.
-- **Connectivity:** Control up to 7 lamps simultaneously via Bluetooth for synchronized effects.
-- **Compatibility:** Works with professional equipment, including V-Mount batteries, stative mounts, and Bowens mounts.
-- **Community and Sharing:** Join a vibrant community of creators to share and discover lighting effects and animations.
-- **DIY-Friendly Design:** 3D print and repair components for a customizable and sustainable solution.
+---
 
-## Get Started
+## 🌟 What is Starklicht?
+
+Starklicht is a modular, STM32-based lighting controller for professional and creative environments.  
+It enables **dynamic lighting animations**, **battery management**, and **intuitive user control** for demanding applications.
+
+---
+
+## 🛠️ Hardware Requirements
+
+- STM32F410RB microcontroller board
+- USB to UART converter for programming
+- Starklicht lighting hardware (LEDs, buttons, display, sensors)
+
+---
+
+## 🚀 Features
+
+- 🎨 **Customizable Lighting Animations:** Create and control stunning effects for any scene.
+- 🔋 **Battery Management:** Real-time monitoring and smart power handling.
+- 🖥️ **User Interface:** Graphical display and button input for easy, on-the-fly adjustments.
+- 💾 **EEPROM Support:** Save and recall your favorite effects and settings.
+- 🧩 **Modular C++ Design:** Clean, maintainable codebase with reusable classes.
+
+---
+
+## 🧩 Software Architecture
+
+![Editor _ Mermaid Chart-2025-06-26-141957](https://github.com/user-attachments/assets/013f5e74-1aa0-4c84-959f-d2c3d1c1fc6c)
+
+
+- **Main Application:** Entry point (`main.c`, `starklicht.cpp`)
+- **Controller:** Central logic and coordination
+- **Display:** Handles graphical output (u8g2 library)
+- **Animation:** Manages lighting effects
+- **Battery:** Monitors and manages power
+- **Messaging:** Communication and event handling over BLE
+
+---
+
+## 🏁 Getting Started
+
+### Prerequisites
+
+- [STM32CubeIDE](https://www.st.com/en/development-tools/stm32cubeide.html)
+- [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html)
+- CMake or Make (optional, for advanced builds)
 
 ### Setup
 
-To set up a Flutter app:
+1. Clone this repository:
+   ```sh
+   git clone https://github.com/yourusername/starklicht-stm32.git
+   ```
+2. Open the project in STM32CubeIDE.
+3. Configure your project settings for the STM32F410RB.
+4. Connect your hardware as described above.
 
-1. Install Flutter SDK from the official Flutter website.
-2. Open terminal or command prompt, and run `flutter doctor` to check for any dependencies you might need to install.
-3. Create a new Flutter project with `flutter create project_name`.
-4. Navigate into your project directory using `cd project_name`.
-5. Run your app with `flutter run`.
+### Building and Flashing
 
-For a complete guide and troubleshooting, visit the official Flutter documentation.
+1. Build the project in STM32CubeIDE.
+2. Connect the STM32F410RB board via USB to UART.
+3. Use STM32CubeProgrammer to flash the firmware onto the MCU.
 
+---
 
-## Contribute
+## 🎬 Example Use Cases
 
-We welcome contributions from the community! Whether it's improving the software, expanding the hardware's capabilities, or sharing your unique lighting effects and animations, your input helps Starklicht grow. For more details on how to contribute, please visit our website.
+- 🎥 **Movie Sets:** Sync lighting with camera cues for dramatic effects.
+- 🎭 **Theater:** Dynamic scene changes and mood lighting.
+- 💡 **Installations:** Interactive or automated light shows.
 
-## Support
+---
 
-Need assistance or have questions? Our dedicated team is here to help. Reach out to us through our contact page on [starklicht.net](https://starklicht.net).
+## 🤝 Contributing
 
-## License
+We welcome your ideas and improvements!  
+See `CONTRIBUTING.md` for guidelines.
 
-Starklicht is committed to an open-source approach. For detailed license information, please check our website.
+---
 
-## Contact Us
+## 📄 License
 
-For further inquiries or feedback, don't hesitate to [contact us](https://starklicht.net). We look forward to hearing from you and seeing how you bring your creative vision to life with Starklicht.
+GLP3.0 – see [LICENSE](LICENSE) for details.
+
+---
+
+## 📬 Contact
+
+Questions or support?  
+Email us: [kontakt@starklicht.net](mailto:kontakt@starklicht.net)
