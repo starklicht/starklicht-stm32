@@ -1,98 +1,59 @@
-
 import 'package:i18n_extension/i18n_extension.dart';
 
 extension Localization on String {
-  String get i18n => localize(this, t);
-  String fill(List<Object> params) => localizeFill(this, params);
-
-  static var t = Translations("de_de") +
+  static final _t = Translations.byLocale('en_us') +
       {
-        "de_de": "Wird auf Button %d gespeichert",
-        "en_us": "Will be saved on button %d"
-      }+
-      {
-        "de_de": "Auf Button %d gespeichert",
-        "en_us": "Saved on button %d"
-      }+
-      {
-        "de_de": "Button %d geladen",
-        "en_us": "Button %d was loaded"
-      }+
-      {
-        "de_de": "STARKLICHT",
-        "en_us": "STARKLICHT"
-      }+
-      {
-        "de_de": "Helligkeit einstellen",
-        "en_us": "Adjust brightness"
-      }+
-      {
-        "de_de": "%s wurde verbunden",
-        "en_us": "%s was connected"
-      }+
-      {
-        "de_de": "%s hat sich verbunden",
-        "en_us": "%s has connected"
-      }+
-      {
-        "de_de": "%s wurde getrennt",
-        "en_us": "%s was disconnected"
-      }+
-      {
-        "de_de": "%s hat sich getrennt",
-        "en_us": "%s has disconnected"
-      }+
-      {
-        "de_de": "Aus",
-        "en_us": "Off"
-      }+
-      {
-        "de_de": "Max. Helligkeit",
-        "en_us": "Max. brightness"
-      }+
-      {
-        "de_de": "Speichere die momentan ablaufende Szene auf deinem Starklicht",
-        "en_us": "Save the current running scene on your Starklicht"
-      }+
-      {
-        "de_de": "Auf Button speichern",
-        "en_us": "Save on button"
-      }+
-      {
-        "de_de": "Abbrechen",
-        "en_us": "Cancel"
-      }+
-      {
-        "de_de": "Speichern",
-        "en_us": "Save"
-      }+
-      {
-        "de_de": "Laden",
-        "en_us": "Load"
-      }+
-      {
-        "de_de": "Verbindungen",
-        "en_us": "Connections"
-      }+
-      {
-        "de_de": "Farbe",
-        "en_us": "Color"
-      }+
-      {
-        "de_de": "Animation",
-        "en_us": "Animation"
-      }+
-      {
-        "de_de": "Bibliothek",
-        "en_us": "Library"
-      }+
-      {
-        "de_de": "Bluetooth ist nicht verfügbar",
-        "en_us": "Bluetooth is not available"
-      }+
-      {
-        "de_de": "Eventuell fehlen Berechtigungen für den Standortzugriff oder Bluetooth.",
-        "en_us": "Bluetooth Low Energy needs location and bluetooth permission to work."
+        "en_us": {
+          'STARKLICHT': 'STARKLICHT',
+          'Verbindungen': 'Connections',
+          'Farbe': 'Color',
+          'Animation': 'Animation',
+          'Bibliothek': 'Library',
+          'Timelines': 'Timelines',
+          'Auf Button %d gespeichert': 'Saved to button %d',
+          'Button %d geladen': 'Loaded button %d',
+          'Helligkeit einstellen': 'Adjust Brightness',
+          'Aus': 'Off',
+          'Max. Helligkeit': 'Max. Brightness',
+          'Auf Button speichern': 'Save to Button',
+          'Speichere die momentan ablaufende Szene auf deinem Starklicht':
+          'Save the currently running scene on your Starklicht',
+          'Wird auf Button %d gespeichert': 'Will be saved to button %d',
+          'Abbrechen': 'Cancel',
+          'Laden': 'Load',
+          'Speichern': 'Save',
+          '%s wurde verbunden': '%s was connected',
+          '%s hat sich verbunden': '%s has connected',
+          '%s wurde getrennt': '%s was disconnected',
+          '%s hat sich getrennt': '%s has disconnected',
+        },
+        "de_de": {
+          'STARKLICHT': 'STARKLICHT',
+          'Verbindungen': 'Verbindungen',
+          'Farbe': 'Farbe',
+          'Animation': 'Animation',
+          'Bibliothek': 'Bibliothek',
+          'Timelines': 'Timelines',
+          'Auf Button %d gespeichert': 'Auf Button %d gespeichert',
+          'Button %d geladen': 'Button %d geladen',
+          'Helligkeit einstellen': 'Helligkeit einstellen',
+          'Aus': 'Aus',
+          'Max. Helligkeit': 'Max. Helligkeit',
+          'Auf Button speichern': 'Auf Button speichern',
+          'Speichere die momentan ablaufende Szene auf deinem Starklicht':
+          'Speichere die momentan ablaufende Szene auf deinem Starklicht',
+          'Wird auf Button %d gespeichert': 'Wird auf Button %d gespeichert',
+          'Abbrechen': 'Abbrechen',
+          'Laden': 'Laden',
+          'Speichern': 'Speichern',
+          '%s wurde verbunden': '%s wurde verbunden',
+          '%s hat sich verbunden': '%s hat sich verbunden',
+          '%s wurde getrennt': '%s wurde getrennt',
+          '%s hat sich getrennt': '%s hat sich getrennt',
+        },
       };
 
+  String get i18n => localize(this, _t);
+
+  String fill(List<Object> params) => localizeFill(this, params);
 }

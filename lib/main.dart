@@ -18,7 +18,7 @@ import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/animation_list.dart';
 import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
-import "package:i18n_extension/i18n_widget.dart";
+import 'package:i18n_extension/i18n_extension.dart';
 import 'package:starklicht_flutter/view/orchestra_list_view.dart';
 import "i18n/main.dart";
 
@@ -34,42 +34,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return I18n(
+        child: MaterialApp(
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en', "US"),
-        Locale('de', "DE")
-      ],
+      supportedLocales: const [Locale('en', "US"), Locale('de', "DE")],
       title: _title,
-      home: I18n(
-          child: const MyStatefulWidget()
-      ),
+      home: const MyStatefulWidget(),
       darkTheme: ThemeData.dark(),
-      /* theme: ThemeData(
-        toggleableActiveColor: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue)
-            .copyWith(
-            secondary: Colors.blueAccent, brightness: Brightness.light),
-      ),
-      darkTheme: ThemeData(
-        appBarTheme: AppBarTheme(
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.black12
-        ),
-        toggleableActiveColor: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue)
-            .copyWith(
-            secondary: Colors.blueAccent, brightness: Brightness.dark,
-
-        ),
-      ), */
-    );
+    ));
   }
 }
 
