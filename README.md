@@ -19,6 +19,12 @@ This is the client for the following microcontroller: [github.com/starklicht/sta
 
 ---
 
+## Website and Demo
+
+https://starklicht.net/
+
+---
+
 ## 🛠️ Getting Started
 
 1. **Install Flutter:**  
