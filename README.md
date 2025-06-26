@@ -13,13 +13,13 @@ It enables **dynamic lighting animations**, **battery management**, and **intuit
 
 ---
 
-## 🛠️ Hardware Requirements
+## 🛠️ Building the Lamp
 
-- STM32F410RB microcontroller board
-- USB to UART converter for programming
-- Starklicht lighting hardware (LEDs, buttons, display, sensors)
-- HM10 BLE Module for Bluetooth connectivity
-- RGB Led Chip of your choice (we are using LED COB 100W RGB ML-56 COB (JX-SPEC-WW-0100))
+✅ The entire Lamp housing can be 3D Printed. We will provide them very soon here!
+
+We also provide PCB's fitting exactly into the housing. You can order both PCB's and Lamp housings on https://www.starklicht.net ! 😊
+
+For detailed instructions on Hardware (PCBs, Wiring, Housing), see Chapter [Hardware](docs/hardware/README.md). This chapter will be updated the next weeks.
 
 ---
 
