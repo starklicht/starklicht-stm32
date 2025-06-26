@@ -13,6 +13,13 @@ It enables **dynamic lighting animations**, **battery management**, and **intuit
 
 ---
 
+## 📖 Documentation
+
+We are working on a detailed Documentation right now, work in Progress 👷‍♀️. Just click on [Wiki](https://github.com/starklicht/starklicht-stm32/wiki) to check it out. It will tell you, how it's made, how to 3D-Print components, etc.
+
+---
+
+
 ## 🛠️ Building the Lamp
 
 ✅ The entire Lamp housing can be 3D Printed. We will provide them very soon here!
