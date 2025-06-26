@@ -61,4 +61,4 @@ Licensed under the GNU GPL v3. See [LICENSE](LICENSE) for details.
 
 ---
 
-> **Starklicht Controller** — Bring cinematic lighting to your fingertips! 🌈✨
+Starklicht UG (haftungsbeschränkt)
