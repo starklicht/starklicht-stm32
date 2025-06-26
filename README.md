@@ -19,7 +19,7 @@ It enables **dynamic lighting animations**, **battery management**, and **intuit
 
 We also provide PCB's fitting exactly into the housing. You can order both PCB's and Lamp housings on https://www.starklicht.net ! 😊
 
-For detailed instructions on Hardware (PCBs, Wiring, Housing), see Chapter [Hardware](docs/hardware/README.md). This chapter will be updated the next weeks.
+For detailed instructions on Hardware (PCBs, Wiring, Housing), refer to the Wiki [Hardware](https://github.com/starklicht/starklicht-stm32/wiki/Hardware). This chapter will be updated the next weeks.
 
 ---
 
