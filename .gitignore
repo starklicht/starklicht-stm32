@@ -1,0 +1,35 @@
+# STM32CubeIDE generated files
+.project
+.cproject
+.mxproject
+.settings/
+.metadata/
+.history/
+.ide/
+
+# Build artifacts
+build/
+Debug/
+Release/
+*.elf
+*.hex
+*.bin
+*.map
+*.o
+*.d
+*.su
+*.srec
+*.lst
+*.log
+
+# Eclipse specific
+.classpath
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Dependencies (if any are downloaded into the project)
+# For example, if you use a package manager that puts dependencies in a folder
+# node_modules/
+# vendor/
