@@ -18,6 +18,8 @@ It enables **dynamic lighting animations**, **battery management**, and **intuit
 - STM32F410RB microcontroller board
 - USB to UART converter for programming
 - Starklicht lighting hardware (LEDs, buttons, display, sensors)
+- HM10 BLE Module for Bluetooth connectivity
+- RGB Led Chip of your choice (we are using LED COB 100W RGB ML-56 COB (JX-SPEC-WW-0100))
 
 ---
 
