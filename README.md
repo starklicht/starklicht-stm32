@@ -66,6 +66,15 @@ For detailed instructions on Hardware (PCBs, Wiring, Housing), refer to the Wiki
 - **Messaging:** Communication and event handling over BLE
 
 ---
+
+## 📚 Third-Party Libraries
+
+This project utilizes the following open-source libraries:
+
+- **u8g2:** A monochrome graphics library for OLEDs and LCDs.
+  - License: [BSD 2-Clause](LICENSES/U8G2_LICENSE.txt)
+
+---
 ## ✉️ Messaging Protocol
 
 ### Design Philosophy
