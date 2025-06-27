@@ -28,6 +28,19 @@ We also provide PCB's fitting exactly into the housing. You can order both PCB's
 
 For detailed instructions on Hardware (PCBs, Wiring, Housing), refer to the Wiki [Hardware](https://github.com/starklicht/starklicht-stm32/wiki/Hardware). This chapter will be updated the next weeks.
 
+### Components
+
+- Microcontroller: STM32F401CCU6 Blackpill Board
+- Display: 1.3" 128x64 OLED Display (SH1106 Driver)
+- Bluetooth Module: HM-10 BLE Module
+- LEDs: High-power RGB LEDs
+-  Potentiometers: For manual control of color and brightness
+-  Buttons: For preset selection and other functions
+-  Fan: For cooling the LEDs and driver
+-  Current Sensor: To monitor power consumption
+-  Temperature Sensors: To monitor the temperature of the LEDs and driver
+
+
 ---
 
 ## 🚀 Features
