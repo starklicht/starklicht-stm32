@@ -1,4 +1,4 @@
-# ✨ Starklicht STM32F410RB Firmware
+# ✨ Starklicht STM32F401 Firmware
 
 Welcome to the **Starklicht** firmware repository!  
 This project powers creative lighting for **movie makers, theater productions, and professional lighting installations**—where dynamic, reliable, and customizable effects matter most.
