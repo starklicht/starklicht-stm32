@@ -13,6 +13,12 @@ It enables **dynamic lighting animations**, **battery management**, and **intuit
 
 ---
 
+## Files
+
+The 3D Print files are located in this Repo in [3d-print](3d-print)
+
+---
+
 ## 📖 Documentation
 
 We are working on a detailed Documentation right now, work in Progress 👷‍♀️. Just click on [Wiki](https://github.com/starklicht/starklicht-stm32/wiki) to check it out. It will tell you, how it's made, how to 3D-Print components, etc.
