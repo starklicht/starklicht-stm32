@@ -15,7 +15,7 @@ It enables **dynamic lighting animations**, **battery management**, and **intuit
 
 ## Files
 
-The 3D Print files are located in this Repo in [3d-print](3d-print)
+You can download all files for Hardware (PCB, 3D Print) at [Cults3D](https://cults3d.com/de/modell-3d/gadget/starklicht)!
 
 ---
 
