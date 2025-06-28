@@ -17,6 +17,8 @@ It enables **dynamic lighting animations**, **battery management**, and **intuit
 
 You can download all files for Hardware (PCB, 3D Print) at [Cults3D](https://cults3d.com/de/modell-3d/gadget/starklicht)!
 
+> **Note**: We will update the Circuit diagrams for the PCB etc. in the next days!
+
 ---
 
 ## 📖 Documentation
