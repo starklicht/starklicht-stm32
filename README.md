@@ -3,6 +3,9 @@
 Welcome to the **Starklicht** firmware repository!  
 This project powers creative lighting for **movie makers, theater productions, and professional lighting installations**—where dynamic, reliable, and customizable effects matter most.
 
+### Documentation
+
+Full Documentation is on our website: https://starklicht.net/docs/intro/
 
 ---
 
